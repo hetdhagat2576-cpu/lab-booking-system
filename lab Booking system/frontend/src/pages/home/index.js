@@ -6,6 +6,27 @@ import ImageConfig from "../../config/image File";
 import IconConfig from "../../components/icon/index.js";
 import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
 
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes scroll-x {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+  
+  .animate-scroll-x {
+    animation: scroll-x 30s linear infinite;
+  }
+  
+  .animate-scroll-x:hover {
+    animation-play-state: paused;
+  }
+`;
+document.head.appendChild(style);
+
 export default function HomeIndex() {
   const navigate = useNavigate(); 
   const { CheckCircle, ArrowRight, Home, Users, FileText, Clock, MessageSquare, Star } = IconConfig;
@@ -125,38 +146,36 @@ export default function HomeIndex() {
             <p className="mt-6 max-w-3xl text-lg text-white/90">
               Seamless scheduling, trusted diagnostics, and fast digital reports.
             </p>
-          
+            
+            {/* Hero Section Overlay Text */}
+            <div className="mt-12 max-w-4xl text-center">
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-4 drop-shadow-lg">
+                Trusted Laboratory Experts
+              </h2>
+              <p className="text-lg text-white/95 leading-relaxed drop-shadow-md">
+                Our platform connects patients with certified laboratories,
+                ensuring transparency, accuracy, and reliable diagnostics
+                for every test.
+              </p>
+              <div className="w-16 h-1 bg-teal-400 mx-auto mt-4 rounded-full" />
+            </div>
+            
             <button 
               onClick={() => navigate("/register")}
-              className="mt-10 px-8 py-4 bg-teal-600 text-white font-semibold rounded-lg hover:bg-teal-700 transition-colors flex items-center gap-3 group">
+              className="mt-8 px-10 py-4 bg-white text-primary font-black rounded-full shadow-[0_10px_20px_-10px_rgba(255,255,255,0.5)] hover:shadow-[0_15px_25px_-5px_rgba(255,255,255,0.6)] hover:-translate-y-1 transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center gap-3 group border-2 border-white/20 backdrop-blur-sm"
+            >
               Get Started Now
-              <ArrowRight className="group-hover:translate-x-1 transition-transform" size={20} />
+              <ArrowRight className="group-hover:translate-x-2 transition-transform duration-300" size={20} />
             </button>
           </div>
         </div>
       </section>
 
-      {/* ABOUT US */}
-      <section className="bg-white py-20">
-        <div className="max-w-4xl mx-auto text-center px-4">
-          <h2 className="text-4xl font-bold text-primary mb-6">
-            Trusted Laboratory Experts
-          </h2>
-          <p className="text-gray600 text-lg leading-relaxed">
-            Our platform connects patients with certified laboratories,
-            ensuring transparency, accuracy, and reliable diagnostics
-            for every test.
-          </p>
-          <div className="w-24 h-1 bg-primary mx-auto mt-6 rounded-full" />
-        </div>
-      </section>
-
       
-
       {/* WHY BOOK WITH US */}
-      <section className="bg-gray50 py-20 border-y border-gray100">
+      <section className="bg-gray50 py-16 border-y border-gray100">
         <div className="container mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center text-gray900 mb-16">
+          <h2 className="text-4xl font-bold text-center text-gray900 mb-12">
             Why Book With Us?
           </h2>
           <div className="grid md:grid-cols-2 gap-10 max-w-5xl mx-auto">
@@ -184,9 +203,9 @@ export default function HomeIndex() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section className="bg-white py-20">
+      <section className="bg-white py-16">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold text-gray900 mb-14">
+          <h2 className="text-4xl font-bold text-gray900 mb-10">
             How It Works
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 max-w-6xl mx-auto">
@@ -209,7 +228,7 @@ export default function HomeIndex() {
 
       {/* MAIN CONTENT SECTION */}
       <main className="flex-grow">
-        <section className="container mx-auto px-4 py-24">
+        <section className="container mx-auto px-4 py-16">
           <div className="grid md:grid-cols-2 gap-14 items-center">
             <div className="space-y-8 text-center md:text-left">
               <h1 className="text-5xl font-extrabold leading-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
@@ -219,20 +238,6 @@ export default function HomeIndex() {
                 Book laboratory tests effortlessly with real-time availability,
                 trusted labs, and instant access to reports.
               </p>
-              <div className="flex items-center gap-4 mt-4 justify-center md:justify-start">
-                <a href="#" aria-label="Facebook" className="p-2 rounded-full bg-gray-100 hover:bg-primary/10 transition-colors">
-                  <FaFacebook className="text-primary" size={20} />
-                </a>
-                <a href="#" aria-label="Twitter" className="p-2 rounded-full bg-gray-100 hover:bg-primary/10 transition-colors">
-                  <FaTwitter className="text-primary" size={20} />
-                </a>
-                <a href="#" aria-label="Instagram" className="p-2 rounded-full bg-gray-100 hover:bg-primary/10 transition-colors">
-                  <FaInstagram className="text-primary" size={20} />
-                </a>
-                <a href="#" aria-label="LinkedIn" className="p-2 rounded-full bg-gray-100 hover:bg-primary/10 transition-colors">
-                  <FaLinkedin className="text-primary" size={20} />
-                </a>
-              </div>
               <div className="space-y-4">
                 {[
                   "Quick & simple booking",
@@ -266,7 +271,7 @@ export default function HomeIndex() {
 
       {/* WHAT OUR USERS SAY SECTION */}
       {userFeedbacks.length > 0 && (
-        <section className="bg-gray50 py-20">
+        <section className="bg-gradient-to-br from-secondary/20 to-primary/10 py-16 overflow-hidden">
           <div className="container mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="text-4xl font-bold text-gray900 mb-4">
@@ -278,36 +283,44 @@ export default function HomeIndex() {
               <div className="w-24 h-1 bg-primary mx-auto mt-6 rounded-full" />
             </div>
             
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-              {userFeedbacks.map((feedback, index) => (
-                <div key={feedback._id || index} className="bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition-all border border-gray100 group">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center">
-                      <MessageSquare className="text-primary" size={20} />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray800">{feedback.userName || "Anonymous User"}</h4>
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star 
-                            key={i} 
-                            className={`w-4 h-4 ${i < (feedback.bookingEaseRating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
-                          />
-                        ))}
+            {/* Auto-scrolling feedback carousel */}
+            <div className="relative">
+              <div className="flex overflow-hidden">
+                <div className="flex animate-scroll-x space-x-6">
+                  {/* Duplicate the feedbacks for seamless scrolling */}
+                  {[...userFeedbacks, ...userFeedbacks].map((feedback, index) => (
+                    <div key={`${feedback._id || index}-${index}`} className="flex-shrink-0 w-80">
+                      <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray100 h-full flex flex-col">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                            <MessageSquare className="text-primary" size={20} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-semibold text-gray800 truncate">{feedback.userName || "Anonymous User"}</h4>
+                            <div className="flex items-center gap-1">
+                              {[...Array(5)].map((_, i) => (
+                                <Star 
+                                  key={i} 
+                                  className={`w-4 h-4 flex-shrink-0 ${i < (feedback.bookingEaseRating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <p className="text-gray600 leading-relaxed mb-4 line-clamp-3 flex-grow">
+                          "{feedback.comment || 'Great experience with the platform!'}"
+                        </p>
+                        
+                        <div className="flex items-center justify-between text-sm text-gray500 mt-auto">
+                          <span className="truncate">Overall Experience</span>
+                          <span className="font-medium text-primary flex-shrink-0">{feedback.bookingEaseRating || 5}/5</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  
-                  <p className="text-gray600 leading-relaxed mb-4 line-clamp-4">
-                    "{feedback.comment || 'Great experience with the platform!'}"
-                  </p>
-                  
-                  <div className="flex items-center justify-between text-sm text-gray500">
-                    <span>Overall Experience</span>
-                    <span className="font-medium text-primary">{feedback.bookingEaseRating || 5}/5</span>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </section>

@@ -200,14 +200,6 @@ export default function ContactUsIndex() {
       <Header />
 
       <main className="flex-grow">
-        {/* Hero Section */}
-        <section className="bg-white py-16 text-center border-b border-secondary/30">
-          <h1 className="text-4xl font-bold text-gray-800 mb-4">Contact Us</h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Have questions? We're here to help! Get in touch with our team.
-          </p>
-           <div className="w-24 h-1 bg-primary mx-auto mt-6 rounded-full" />
-        </section>
 
         {/* Contact Info Card Grid */}
         <section className="bg-secondary/10 py-16">
@@ -264,9 +256,7 @@ export default function ContactUsIndex() {
                 />
               </div>
 
-
-
-              <div className="text-center">
+              <div className="text-center flex justify-center">
                 {/* Primary Color Button */}
                 <CButton type="submit" size="lg" className="px-16 bg-primary hover:bg-primaryHover text-white">
                   Send Message
@@ -276,31 +266,7 @@ export default function ContactUsIndex() {
           </div>
         </section>
 
-        {/* FAQ Section */}
-        <section className="bg-secondary/10 py-16 border-t border-secondary/30">
-          <div className="container mx-auto px-4 max-w-5xl">
-            <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">Frequently Asked Questions</h2>
-            <div className="grid md:grid-cols-2 gap-8">
-              {CONTACT_FAQ_ITEMS.map((item, index) => (
-                <div key={index} className="bg-white rounded-xl shadow-md p-6 border-l-4 border-primary hover:shadow-lg transition-shadow">
-                  <div className="flex gap-4">
-                    <div className="flex-shrink-0 bg-secondary/20 p-2 rounded-lg">
-                      {(() => {
-                        const Icon = IconConfig[item.iconKey];
-                        return <Icon className="w-6 h-6 text-primary" />;
-                      })()}
-                    </div>
-                    <div>
-                      <h3 className="font-bold mb-1 text-gray-800">{item.title}</h3>
-                      <p className="text-gray-600 text-sm">{item.desc}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-      </main>
+              </main>
 
       <Footer />
     </div>

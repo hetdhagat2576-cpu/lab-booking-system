@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 import IconConfig from "../icon/index.js";
 import LogoutConfirmation from "../logoutConfirmation/index.js";
+import Theme from "../../config/theam/index.js";
 
 
 export default function Header({ hideNavItems = false }) {
@@ -207,7 +208,17 @@ export default function Header({ hideNavItems = false }) {
               
               <button 
                 onClick={() => navigate("/register")} 
-                className="px-7 py-2.5 bg-white text-primary rounded-full text-sm font-black shadow-[0_10px_20px_-10px_rgba(255,255,255,0.5)] hover:shadow-[0_15px_25px_-5px_rgba(255,255,255,0.6)] hover:-translate-y-1 transition-all duration-300 active:scale-95"
+                className="px-7 py-2.5 text-white rounded-full text-sm font-black transition-all active:scale-95 flex items-center gap-2"
+                style={{ 
+                  backgroundColor: Theme.colors.primary,
+                  border: `1px solid ${Theme.colors.primary}20`
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = Theme.colors.primaryHover;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = Theme.colors.primary;
+                }}
               >
                 REGISTER
               </button>
@@ -229,7 +240,17 @@ export default function Header({ hideNavItems = false }) {
               )}
               <button
                 onClick={handleLogoutClick}
-                className="px-6 py-2 bg-white/10 text-white rounded-full text-sm font-black border border-white/20 hover:bg-white/20 transition-all active:scale-95 flex items-center gap-2"
+                className="px-6 py-2 text-white rounded-full text-sm font-black transition-all active:scale-95 flex items-center gap-2"
+                style={{ 
+                  backgroundColor: Theme.colors.primary,
+                  border: `1px solid ${Theme.colors.primary}20`
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = Theme.colors.primaryHover;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = Theme.colors.primary;
+                }}
               >
                 {LogOut && <LogOut className="w-5 h-5" />}
                 Logout

@@ -209,19 +209,21 @@ export default function AboutIndex() {
         {/* CTA Section */}
         <section className="bg-white py-20 text-center">
           <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-2xl mx-auto text-center">
               <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
               <p className="text-gray-600 mb-8 text-lg">
                 Start managing laboratory bookings efficiently with our platform.
               </p>
-              <CButton
-                variant="outline"
-                size="lg"
-                onClick={() => navigate("/")}
-                className="px-10 py-4 border-primary text-primary hover:bg-primary hover:text-white transition-colors"
-              >
-                Go to Home
-              </CButton>
+              <div className="flex justify-center">
+                <CButton
+                  variant="outline"
+                  size="md"
+                  onClick={() => navigate("/")}
+                  className="px-6 py-2 border-primary text-primary hover:bg-primary hover:text-white transition-colors"
+                >
+                  Go to Home
+                </CButton>
+              </div>
             </div>
           </div>
         </section>

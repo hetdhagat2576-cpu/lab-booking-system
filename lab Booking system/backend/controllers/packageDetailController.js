@@ -66,11 +66,7 @@ const getPackageDetails = async (req, res) => {
     const packageDetails = {
       packageName: package.name,
       requiredSamples: Array.from(allSampleTypes),
-      reportingTime: maxDuration,
-      includedTests: package.testsIncluded.map(test => ({
-        name: test.name,
-        description: test.description
-      }))
+      reportingTime: maxDuration
     };
     
     res.status(200).json({
@@ -87,6 +83,48 @@ const getPackageDetails = async (req, res) => {
   }
 };
 
+// Update package details
+const updatePackageDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid package ID'
+      });
+    }
+    
+    const package = await Package.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+    
+    if (!package) {
+      return res.status(404).json({
+        success: false,
+        message: 'Package not found'
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      data: package,
+      message: 'Package details updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating package details:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating package details',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
-  getPackageDetails
+  getPackageDetails,
+  updatePackageDetails
 };

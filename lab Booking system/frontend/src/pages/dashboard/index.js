@@ -9,6 +9,7 @@ import Theme from "../../config/theam/index.js";
 import IconConfig from "../../components/icon/index.js";
 import CButton from "../../components/cButton";
 import { safeFetch } from "../../config/api";
+import Swal from 'sweetalert2';
 import {
   DASHBOARD_HEALTH_CONCERNS,
 } from "../../config/staticData";
@@ -143,7 +144,12 @@ export default function DashboardIndex() {
       }
     } catch (error) {
       console.error('Error downloading report:', error);
-      alert('Failed to download report');
+      await Swal.fire({
+        icon: 'error',
+        title: 'Download Failed',
+        text: 'Failed to download report',
+        confirmButtonColor: Theme.colors.primary
+      });
     }
   };
 
@@ -181,39 +187,8 @@ export default function DashboardIndex() {
       </div>
 
       <main className="flex-grow container mx-auto px-4 py-8 pt-[72px]">
-        <div className="mb-6 mt-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-            <div className="flex">
-              <div></div>
-              <CButton
-                fullWidth
-                variant="primary"
-                onClick={() => navigate("/tests")}
-                className="h-12 font-bold rounded-xl uppercase tracking-widest"
-              >
-                All Tests
-              </CButton>
-            </div>
-            <div className="flex">
-              <CButton
-                fullWidth
-                variant="outline"
-                onClick={() => navigate("/health-packages/all")}
-                className="h-12 font-bold rounded-xl uppercase tracking-widest border-2"
-                style={{ borderColor: Theme.colors.primary, color: Theme.colors.primary }}
-              >
-                Health Packages
-              </CButton>
-            </div>
-          </div>
-        </div>
         {/* Header Section */}
         <div className="mb-2 flex items-start gap-4">
-          <div className="flex-shrink-0">
-            <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ backgroundColor: Theme.colors.secondary }}>
-              {React.createElement(IconConfig.FlaskConical, { className: "w-8 h-8 text-gray-800" })}
-            </div>
-          </div>
           <div className="flex-1">
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-2">
               Browse By Health Concern

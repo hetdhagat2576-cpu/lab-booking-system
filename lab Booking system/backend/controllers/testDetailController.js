@@ -54,6 +54,48 @@ const getTestDetails = async (req, res) => {
   }
 };
 
+// Update test details
+const updateTestDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid test ID'
+      });
+    }
+    
+    const test = await Test.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+    
+    if (!test) {
+      return res.status(404).json({
+        success: false,
+        message: 'Test not found'
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      data: test,
+      message: 'Test details updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating test details:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating test details',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
-  getTestDetails
+  getTestDetails,
+  updateTestDetails
 };

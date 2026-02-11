@@ -193,7 +193,12 @@ export default function UserLogin() {
     ) {
       const msg = "Access Denied: Please use the dedicated portal for your role.";
       setErrors((prev) => ({ ...prev, email: msg }));
-      alert(msg);
+      await Swal.fire({
+        icon: 'error',
+        title: 'Access Denied',
+        text: msg,
+        confirmButtonColor: Theme.colors.primary
+      });
       return;
     }
 
@@ -293,16 +298,26 @@ export default function UserLogin() {
         // User cancelled, don't show error
         return;
       }
-      alert("Server error. Please try again later.");
+      await Swal.fire({
+        icon: 'error',
+        title: 'Server Error',
+        text: 'Server error. Please try again later.',
+        confirmButtonColor: Theme.colors.primary
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleForgetPassword = (e) => {
+  const handleForgetPassword = async (e) => {
     e.preventDefault();
     if (!forgetEmail) return;
-    alert(`Password reset link sent to ${forgetEmail}`);
+      await Swal.fire({
+        icon: 'success',
+        title: 'Password Reset Sent',
+        text: `Password reset link sent to ${forgetEmail}`,
+        confirmButtonColor: Theme.colors.primary
+      });
     setShowForgetPassword(false);
     setForgetEmail("");
   };
@@ -373,10 +388,7 @@ export default function UserLogin() {
         </CButton>
 
         <div className="mb-10 text-center lg:text-left">
-          <div className="flex items-center justify-center lg:justify-start mb-4">
-            <FaUser className="w-10 h-10 text-primary mr-3" />
-            <h2 className="text-3xl font-bold text-slate-800">User Login</h2>
-          </div>
+          <h2 className="text-3xl font-bold text-slate-800">User Login</h2>
           <p className="text-slate-500 mt-2">Please enter your details to sign in.</p>
         </div>
 
@@ -437,10 +449,10 @@ export default function UserLogin() {
           <CButton
             type="submit"
             fullWidth
-            size="sm"
+            size="lg"
             variant="primary"
             disabled={isLoading}
-            className="text-white shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-all">
+            className="text-white shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-all px-16">
             {isLoading ? (
               <span className="flex items-center justify-center">
                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -454,16 +466,6 @@ export default function UserLogin() {
             )}
           </CButton>
 
-          <div className="text-center mt-4">
-            <span className="text-sm text-gray-600">Don't have an account? </span>
-            <button
-              type="button"
-              onClick={() => navigate("/register")}
-              className="text-sm font-semibold text-primary hover:text-primaryHover underline transition-colors"
-            >
-              Sign Up
-            </button>
-          </div>
         </form>
       </AuthLayout>
     </div>

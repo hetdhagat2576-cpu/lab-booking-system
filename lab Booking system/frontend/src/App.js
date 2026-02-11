@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Loader from "./components/loader";
-import { useAuth } from './context/authContext';
+import { useAuth, AuthProvider } from './context/authContext';
 
 import Home from "./pages/home";
 import LoginSelection from "./pages/loginSelection";
@@ -79,10 +79,11 @@ export default function App() {
     return null;
   }
   return (
-    <Router>
-      <Loader />
-      <ScrollToTop />
-      <Routes>
+    <AuthProvider>
+      <Router>
+        <Loader />
+        <ScrollToTop />
+        <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login-selection" element={<LoginSelection />} />
         <Route path="/admin-login" element={<AdminLogin />} />
@@ -145,5 +146,6 @@ export default function App() {
         <Route path="/feedback" element={<Feedback />} />
       </Routes>
     </Router>
-  );
+  </AuthProvider>
+);
 }

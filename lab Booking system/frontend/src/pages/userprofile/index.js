@@ -120,8 +120,15 @@ export default function UserProfileIndex() {
 
   const handleSave = async () => {
     if (!user || !user.token) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Authentication Error',
+        text: 'Please login to update your profile',
+        confirmButtonColor: Theme.colors.primary
+      });
       return;
     }
+    
     try {
       const res = await fetch(createApiUrl('/api/user/profile'), {
         method: "PUT",
@@ -137,6 +144,7 @@ export default function UserProfileIndex() {
         }),
       });
       const data = await res.json();
+      
       if (res.ok && data.success && data.data) {
         updateUser(data.data);
         setForm({
@@ -145,8 +153,33 @@ export default function UserProfileIndex() {
           phone: data.data.phone || "",
           address: data.data.address || "",
         });
+        
+        Swal.fire({
+          icon: 'success',
+          title: 'Profile Updated!',
+          text: 'Your information has been saved successfully.',
+          confirmButtonColor: Theme.colors.primary,
+          timer: 2000,
+          timerProgressBar: true,
+          showConfirmButton: false
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Update Failed',
+          text: data.message || 'Failed to update profile. Please try again.',
+          confirmButtonColor: Theme.colors.primary
+        });
       }
-    } catch {}
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Connection Error',
+        text: 'Unable to connect to server. Please check your connection and try again.',
+        confirmButtonColor: Theme.colors.primary
+      });
+    }
   };
   const handleClearFeedbacks = async () => {
     try {
@@ -374,7 +407,15 @@ export default function UserProfileIndex() {
                       <Typography variant="body2" className="text-slate-400">
                         Last updated: {new Date().toLocaleDateString()}
                       </Typography>
-                                          </div>
+                      <Button 
+                        variant="contained" 
+                        onClick={handleSave}
+                        sx={{ backgroundColor: Theme.colors.primary, borderRadius: '10px', textTransform: 'none', px: 3, py: 1, "&:hover": { backgroundColor: Theme.colors.primaryHover } }}
+                        size="small"
+                      >
+                        Save Changes
+                      </Button>
+                    </div>
                   </Grid>
                   <Grid item xs={12} md={4}>
                     <Typography variant="h6" fontWeight="700" className="mb-4">Quick Stats</Typography>

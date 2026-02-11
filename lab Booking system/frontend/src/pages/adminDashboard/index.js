@@ -7,6 +7,7 @@ import IconConfig from "../../components/icon/index.js";
 import Theme from "../../config/theam/index.js";
 import LogoutConfirmation from "../../components/logoutConfirmation/index.js";
 import { PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import Swal from 'sweetalert2';
 import { } from "../../config/staticData";
 
 
@@ -77,6 +78,17 @@ export default function AdminDashboardIndex() {
   const [bookingFilter, setBookingFilter] = useState('all');
   const [stats, setStats] = useState({ totalBookings: 0, pendingBookings: 0, approvedBookings: 0, rejectedBookings: 0, totalUsers: 0, adminUsers: 0, labtechUsers: 0, regularUsers: 0 });
   const [feedbackStats, setFeedbackStats] = useState({ totalFeedbacks: 0, pendingFeedbacks: 0, reviewedFeedbacks: 0, resolvedFeedbacks: 0 });
+  
+  // User Dashboard Management State
+  const [healthConcerns, setHealthConcerns] = useState([]);
+  const [editingHealthConcern, setEditingHealthConcern] = useState(null);
+  const [showHealthConcernForm, setShowHealthConcernForm] = useState(false);
+  const [healthConcernFormData, setHealthConcernFormData] = useState({
+    id: '',
+    title: '',
+    iconKey: 'FlaskConical',
+    description: ''
+  });
   
   // Chart data processing
   const [bookingStatusData, setBookingStatusData] = useState([]);
@@ -299,15 +311,21 @@ export default function AdminDashboardIndex() {
 
   // Admin: Fetch bookings
   const fetchBookings = useCallback(async () => {
-    if (!user?.token) return;
+    if (!user?.token) {
+      console.log('No user token available for fetching bookings');
+      return;
+    }
     try {
+      console.log('Fetching bookings...');
       const resp = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/bookings`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
       });
+      console.log('Bookings response status:', resp.status);
       if (resp.ok) {
         const result = await resp.json();
+        console.log('Bookings response:', result);
         const list = result.data || [];
         setBookings(list);
         const pending = list.filter(b => (b.adminStatus || '').toLowerCase() === 'pending').length;
@@ -464,7 +482,18 @@ export default function AdminDashboardIndex() {
   }, [user]);
 
   const handleDeleteUser = async (userId, userName) => {
-    if (!window.confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: `Are you sure you want to delete user "${userName}"? This action cannot be undone.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: Theme.colors.primary,
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (!result.isConfirmed) {
       return;
     }
     
@@ -479,14 +508,28 @@ export default function AdminDashboardIndex() {
       if (response.ok) {
         // Refresh users list
         fetchUsers();
-        alert('User deleted successfully');
+        await Swal.fire({
+          icon: 'success',
+          title: 'User deleted successfully',
+          confirmButtonColor: Theme.colors.primary
+        });
       } else {
         const errorData = await response.json();
-        alert(`Failed to delete user: ${errorData.message || 'Unknown error'}`);
+        await Swal.fire({
+          icon: 'error',
+          title: 'Failed to delete user',
+          text: errorData.message || 'Unknown error',
+          confirmButtonColor: Theme.colors.primary
+        });
       }
     } catch (error) {
       console.error('Error deleting user:', error);
-      alert('Error deleting user. Please try again.');
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error deleting user',
+        text: 'Please try again.',
+        confirmButtonColor: Theme.colors.primary
+      });
     }
   };
 
@@ -785,7 +828,18 @@ export default function AdminDashboardIndex() {
   
 
   const handleDeleteTest = async (id) => {
-    if (window.confirm('Are you sure you want to delete this test?')) {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this test?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: Theme.colors.primary,
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (result.isConfirmed) {
       try {
         const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests/${id}`, {
           method: 'DELETE',
@@ -898,6 +952,117 @@ export default function AdminDashboardIndex() {
     } catch (error) {
       console.error('Error saving package:', error);
     }
+  };
+
+  // User Dashboard Management Functions
+  const fetchHealthConcerns = useCallback(async () => {
+    // For now, use the static data from config
+    // In a real implementation, this would fetch from an API
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns`, {
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        setHealthConcerns(result.data || []);
+      } else {
+        // Fallback to static data if API doesn't exist
+        const { DASHBOARD_HEALTH_CONCERNS } = await import('../../config/staticData/index.js');
+        setHealthConcerns(DASHBOARD_HEALTH_CONCERNS);
+      }
+    } catch (error) {
+      console.log('Health concerns API not available, using static data');
+      // Fallback to static data
+      const { DASHBOARD_HEALTH_CONCERNS } = await import('../../config/staticData/index.js');
+      setHealthConcerns(DASHBOARD_HEALTH_CONCERNS);
+    }
+  }, [user]);
+
+  const saveHealthConcern = async (formData) => {
+    try {
+      const method = editingHealthConcern ? 'PUT' : 'POST';
+      const url = editingHealthConcern 
+        ? `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns/${editingHealthConcern.id}`
+        : `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns`;
+      
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify(formData)
+      });
+
+      if (response.ok) {
+        await fetchHealthConcerns();
+        setShowHealthConcernForm(false);
+        setEditingHealthConcern(null);
+        resetHealthConcernForm();
+        Swal.fire('Success!', `Health concern ${editingHealthConcern ? 'updated' : 'added'} successfully`, 'success');
+      } else {
+        throw new Error('Failed to save health concern');
+      }
+    } catch (error) {
+      console.error('Error saving health concern:', error);
+      Swal.fire('Error!', 'Failed to save health concern', 'error');
+    }
+  };
+
+  const deleteHealthConcern = async (id) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${user.token}`
+          }
+        });
+
+        if (response.ok) {
+          await fetchHealthConcerns();
+          Swal.fire('Deleted!', 'Health concern has been deleted.', 'success');
+        } else {
+          throw new Error('Failed to delete health concern');
+        }
+      } catch (error) {
+        console.error('Error deleting health concern:', error);
+        Swal.fire('Error!', 'Failed to delete health concern', 'error');
+      }
+    }
+  };
+
+  const resetHealthConcernForm = () => {
+    setHealthConcernFormData({
+      id: '',
+      title: '',
+      iconKey: 'FlaskConical',
+      description: ''
+    });
+  };
+
+  const handleEditHealthConcern = (concern) => {
+    setEditingHealthConcern(concern);
+    setHealthConcernFormData({
+      id: concern.id,
+      title: concern.title,
+      iconKey: concern.iconKey,
+      description: concern.description
+    });
+    setShowHealthConcernForm(true);
   };
 
   // Package Management Functions
@@ -1046,7 +1211,18 @@ export default function AdminDashboardIndex() {
   };
 
   const handleDeletePackage = async (id) => {
-    if (window.confirm('Are you sure you want to delete this package?')) {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this package?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: Theme.colors.primary,
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (result.isConfirmed) {
       try {
         const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages/${id}`, {
           method: 'DELETE',
@@ -1116,7 +1292,18 @@ export default function AdminDashboardIndex() {
   };
 
   const deleteServiceFeature = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this feature?')) return false;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this feature?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: Theme.colors.primary,
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (!result.isConfirmed) return false;
     
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/features/${id}`, {
@@ -1224,7 +1411,18 @@ export default function AdminDashboardIndex() {
   };
 
   const deleteHighlight = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this highlight?')) return false;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this highlight?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: Theme.colors.primary,
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (!result.isConfirmed) return false;
     
     console.log('Deleting highlight with ID:', id);
     
@@ -1307,7 +1505,18 @@ export default function AdminDashboardIndex() {
   };
 
   const deleteAboutSection = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this section?')) return false;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this section?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: Theme.colors.primary,
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (!result.isConfirmed) return false;
     
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/about/section/${id}`, {
@@ -1434,7 +1643,18 @@ export default function AdminDashboardIndex() {
   };
 
   const deleteFAQ = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this FAQ?')) return false;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this FAQ?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: Theme.colors.primary,
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (!result.isConfirmed) return false;
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq/${id}`, {
         method: 'DELETE',
@@ -1575,7 +1795,18 @@ export default function AdminDashboardIndex() {
   };
 
   const deleteTermsSection = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this terms section?')) return false;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this terms section?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: Theme.colors.primary,
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (!result.isConfirmed) return false;
     
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/terms/sections/${id}`, {
@@ -1648,7 +1879,18 @@ export default function AdminDashboardIndex() {
   };
 
   const deletePrivacySection = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this privacy section?')) return false;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this privacy section?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: Theme.colors.primary,
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (!result.isConfirmed) return false;
     
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/privacy/sections/${id}`, {
@@ -2379,6 +2621,13 @@ export default function AdminDashboardIndex() {
     }
   }, [activeTab, user]);
 
+  // Fetch health concerns when user-dashboard tab is active
+  useEffect(() => {
+    if (activeTab === 'user-dashboard' && user?.token) {
+      fetchHealthConcerns();
+    }
+  }, [activeTab, user, fetchHealthConcerns]);
+
   // Fetch packages when packages tab is active or filters change
   useEffect(() => {
     if (activeTab === 'packages' && user?.token) {
@@ -2475,7 +2724,12 @@ export default function AdminDashboardIndex() {
         }));
         
         // Show success message
-        alert('Booking approved successfully! The lab technician can now access this booking.');
+        await Swal.fire({
+          icon: 'success',
+          title: 'Booking approved successfully!',
+          text: 'The lab technician can now access this booking.',
+          confirmButtonColor: Theme.colors.primary
+        });
         console.log(`Booking ${id} approved successfully`);
         
         // Emit WebSocket event to notify technicians
@@ -2498,17 +2752,32 @@ export default function AdminDashboardIndex() {
         // Revert on error
         setBookings(originalBookings);
         console.error('Failed to approve booking:', responseData);
-        alert(`Failed to approve booking: ${responseData.message || 'Unknown error'}`);
+        await Swal.fire({
+          icon: 'error',
+          title: 'Failed to approve booking',
+          text: responseData.message || 'Unknown error',
+          confirmButtonColor: Theme.colors.primary
+        });
       }
     } catch (error) {
       console.error('Error approving booking:', error);
-      alert(`Error approving booking: ${error.message}`);
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error approving booking',
+        text: error.message,
+        confirmButtonColor: Theme.colors.primary
+      });
     }
   };
 
   const handleRejectWithReason = async (id, reason) => {
     if (!reason || reason.trim() === '') {
-      alert('Please provide a reason for rejection.');
+      await Swal.fire({
+        icon: 'warning',
+        title: 'Reason Required',
+        text: 'Please provide a reason for rejection.',
+        confirmButtonColor: Theme.colors.primary
+      });
       return;
     }
     
@@ -2565,7 +2834,12 @@ export default function AdminDashboardIndex() {
         }));
         
         // Show success message
-        alert('Booking rejected successfully! The user will be notified.');
+        await Swal.fire({
+          icon: 'success',
+          title: 'Booking rejected successfully!',
+          text: 'The user will be notified.',
+          confirmButtonColor: Theme.colors.primary
+        });
         console.log(`Booking ${id} rejected successfully`);
         
         // Refresh bookings to ensure data consistency
@@ -2574,11 +2848,21 @@ export default function AdminDashboardIndex() {
         // Revert on error
         setBookings(originalBookings);
         console.error('Failed to reject booking:', responseData);
-        alert(`Failed to reject booking: ${responseData.message || 'Unknown error'}`);
+        await Swal.fire({
+          icon: 'error',
+          title: 'Failed to reject booking',
+          text: responseData.message || 'Unknown error',
+          confirmButtonColor: Theme.colors.primary
+        });
       }
     } catch (error) {
       console.error('Error rejecting booking:', error);
-      alert(`Error rejecting booking: ${error.message}`);
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error rejecting booking',
+        text: error.message,
+        confirmButtonColor: Theme.colors.primary
+      });
     }
   };
 
@@ -2623,7 +2907,18 @@ export default function AdminDashboardIndex() {
   };
 
   const deleteFeedback = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this feedback?')) return;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this feedback?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: Theme.colors.primary,
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (!result.isConfirmed) return;
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/feedback/${id}`, {
         method: 'DELETE',
@@ -2642,7 +2937,18 @@ export default function AdminDashboardIndex() {
   };
 
   const deleteContact = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this contact?')) return;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this contact?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: Theme.colors.primary,
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (!result.isConfirmed) return;
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/contact/${id}`, {
         method: 'DELETE',
@@ -2732,7 +3038,18 @@ export default function AdminDashboardIndex() {
   };
 
   const deleteHomeWhyBookItem = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this item?')) return false;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this item?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: Theme.colors.primary,
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (!result.isConfirmed) return false;
     
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/why-book/${id}`, {
@@ -2804,7 +3121,18 @@ export default function AdminDashboardIndex() {
   };
 
   const deleteHomeHowItWorksItem = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this step?')) return false;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this step?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: Theme.colors.primary,
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (!result.isConfirmed) return false;
     
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/how-it-works/${id}`, {
@@ -2841,7 +3169,12 @@ export default function AdminDashboardIndex() {
     if (success) {
       resetWhyBookForm();
     } else {
-      alert('Failed to save item. Please try again.');
+      await Swal.fire({
+        icon: 'error',
+        title: 'Failed to save item',
+        text: 'Please try again.',
+        confirmButtonColor: Theme.colors.primary
+      });
     }
   };
 
@@ -2858,7 +3191,12 @@ export default function AdminDashboardIndex() {
     if (success) {
       resetHowItWorksForm();
     } else {
-      alert('Failed to save step. Please try again.');
+      await Swal.fire({
+        icon: 'error',
+        title: 'Failed to save step',
+        text: 'Please try again.',
+        confirmButtonColor: Theme.colors.primary
+      });
     }
   };
 
@@ -2971,7 +3309,18 @@ export default function AdminDashboardIndex() {
   };
 
   const deleteFAQItem = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this FAQ item?')) return false;
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete this FAQ item?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: Theme.colors.primary,
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (!result.isConfirmed) return false;
     
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq/${id}`, {
@@ -3070,6 +3419,7 @@ export default function AdminDashboardIndex() {
             
             <SidebarItem id="tests" label="Test Management" icon={TestTube} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
             <SidebarItem id="packages" label="Package Management" icon={Package} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
+            <SidebarItem id="user-dashboard" label="User Dashboard" icon={LayoutDashboard} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
             
             <div className="border-t border-gray-200 my-2"></div>
             
@@ -3200,7 +3550,7 @@ export default function AdminDashboardIndex() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600">Total Bookings</p>
-                        <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalBookings}</p>
+                        <p className="text-3xl font-bold text-gray-900 mt-2">{stats?.totalBookings || 0}</p>
                       </div>
                       <div className="p-3 bg-blue-100 rounded-lg">
                         <ClipboardList size={24} className="text-blue-600" />
@@ -3217,7 +3567,7 @@ export default function AdminDashboardIndex() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600">Approved Bookings</p>
-                        <p className="text-3xl font-bold text-green-600 mt-2">{stats.approvedBookings}</p>
+                        <p className="text-3xl font-bold text-green-600 mt-2">{stats?.approvedBookings || 0}</p>
                       </div>
                       <div className="p-3 bg-green-100 rounded-lg">
                         <CheckCircle2 size={24} className="text-green-600" />
@@ -3234,7 +3584,7 @@ export default function AdminDashboardIndex() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-gray-600">Pending Bookings</p>
-                        <p className="text-3xl font-bold text-yellow-600 mt-2">{stats.pendingBookings}</p>
+                        <p className="text-3xl font-bold text-yellow-600 mt-2">{stats?.pendingBookings || 0}</p>
                       </div>
                       <div className="p-3 bg-yellow-100 rounded-lg">
                         <Clock size={24} className="text-yellow-600" />
@@ -3547,7 +3897,7 @@ export default function AdminDashboardIndex() {
                         </tr>
                       </thead>
                       <tbody>
-                        {feedbacks.filter(f => f.status !== 'pending' && f.status !== 'reviewed' && f.status !== 'resolved').map((f, index) => (
+                        {feedbacks.map((f, index) => (
                           <tr key={f._id} className={`border-b border-gray-100/30 hover:bg-gradient-to-r transition-all duration-300 ${index % 2 === 0 ? 'bg-white/70' : 'bg-gray-50/40'}`}
                             style={{
                               backgroundImage: `linear-gradient(135deg, ${Theme.colors.primary}08, ${Theme.colors.secondary}12)`,
@@ -3650,7 +4000,7 @@ export default function AdminDashboardIndex() {
                       </tbody>
                     </table>
                     </div>
-                    {feedbacks.filter(f => feedbackFilter === 'all' || f.status === feedbackFilter).filter(f => f.status !== 'pending').length === 0 && (
+                    {feedbacks.length === 0 && (
                       <div className="text-center py-20">
                         <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-50 to-teal-50 flex items-center justify-center shadow-xl border border-gray-200/50"
                           style={{
@@ -3660,8 +4010,8 @@ export default function AdminDashboardIndex() {
                         >
                           <MessageSquare size={48} className="text-blue-400" style={{ color: Theme.colors.primary }} />
                         </div>
-                        <h3 className="text-xl font-bold text-gray-800 mb-3" style={{ color: Theme.colors.textDark }}>No {feedbackFilter === 'all' ? '' : feedbackFilter} feedback found</h3>
-                        <p className="text-sm text-gray-500 max-w-md mx-auto">There are currently no {feedbackFilter === 'all' ? '' : feedbackFilter} feedbacks to display.</p>
+                        <h3 className="text-xl font-bold text-gray-800 mb-3" style={{ color: Theme.colors.textDark }}>No feedback found</h3>
+                        <p className="text-sm text-gray-500 max-w-md mx-auto">There are currently no feedbacks to display.</p>
                       </div>
                     )}
                   </div>
@@ -3781,10 +4131,11 @@ export default function AdminDashboardIndex() {
                       <CButton
                         variant="primary"
                         fullWidth={false}
-                        className="px-3 py-2 text-xs rounded-md"
+                        className="px-4 py-3 text-sm rounded-md"
+                        size="lg"
                         onClick={() => setShowTestForm(true)}
                       >
-                        <Plus size={14} className="mr-1" />
+                        <Plus size={16} className="mr-2" />
                         Add New Test
                       </CButton>
                     </div>
@@ -3917,10 +4268,11 @@ export default function AdminDashboardIndex() {
                       <CButton
                         variant="primary"
                         fullWidth={false}
-                        className="px-3 py-2 text-xs rounded-md"
+                        className="px-4 py-3 text-sm rounded-md"
+                        size="lg"
                         onClick={() => setShowPackageForm(true)}
                       >
-                        <Plus size={14} className="mr-1" />
+                        <Plus size={16} className="mr-2" />
                         Add New Package
                       </CButton>
                     </div>
@@ -4095,10 +4447,11 @@ export default function AdminDashboardIndex() {
                             <CButton 
                               variant="primary"
                               fullWidth={false}
-                              className="px-3 py-2 text-xs rounded-md"
+                              className="px-4 py-3 text-sm rounded-md"
+                              size="lg"
                               onClick={() => setShowWhyBookForm(true)}
                             >
-                              <Plus size={14} className="mr-1" />
+                              <Plus size={16} className="mr-2" />
                               Add Item
                             </CButton>
                           </div>
@@ -4204,10 +4557,11 @@ export default function AdminDashboardIndex() {
                                 <CButton 
                                   variant="primary"
                                   fullWidth={false}
-                                  className="px-3 py-2 text-xs rounded-md"
+                                  className="px-4 py-3 text-sm rounded-md"
+                                  size="lg"
                                   onClick={() => setShowWhyBookForm(true)}
                                 >
-                                  <Plus size={14} className="mr-1" />
+                                  <Plus size={16} className="mr-2" />
                                   Add Your First Item
                                 </CButton>
                               </div>
@@ -4226,10 +4580,11 @@ export default function AdminDashboardIndex() {
                             <CButton 
                               variant="primary"
                               fullWidth={false}
-                              className="px-3 py-2 text-xs rounded-md"
+                              className="px-4 py-3 text-sm rounded-md"
+                              size="lg"
                               onClick={() => setShowHowItWorksForm(true)}
                             >
-                              <Plus size={14} className="mr-1" />
+                              <Plus size={16} className="mr-2" />
                               Add Step
                             </CButton>
                           </div>
@@ -4351,10 +4706,11 @@ export default function AdminDashboardIndex() {
                                 <CButton 
                                   variant="primary"
                                   fullWidth={false}
-                                  className="px-3 py-2 text-xs rounded-md"
+                                  className="px-4 py-3 text-sm rounded-md"
+                                  size="lg"
                                   onClick={() => setShowHowItWorksForm(true)}
                                 >
-                                  <Plus size={14} className="mr-1" />
+                                  <Plus size={16} className="mr-2" />
                                   Add Your First Step
                                 </CButton>
                               </div>
@@ -4414,10 +4770,11 @@ export default function AdminDashboardIndex() {
                             <CButton 
                               variant="primary"
                               fullWidth={false}
-                              className="px-3 py-2 text-xs rounded-md"
+                              className="px-4 py-3 text-sm rounded-md"
+                              size="lg"
                               onClick={() => setShowServiceForm(true)}
                             >
-                              <Plus size={14} className="mr-1" />
+                              <Plus size={16} className="mr-2" />
                               Add Feature
                             </CButton>
                           </div>
@@ -4442,7 +4799,12 @@ export default function AdminDashboardIndex() {
                               if (success) {
                                 resetServiceForm();
                               } else {
-                                alert('Failed to save feature. Please try again.');
+                                await Swal.fire({
+                                  icon: 'error',
+                                  title: 'Failed to save feature',
+                                  text: 'Please try again.',
+                                  confirmButtonColor: Theme.colors.primary
+                                });
                               }
                             }}>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -4555,10 +4917,11 @@ export default function AdminDashboardIndex() {
                             <CButton 
                               variant="primary"
                               fullWidth={false}
-                              className="px-3 py-2 text-xs rounded-md"
+                              className="px-4 py-3 text-sm rounded-md"
+                              size="lg"
                               onClick={() => setShowHighlightForm(true)}
                             >
-                              <Plus size={14} className="mr-1" />
+                              <Plus size={16} className="mr-2" />
                               Add Highlight
                             </CButton>
                           </div>
@@ -4584,7 +4947,12 @@ export default function AdminDashboardIndex() {
                               if (success) {
                                 resetHighlightForm();
                               } else {
-                                alert('Failed to save highlight. Please try again.');
+                                await Swal.fire({
+                                  icon: 'error',
+                                  title: 'Failed to save highlight',
+                                  text: 'Please try again.',
+                                  confirmButtonColor: Theme.colors.primary
+                                });
                               }
                             }}>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -4774,7 +5142,12 @@ export default function AdminDashboardIndex() {
                             setEditingAboutItem(null);
                             setAboutFormData({ icon: 'bolt', title: '', description: '' });
                           } else {
-                            alert('Failed to save section. Please try again.');
+                            await Swal.fire({
+                              icon: 'error',
+                              title: 'Failed to save section',
+                              text: 'Please try again.',
+                              confirmButtonColor: Theme.colors.primary
+                            });
                           }
                         }}>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -5780,23 +6153,7 @@ export default function AdminDashboardIndex() {
                           placeholder="24-48 hours"
                         />
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Included Tests (JSON format)</label>
-                        <textarea
-                          value={JSON.stringify(packageDetailsFormData.includedTests, null, 2)}
-                          onChange={(e) => {
-                            try {
-                              const parsed = JSON.parse(e.target.value);
-                              setPackageDetailsFormData(prev => ({ ...prev, includedTests: parsed }));
-                            } catch (err) {
-                              // Invalid JSON, don't update state
-                            }
-                          }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 h-32 font-mono text-sm"
-                          placeholder='[{"name": "Test Name", "description": "Test Description"}]'
-                        />
-                      </div>
-                      <div className="flex gap-2">
+                                            <div className="flex gap-2">
                         <CButton type="submit" variant="primary">
                           Update
                         </CButton>
@@ -5830,30 +6187,165 @@ export default function AdminDashboardIndex() {
                       <h4 className="font-medium text-gray-900">Reporting Time</h4>
                       <p className="text-gray-600">{details.reportingTime}</p>
                     </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">Included Tests</h4>
-                      {details.includedTests && details.includedTests.length > 0 ? (
-                        <ul className="mt-1 space-y-1">
-                          {details.includedTests.map((test, index) => (
-                            <li key={index} className="text-gray-600 flex items-start">
-                              <span className="text-blue-500 mr-2">•</span>
-                              <div>
-                                <span className="font-medium">{test.name}</span>
-                                {test.description && (
-                                  <p className="text-sm text-gray-500">{test.description}</p>
-                                )}
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p className="text-gray-500 mt-1">No tests included</p>
-                      )}
-                    </div>
-                  </div>
+                                      </div>
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* User Dashboard Management */}
+      {activeTab === "user-dashboard" && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-lg font-semibold">User Dashboard Management</h3>
+              <p className="text-sm text-gray-600 mt-1">Manage health categories and test categorization</p>
+            </div>
+            <div className="flex justify-end">
+              <CButton
+                onClick={() => {
+                  resetHealthConcernForm();
+                  setEditingHealthConcern(null);
+                  setShowHealthConcernForm(true);
+                }}
+                variant="primary"
+              >
+                Add Health Category
+              </CButton>
+            </div>
+          </div>
+
+          {/* Health Concern Form */}
+          {showHealthConcernForm && (
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <h4 className="text-md font-medium mb-4">
+                {editingHealthConcern ? 'Edit Health Category' : 'Add New Health Category'}
+              </h4>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                saveHealthConcern(healthConcernFormData);
+              }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Category ID</label>
+                    <input
+                      type="text"
+                      value={healthConcernFormData.id}
+                      onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, id: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                      placeholder="e.g., liver, lungs, kidney"
+                      disabled={!!editingHealthConcern}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Display Title</label>
+                    <input
+                      type="text"
+                      value={healthConcernFormData.title}
+                      onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                      placeholder="e.g., Liver, Lungs, Kidney"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Icon</label>
+                    <select
+                      value={healthConcernFormData.iconKey}
+                      onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, iconKey: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                    >
+                      <option value="FlaskConical">Flask</option>
+                      <option value="Activity">Activity</option>
+                      <option value="Droplets">Droplets</option>
+                      <option value="Heart">Heart</option>
+                      <option value="Brain">Brain</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <input
+                      type="text"
+                      value={healthConcernFormData.description}
+                      onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, description: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                      placeholder="Brief description of the category"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <CButton type="submit" variant="primary">
+                    {editingHealthConcern ? 'Update' : 'Add'}
+                  </CButton>
+                  <CButton 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setShowHealthConcernForm(false);
+                      setEditingHealthConcern(null);
+                      resetHealthConcernForm();
+                    }}
+                  >
+                    Cancel
+                  </CButton>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Health Categories List */}
+          <div className="bg-white rounded-lg border border-gray-200">
+            <div className="p-6">
+              <h4 className="text-md font-medium mb-4">Health Categories</h4>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category ID</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Icon</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {healthConcerns.map((concern) => (
+                      <tr key={concern.id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {concern.id}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {concern.title}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {concern.iconKey}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">
+                          {concern.description}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <button
+                            onClick={() => handleEditHealthConcern(concern)}
+                            className="text-indigo-600 hover:text-indigo-900 mr-3"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => deleteHealthConcern(concern.id)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       )}

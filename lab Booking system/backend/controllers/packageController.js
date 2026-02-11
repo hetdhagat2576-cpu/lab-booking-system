@@ -347,10 +347,6 @@ const getPackageDetails = async (req, res) => {
     // Format the response as requested
     const packageDetails = {
       packageName: package.name,
-      includedTests: package.testsIncluded.map(test => ({
-        name: test.name,
-        description: test.description
-      })),
       reportDeliveryTime: maxDuration,
       sampleTypes: Array.from(allSampleTypes)
     };

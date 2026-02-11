@@ -272,14 +272,11 @@ export default function AdminLogin() {
         </button>
 
         <div className="mb-8 text-center lg:text-left">
-          <div className="flex items-center justify-center lg:justify-start mb-2">
-            <Shield className="w-8 h-8 text-primary mr-3" />
-            <h2 className="text-3xl font-bold text-slate-800">
-              Admin Login
-            </h2>
-          </div>
+          <h2 className="text-3xl font-bold text-slate-800">
+            Admin Login
+          </h2>
           <p className="text-slate-500">
-            Please enter your credentials to access the dashboard.
+            Please enter your credentials to access dashboard.
           </p>
         </div>
 
@@ -335,9 +332,9 @@ export default function AdminLogin() {
           <CButton
             type="submit"
             fullWidth
-            size="sm"
+            size="lg"
             variant="primary"
-            className="text-white shadow-lg shadow-cyan-900/20 mt-2"
+            className="text-white shadow-lg shadow-cyan-900/20 mt-2 px-16"
           >
             Sign In
           </CButton>
