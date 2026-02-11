@@ -240,6 +240,18 @@ const addServiceHighlight = async (req, res) => {
       serviceContent = await ServiceContent.create({ features: [], highlights: [] });
     }
     
+    // Check for duplicate highlight with same title and description
+    const existingHighlight = serviceContent.highlights.find(
+      highlight => highlight.title === title && highlight.description === description
+    );
+    
+    if (existingHighlight) {
+      return res.status(400).json({
+        success: false,
+        message: 'A highlight with this title and description already exists'
+      });
+    }
+    
     const newHighlight = {
       title,
       description,
@@ -271,29 +283,61 @@ const updateServiceHighlight = async (req, res) => {
     const { id } = req.params;
     const { title, description, iconKey, order, isActive } = req.body;
     
+    // DEBUG: Log incoming request details
+    console.log('=== DEBUG: Update Service Highlight ===');
+    console.log('Request params ID:', id);
+    console.log('Request body:', { title, description, iconKey, order, isActive });
+    
     let serviceContent = await ServiceContent.findOne();
     if (!serviceContent) {
+      console.log('ERROR: Service content not found');
       return res.status(404).json({
         success: false,
         message: 'Service content not found'
       });
     }
     
+    console.log('Found service content with', serviceContent.highlights.length, 'highlights');
+    console.log('All highlight IDs in database:', serviceContent.highlights.map(h => ({ _id: h._id, title: h.title })));
+    
     const highlight = serviceContent.highlights.id(id);
+    console.log('Found highlight by ID:', highlight ? 'YES' : 'NO');
+    if (highlight) {
+      console.log('Highlight details:', { _id: highlight._id, title: highlight.title, description: highlight.description });
+    }
+    
     if (!highlight) {
+      console.log('ERROR: Highlight not found with ID:', id);
       return res.status(404).json({
         success: false,
         message: 'Highlight not found'
       });
     }
     
-    if (title !== undefined) highlight.title = title;
-    if (description !== undefined) highlight.description = description;
-    if (iconKey !== undefined) highlight.iconKey = iconKey;
-    if (order !== undefined) highlight.order = order;
-    if (isActive !== undefined) highlight.isActive = isActive;
+    if (title !== undefined) {
+      console.log('Updating title from', highlight.title, 'to', title);
+      highlight.title = title;
+    }
+    if (description !== undefined) {
+      console.log('Updating description from', highlight.description, 'to', description);
+      highlight.description = description;
+    }
+    if (iconKey !== undefined) {
+      console.log('Updating iconKey from', highlight.iconKey, 'to', iconKey);
+      highlight.iconKey = iconKey;
+    }
+    if (order !== undefined) {
+      console.log('Updating order from', highlight.order, 'to', order);
+      highlight.order = order;
+    }
+    if (isActive !== undefined) {
+      console.log('Updating isActive from', highlight.isActive, 'to', isActive);
+      highlight.isActive = isActive;
+    }
     
     await serviceContent.save();
+    console.log('Service content saved successfully');
+    console.log('Updated highlight:', { _id: highlight._id, title: highlight.title, description: highlight.description });
     
     res.status(200).json({
       success: true,

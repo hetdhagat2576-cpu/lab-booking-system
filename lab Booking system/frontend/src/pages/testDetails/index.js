@@ -174,13 +174,14 @@ export default function TestDetails() {
       <Header />
       <main className="flex-grow pt-8 pb-12 bg-slate-50/50">
         <div className="container mx-auto px-4">
-          <button
+          <CButton
             onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-slate-500 hover:text-primary font-bold mb-6 transition-colors"
+            variant="outline"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back</span>
-          </button>
+          </CButton>
 
           <div className="flex flex-col gap-8">
             

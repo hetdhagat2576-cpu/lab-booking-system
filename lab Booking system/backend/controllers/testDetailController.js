@@ -22,11 +22,22 @@ const getTestDetails = async (req, res) => {
       });
     }
     
-    // Format the response as requested
+    // Format the response with comprehensive test information
     const testDetails = {
+      _id: test._id,
       testName: test.name,
+      description: test.description,
+      category: test.category,
+      price: test.price,
+      originalPrice: test.originalPrice,
       requiredSamples: [test.sampleType], // Array to allow for multiple sample types in future
-      reportingTime: test.duration
+      reportingTime: test.duration,
+      preparation: test.preparation || 'No special preparation required',
+      isPopular: test.isPopular,
+      tags: test.tags,
+      imageUrl: test.imageUrl,
+      createdAt: test.createdAt,
+      updatedAt: test.updatedAt
     };
     
     res.status(200).json({

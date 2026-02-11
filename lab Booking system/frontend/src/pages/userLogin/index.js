@@ -342,13 +342,14 @@ export default function UserLogin() {
               >
                 Send Reset Link
               </CButton>
-              <button
+              <CButton
                 type="button"
                 onClick={() => setShowForgetPassword(false)}
                 className="w-full text-center text-sm font-medium text-primary hover:underline"
+                variant="outline"
               >
                 Back to Login
-              </button>
+              </CButton>
             </form>
           </div>
         </main>
@@ -362,13 +363,14 @@ export default function UserLogin() {
 
       <AuthLayout type="user" rightScrollable={false}>
         {/* Back Button */}
-        <button
+        <CButton
           onClick={() => navigate("/login-selection")}
           className="flex items-center text-gray-600 hover:text-primary mb-6 transition-colors"
+          variant="outline"
         >
           <FaArrowLeft className="mr-2" />
           Back to Role Selection
-        </button>
+        </CButton>
 
         <div className="mb-10 text-center lg:text-left">
           <div className="flex items-center justify-center lg:justify-start mb-4">
@@ -435,7 +437,7 @@ export default function UserLogin() {
           <CButton
             type="submit"
             fullWidth
-            size="lg"
+            size="sm"
             variant="primary"
             disabled={isLoading}
             className="text-white shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-all">
@@ -452,18 +454,16 @@ export default function UserLogin() {
             )}
           </CButton>
 
-          <div className="relative py-4">
-            <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate200"></span></div>
-            <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate500">New to the platform?</span></div>
+          <div className="text-center mt-4">
+            <span className="text-sm text-gray-600">Don't have an account? </span>
+            <button
+              type="button"
+              onClick={() => navigate("/register")}
+              className="text-sm font-semibold text-primary hover:text-primaryHover underline transition-colors"
+            >
+              Sign Up
+            </button>
           </div>
-
-          <button
-            type="button"
-            onClick={() => navigate("/register")}
-            className="w-full py-3 px-4 rounded-lg border-2 border-primary text-primary font-bold hover:bg-primary hover:text-white transition-colors"
->
-            Create an Account
-          </button>
         </form>
       </AuthLayout>
     </div>

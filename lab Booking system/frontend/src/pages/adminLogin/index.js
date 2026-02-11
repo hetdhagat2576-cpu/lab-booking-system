@@ -8,12 +8,13 @@ import CButton from "../../components/cButton";
 import CInput from "../../components/cInput";
 import Theme from "../../config/theam/index.js";
 import { createApiUrl } from "../../config/api.js";
+import { roleOptions } from "../../config/staticData";
 import Swal from 'sweetalert2';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const { Shield, ArrowLeft, Mail, Lock, Eye, EyeOff } = IconConfig || {};
+  const { Shield, ArrowLeft, Mail, Lock, Eye, EyeOff, User, UserCog } = IconConfig || {};
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -334,7 +335,7 @@ export default function AdminLogin() {
           <CButton
             type="submit"
             fullWidth
-            size="lg"
+            size="sm"
             variant="primary"
             className="text-white shadow-lg shadow-cyan-900/20 mt-2"
           >

@@ -6,6 +6,7 @@ import Header from "../../components/header";
 import Footer from "../../components/footer";
 import IconConfig from "../../components/icon/index.js";
 import Theme from "../../config/theam/index.js";
+import CButton from "../../components/cButton";
 
 export default function UserHistoryIndex() {
   const navigate = useNavigate();
@@ -45,12 +46,13 @@ export default function UserHistoryIndex() {
       <Header hideNavItems={true} />
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="mb-4">
-          <button
+          <CButton
             onClick={() => navigate("/dashboard")}
             className="flex items-center text-primary hover:opacity-80 transition"
+            variant="outline"
           >
             <ArrowLeft className="mr-2" /> Back to Dashboard
-          </button>
+          </CButton>
         </div>
         <div className="mb-6 sm:mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-gray-800 mb-1">Your Booking History</h1>

@@ -84,14 +84,12 @@ export default function RegisterIndex() {
             html: `
               <div style="text-align: left;">
                 <p style="margin-bottom: 20px; color: #666;">${message}</p>
-                <div id="recaptcha-container" style="display: flex; justify-content: center; margin: 20px 0;"></div>
+                <div id="recaptcha-container" style="display: flex; justify-content: center; margin: 20px 0; transform: scale(0.85); transform-origin: 0 0;"></div>
               </div>
             `,
-            icon: 'info',
             showCancelButton: true,
-            confirmButtonText: confirmButtonText,
+            showConfirmButton: false,
             cancelButtonText: 'Cancel',
-            confirmButtonColor: '#3085d6',
             cancelButtonColor: '#d33',
             didOpen: () => {
               // Render reCAPTCHA inside the SweetAlert
@@ -108,6 +106,9 @@ export default function RegisterIndex() {
                     sitekey: process.env.REACT_APP_RECAPTCHA_SITE_KEY || "6LcolFcsAAAAAHu4qJFpMgWFj_SW9jD6obXysvES",
                     callback: (token) => {
                       recaptchaToken = token;
+                      // Auto-close SweetAlert and proceed when captcha is completed
+                      Swal.close();
+                      resolve(token);
                     },
                     'expired-callback': () => {
                       recaptchaToken = null;
@@ -118,18 +119,10 @@ export default function RegisterIndex() {
                   Swal.showValidationMessage('reCAPTCHA failed to load. Please refresh the page.');
                 }
               }, 500); // 500ms delay
-            },
-            preConfirm: () => {
-              if (!recaptchaToken) {
-                Swal.showValidationMessage('Please verify you are not a robot');
-                return false;
-              }
-              return recaptchaToken;
             }
           }).then((result) => {
-            if (result.isConfirmed && result.value) {
-              resolve(result.value);
-            } else {
+            // This will only be triggered if user cancels, since we auto-resolve on captcha completion
+            if (result.isDismissed) {
               reject(new Error('User cancelled or reCAPTCHA not completed'));
             }
           }).catch((error) => {
@@ -180,25 +173,14 @@ export default function RegisterIndex() {
 
       if (!response.ok) {
         if (response.status === 401 && (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost')) {
-          await Swal.fire({
-            icon: 'success',
-            title: 'Registration Successful!',
-            text: 'Your account has been created. Please check your email for OTP verification.',
-            confirmButtonColor: '#3085d6',
-            timer: 3000,
-            timerProgressBar: true,
-            showConfirmButton: false
+          // Direct navigation to OTP without success message
+          navigate("/otp-verification", { 
+            state: { 
+              email: formData.email,
+              isRegistrationFlow: true,
+              redirectPath: "/user-login"
+            } 
           });
-
-          setTimeout(() => {
-            navigate("/otp-verification", { 
-              state: { 
-                email: formData.email,
-                isRegistrationFlow: true,
-                redirectPath: "/user-login"
-              } 
-            });
-          }, 1000);
           return;
         }
 
@@ -219,27 +201,14 @@ export default function RegisterIndex() {
       }
 
       if (data && data.success) {
-        // Show SweetAlert success message
-        await Swal.fire({
-          icon: 'success',
-          title: 'Registration Successful!',
-          text: 'Your account has been created. Please check your email for OTP verification.',
-          confirmButtonColor: '#3085d6',
-          timer: 3000,
-          timerProgressBar: true,
-          showConfirmButton: false
+        // Direct navigation to OTP verification page without success message
+        navigate("/otp-verification", { 
+          state: { 
+            email: formData.email,
+            isRegistrationFlow: true,
+            redirectPath: "/user-login"
+          } 
         });
-        
-        // Redirect to OTP verification page
-        setTimeout(() => {
-          navigate("/otp-verification", { 
-            state: { 
-              email: formData.email,
-              isRegistrationFlow: true,
-              redirectPath: "/user-login"
-            } 
-          });
-        }, 1000);
       } else {
         if (data.message && data.message.includes("already exists")) {
           setRegisterError("This email is already registered. Please login instead.");
@@ -457,7 +426,7 @@ export default function RegisterIndex() {
             <CButton
               type="submit"
               variant="primary"
-              size="lg"
+              size="sm"
               fullWidth
               isLoading={isLoading}
               disabled={isLoading}

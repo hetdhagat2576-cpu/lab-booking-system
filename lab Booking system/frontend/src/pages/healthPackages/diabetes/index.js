@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 // Fixed paths: Added an extra ../ to reach the correct root directory
@@ -8,6 +8,7 @@ import Header from "../../../components/header/index.js";
 import Footer from "../../../components/footer/index.js";
 import CButton from "../../../components/cButton/index.js";
 import { DIABETES_PACKAGES, RECOMMENDED_TESTS, getTestCount } from "../../../config/staticData/index.js";
+import { getSynchronizedTests, formatTestForDisplay } from "../../../services/testSync";
 
 const { Home, UserCheck, FileBarChart } = IconConfig;
 
@@ -17,11 +18,21 @@ export default function Diabetes() {
   const navigate = useNavigate();
   const [showAllPackages, setShowAllPackages] = useState(false);
   const [showAllTests, setShowAllTests] = useState(false);
+  const [synchronizedTests, setSynchronizedTests] = useState([]);
   
   const { ArrowLeft, CheckCircle2, Clock, ShieldCheck, Droplets } = IconConfig;
 
+  // Load synchronized tests from localStorage on component mount
+  useEffect(() => {
+    const tests = getSynchronizedTests('diabetes');
+    setSynchronizedTests(tests);
+  }, []);
+
+  // Use synchronized tests if available, otherwise fall back to static data
+  const recommendedTests = synchronizedTests.length > 0 ? synchronizedTests : RECOMMENDED_TESTS.diabetes;
+
   const displayPackages = showAllPackages ? DIABETES_PACKAGES : DIABETES_PACKAGES.slice(0, 3);
-  const displayTests = showAllTests ? RECOMMENDED_TESTS.diabetes : RECOMMENDED_TESTS.diabetes.slice(0, 3);
+  const displayTests = showAllTests ? recommendedTests : recommendedTests.slice(0, 3);
 
   const handleBook = (packageId) => navigate(`/new-booking?package=${packageId}`);
 

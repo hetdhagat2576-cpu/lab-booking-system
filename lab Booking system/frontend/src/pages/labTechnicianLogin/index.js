@@ -8,12 +8,13 @@ import CButton from "../../components/cButton";
 import CInput from "../../components/cInput";
 import Theme from "../../config/theam/index.js";
 import { createApiUrl } from "../../config/api.js";
+import { roleOptions } from "../../config/staticData";
 import Swal from 'sweetalert2';
 
 export default function LabTechnicianLogin() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const { UserCog, ArrowLeft, Mail, Lock, Eye, EyeOff } = IconConfig || {};
+  const { UserCog, ArrowLeft, Mail, Lock, Eye, EyeOff, User, Shield } = IconConfig || {};
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -361,7 +362,7 @@ export default function LabTechnicianLogin() {
           <CButton
             type="submit"
             fullWidth
-            size="lg"
+            size="sm"
             variant="primary"
             disabled={loading}
             className="text-white shadow-lg shadow-cyan-900/20 mt-2"

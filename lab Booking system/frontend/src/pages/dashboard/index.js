@@ -8,16 +8,9 @@ import { FileText } from "lucide-react";
 import Theme from "../../config/theam/index.js";
 import IconConfig from "../../components/icon/index.js";
 import CButton from "../../components/cButton";
+import { safeFetch } from "../../config/api";
 import {
   DASHBOARD_HEALTH_CONCERNS,
-  RECOMMENDED_TESTS,
-  FULL_BODY_PACKAGES,
-  LIVER_HEALTH_PACKAGES,
-  LUNG_HEALTH_PACKAGES,
-  KIDNEY_HEALTH_PACKAGES,
-  THYROID_HEALTH_PACKAGES,
-  DIABETES_PACKAGES,
-  FEVER_PACKAGES,
 } from "../../config/staticData";
 
 export default function DashboardIndex() {
@@ -27,6 +20,9 @@ export default function DashboardIndex() {
   const [view, setView] = useState(null);
   const [userReports, setUserReports] = useState([]);
   const [loadingReports, setLoadingReports] = useState(false);
+  const [tests, setTests] = useState([]);
+  const [loadingTests, setLoadingTests] = useState(false);
+  const [categorizedTests, setCategorizedTests] = useState({});
 
   useEffect(() => {
     const userData = localStorage.getItem("lab_user");
@@ -41,7 +37,67 @@ export default function DashboardIndex() {
   }, []);
 
   const handleHealthConcernClick = (id) => {
+    // Store the categorized tests for this health concern
+    const concernTests = categorizedTests[id] || [];
+    localStorage.setItem(`health_concern_${id}_tests`, JSON.stringify(concernTests));
     navigate(`/health-packages/${id}`);
+  };
+
+  const fetchTests = async () => {
+    try {
+      setLoadingTests(true);
+      const response = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests?isActive=true`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        const apiTests = data.data || [];
+        setTests(apiTests);
+        
+        // Categorize tests by health concern
+        const categorized = {};
+        
+        // Initialize categories
+        DASHBOARD_HEALTH_CONCERNS.forEach(concern => {
+          categorized[concern.id] = [];
+        });
+        
+        // Categorize tests based on their category or name
+        apiTests.forEach(test => {
+          const category = test.category?.toLowerCase() || '';
+          const testName = test.name?.toLowerCase() || '';
+          
+          // Categorize based on category field or name patterns
+          if (category.includes('liver') || testName.includes('liver') || testName.includes('sgpt') || testName.includes('sgot') || testName.includes('alt')) {
+            categorized.liver.push(test);
+          } else if (category.includes('lung') || category.includes('respiratory') || testName.includes('lung')) {
+            categorized.lungs.push(test);
+          } else if (category.includes('kidney') || category.includes('renal') || testName.includes('kidney') || testName.includes('creatinine') || testName.includes('bun')) {
+            categorized.kidney.push(test);
+          } else if (category.includes('thyroid') || testName.includes('thyroid') || testName.includes('tsh') || testName.includes('t3') || testName.includes('t4')) {
+            categorized.thyroid.push(test);
+          } else if (category.includes('diabetes') || testName.includes('sugar') || testName.includes('glucose') || testName.includes('hba1c')) {
+            categorized.diabetes.push(test);
+          } else if (category.includes('fever') || testName.includes('fever') || testName.includes('dengue') || testName.includes('malaria') || testName.includes('typhoid')) {
+            categorized.fever.push(test);
+          } else {
+            // Default to liver if no specific category matches
+            categorized.liver.push(test);
+          }
+        });
+        
+        setCategorizedTests(categorized);
+      } else {
+        console.error('Failed to fetch tests from API');
+        setTests([]);
+        setCategorizedTests({});
+      }
+    } catch (error) {
+      console.error('Error fetching tests:', error);
+      setTests([]);
+      setCategorizedTests({});
+    } finally {
+      setLoadingTests(false);
+    }
   };
 
   const fetchUserReports = async () => {
@@ -49,7 +105,7 @@ export default function DashboardIndex() {
     
     setLoadingReports(true);
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/reports/patient/${user._id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/patient/${user._id}`, {
         headers: {
           Authorization: `Bearer ${user.token}`
         }
@@ -68,7 +124,7 @@ export default function DashboardIndex() {
 
   const handleDownloadReport = async (reportId) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/reports/${reportId}/download`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/${reportId}/download`, {
         headers: {
           Authorization: `Bearer ${user.token}`
         }
@@ -94,7 +150,7 @@ export default function DashboardIndex() {
   useEffect(() => {
     const fetchUserBookings = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/bookings`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/bookings`, {
           headers: {
             Authorization: `Bearer ${user?.token || ""}`,
           },
@@ -112,6 +168,7 @@ export default function DashboardIndex() {
     if (user && (!user.role || user.role === "user")) {
       fetchUserBookings();
       fetchUserReports();
+      fetchTests(); // Fetch tests to synchronize with All Tests page
     }
   }, [user]);
 
@@ -180,6 +237,14 @@ export default function DashboardIndex() {
         </div>
 
         {/* Health Concern Grid */}
+        {loadingTests ? (
+          <section className="mb-8 max-w-6xl mx-auto">
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="ml-4 text-slate-600">Loading health concerns...</p>
+            </div>
+          </section>
+        ) : (
         <section className="grid grid-cols-2 lg:grid-cols-3 gap-6 mb-8 max-w-6xl mx-auto">
           {healthConcerns.map((concern) => (
             <button
@@ -250,12 +315,22 @@ export default function DashboardIndex() {
                 {concern.description}
               </p>
 
+              {/* Test Count Badge */}
+              {!loadingTests && (
+                <div className="relative mt-2">
+                  <span className="inline-flex items-center bg-primary/10 text-primary text-xs font-bold px-2 py-1 rounded-full border border-primary/20">
+                    {categorizedTests[concern.id]?.length || 0} Tests
+                  </span>
+                </div>
+              )}
+
               {/* Decorative Elements */}
               <div className="absolute top-2 right-2 w-2 h-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ backgroundColor: Theme.colors.primary }} />
               <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ backgroundColor: Theme.colors.secondary }} />
             </button>
           ))}
         </section>
+        )}
 
         {/* Reports Section */}
         {userReports.length > 0 && (

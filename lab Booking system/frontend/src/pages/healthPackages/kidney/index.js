@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import IconConfig from "../../../components/icon/index.js";
 import Theme from "../../../config/theam/index.js";
@@ -6,6 +6,7 @@ import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 import CButton from "../../../components/cButton";
 import { KIDNEY_HEALTH_PACKAGES, RECOMMENDED_TESTS, getTestCount } from "../../../config/staticData";
+import { getSynchronizedTests, formatTestForDisplay } from "../../../services/testSync";
 
 const { Home, UserCheck, FileBarChart } = IconConfig;
 
@@ -15,12 +16,22 @@ export default function Kidney() {
   // Separate states for the two sections
   const [showAllPackages, setShowAllPackages] = useState(false);
   const [showAllTests, setShowAllTests] = useState(false);
+  const [synchronizedTests, setSynchronizedTests] = useState([]);
 
   const { ArrowLeft, CheckCircle2, Clock, ShieldCheck, Droplets } = IconConfig;
 
+  // Load synchronized tests from localStorage on component mount
+  useEffect(() => {
+    const tests = getSynchronizedTests('kidney');
+    setSynchronizedTests(tests);
+  }, []);
+
+  // Use synchronized tests if available, otherwise fall back to static data
+  const recommendedTests = synchronizedTests.length > 0 ? synchronizedTests : RECOMMENDED_TESTS.kidney;
+
   // Slicing logic for display
   const displayPackages = showAllPackages ? KIDNEY_HEALTH_PACKAGES : KIDNEY_HEALTH_PACKAGES.slice(0, 3);
-  const displayTests = showAllTests ? RECOMMENDED_TESTS.kidney : RECOMMENDED_TESTS.kidney.slice(0, 3);
+  const displayTests = showAllTests ? recommendedTests : recommendedTests.slice(0, 3);
 
   const handleBook = (packageId) => {
     navigate(`/new-booking?package=${packageId}`);
@@ -74,39 +85,45 @@ export default function Kidney() {
                 onClick={() => setShowAllTests(!showAllTests)}
                 className="border-2 border-slate-200 hover:border-primary hover:text-primary font-bold px-6 rounded-xl h-10 text-sm transition-all shadow-sm"
               >
-                {showAllTests ? "Show Less" : `View All (${RECOMMENDED_TESTS.kidney.length})`}
+                {showAllTests ? "Show Less" : `View All (${recommendedTests.length})`}
               </CButton>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {displayTests.map((t) => (
+              {displayTests.map((t) => {
+                const formattedTest = formatTestForDisplay(t);
+                return (
                 <div
-                  key={t.id}
+                  key={formattedTest.displayId}
                   className="group bg-white rounded-2xl border border-slate-200 hover:border-primary/50 hover:shadow-lg transition-all duration-300 flex flex-col h-full overflow-hidden"
                 >
                   <div className="p-6 flex flex-col h-full">
                     <div className="h-14 mb-2">
                       <h4 className="text-lg font-bold text-slate-800 leading-tight group-hover:text-primary transition-colors line-clamp-2">
-                        {t.title}
+                        {formattedTest.displayTitle}
                       </h4>
                     </div>
 
-                    <div className="mb-6">
-                      <span className="inline-flex items-center bg-red-50 text-red-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-red-100 uppercase">
-                        {t.discount}% OFF
-                      </span>
-                    </div>
+                    {formattedTest.displayDiscount && (
+                      <div className="mb-6">
+                        <span className="inline-flex items-center bg-red-50 text-red-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-red-100 uppercase">
+                          {formattedTest.displayDiscount}% OFF
+                        </span>
+                      </div>
+                    )}
 
                     <div className="mt-auto">
                       <div className="flex items-baseline gap-3 mb-6">
-                        <span className="text-2xl font-black text-slate-900">₹{t.price}</span>
-                        <span className="text-slate-400 line-through text-xs font-medium">₹{t.originalPrice}</span>
+                        <span className="text-2xl font-black text-slate-900">₹{formattedTest.displayPrice}</span>
+                        {formattedTest.displayOriginalPrice && (
+                          <span className="text-slate-400 line-through text-xs font-medium">₹{formattedTest.displayOriginalPrice}</span>
+                        )}
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <CButton
                           variant="outline"
                           fullWidth={true}
-                          onClick={() => navigate(`/recommended-detail?type=test&category=kidney&id=${t.id}`)}
+                          onClick={() => navigate(`/recommended-detail?type=test&category=kidney&id=${formattedTest.displayId}`)}
                           className="rounded-xl h-11 font-bold uppercase tracking-widest border-2 border-slate-200 hover:border-primary hover:text-primary transition-all shadow-sm"
                         >
                           Details
@@ -114,7 +131,7 @@ export default function Kidney() {
                         <CButton
                           variant="primary"
                           fullWidth={true}
-                          onClick={() => navigate(`/new-booking?name=${encodeURIComponent(t.title)}&price=${t.price}`)}
+                          onClick={() => navigate(`/new-booking?name=${encodeURIComponent(formattedTest.displayTitle)}&price=${formattedTest.displayPrice}`)}
                           className="rounded-xl h-11 font-bold uppercase tracking-widest"
                         >
                           Book
@@ -123,7 +140,8 @@ export default function Kidney() {
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

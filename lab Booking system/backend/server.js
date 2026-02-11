@@ -75,6 +75,7 @@ app.use('/api/packages', require('./routes/packageRoutes'));
 app.use('/api/test-details', require('./routes/testDetailRoutes'));
 app.use('/api/package-details', require('./routes/packageDetailRoutes'));
 app.use('/api/faq', require('./routes/faqRoutes'));
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 // Admin routes (list users, etc.)
 app.use('/api/admin', require('./routes/adminRoutes'));
 
@@ -104,7 +105,7 @@ app.use('*', (req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 const server = http.createServer(app);
 

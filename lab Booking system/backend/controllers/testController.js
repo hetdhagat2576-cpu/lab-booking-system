@@ -200,11 +200,132 @@ const getTestCategories = async (req, res) => {
   }
 };
 
+// Bulk update tests (Admin only)
+const bulkUpdateTests = async (req, res) => {
+  try {
+    const { updates } = req.body;
+    
+    if (!Array.isArray(updates) || updates.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Updates array is required'
+      });
+    }
+    
+    const results = [];
+    
+    for (const update of updates) {
+      const { id, ...updateData } = update;
+      
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        results.push({ id, success: false, message: 'Invalid test ID' });
+        continue;
+      }
+      
+      try {
+        const test = await Test.findByIdAndUpdate(
+          id,
+          updateData,
+          { new: true, runValidators: true }
+        );
+        
+        if (!test) {
+          results.push({ id, success: false, message: 'Test not found' });
+        } else {
+          results.push({ id, success: true, data: test });
+        }
+      } catch (error) {
+        results.push({ id, success: false, message: error.message });
+      }
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: 'Bulk update completed',
+      data: results
+    });
+  } catch (error) {
+    console.error('Error in bulk update:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error in bulk update',
+      error: error.message
+    });
+  }
+};
+
+// Toggle test active status (Admin only)
+const toggleTestStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid test ID'
+      });
+    }
+    
+    const test = await Test.findById(id);
+    
+    if (!test) {
+      return res.status(404).json({
+        success: false,
+        message: 'Test not found'
+      });
+    }
+    
+    test.isActive = !test.isActive;
+    await test.save();
+    
+    res.status(200).json({
+      success: true,
+      message: `Test ${test.isActive ? 'activated' : 'deactivated'} successfully`,
+      data: test
+    });
+  } catch (error) {
+    console.error('Error toggling test status:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error toggling test status',
+      error: error.message
+    });
+  }
+};
+
+// Get popular tests
+const getPopularTests = async (req, res) => {
+  try {
+    const { limit = 10 } = req.query;
+    
+    const tests = await Test.find({ isActive: true, isPopular: true })
+      .sort({ isPopular: -1, name: 1 })
+      .limit(parseInt(limit))
+      .lean();
+    
+    res.status(200).json({
+      success: true,
+      data: tests,
+      count: tests.length
+    });
+  } catch (error) {
+    console.error('Error fetching popular tests:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching popular tests',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getAllTests,
   getTestById,
   createTest,
   updateTest,
   deleteTest,
-  getTestCategories
+  getTestCategories,
+  bulkUpdateTests,
+  toggleTestStatus,
+  getPopularTests
 };

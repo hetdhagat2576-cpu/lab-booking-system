@@ -76,24 +76,6 @@ export default function PrivacyPage() {
     <div className="min-h-screen flex flex-col">
       <Header />
 
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-primary to-primary/90 text-white py-16">
-        <div className="container mx-auto px-4 text-center">
-          <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <ShieldCheck size={32} />
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Privacy Policy</h1>
-          <p className="text-lg text-white/90 max-w-2xl mx-auto">
-            Your privacy is important to us. This policy explains how we collect, use, and protect your information.
-          </p>
-          {privacyContent.lastUpdated && (
-            <p className="text-sm text-white/70 mt-4">
-              Last updated: {new Date(privacyContent.lastUpdated).toLocaleDateString()}
-            </p>
-          )}
-        </div>
-      </section>
-
       {/* Privacy Content */}
       <main className="flex-1 py-12">
         <div className="container mx-auto px-4 max-w-4xl">

@@ -261,12 +261,7 @@ export default function OtpVerification() {
       const data = await response.json();
 
       if (data.success) {
-        await Swal.fire({
-          title: 'Email Verified Successfully',
-          text: 'Your account has been verified. You can now log in.',
-          icon: 'success',
-          confirmButtonText: 'Go to Login'
-        });
+        // Direct navigation to login without success message
         navigate('/user-login');
       } else {
         setError(data.message || 'Invalid OTP. Please try again.');

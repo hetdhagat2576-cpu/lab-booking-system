@@ -75,31 +75,6 @@ export default function PrivacyPolicyIndex() {
           <div className="w-24 h-1 bg-primary mx-auto mt-6 rounded-full" />
         </div>
 
-        {/* Last Updated */}
-        {privacyPolicyData?.lastUpdated && (
-          <div className="max-w-5xl mx-auto text-center mb-12">
-            <p className="text-sm text-gray-500">
-              Last Updated: {new Date(privacyPolicyData.lastUpdated).toLocaleDateString()}
-            </p>
-          </div>
-        )}
-
-        {/* Hero Image Section - Abstract Tech */}
-        <div className="max-w-6xl mx-auto mb-20 rounded-4xl overflow-hidden shadow-3xl transform -rotate-1 perspective-1000">
-          <div className="bg-gradient-to-br from-primary to-accentBlue p-6 rounded-4xl relative overflow-hidden">
-            <img
-            src="https://thumbs.dreamstime.com/b/digital-cybersecurity-concept-glowing-blue-shield-lock-symbol-abstract-circuit-board-background-representing-data-keyhole-378630785.jpg"
-           alt="Abstract circuit board representing data flow and security"
-           className="w-full h-[450px] object-cover object-center rounded-3xl shadow-xl border-4 border-white/50 transform rotate-1 scale-105 transition-transform duration-1000"/>
-
-            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                <p className="text-white text-3xl font-bold tracking-wide text-shadow-lg drop-shadow-lg">
-                    Data Integrity & Innovation
-                </p>
-            </div>
-          </div>
-        </div>
-
         {/* Content Section - Detailed & Aesthetic */}
         <div className="max-w-5xl mx-auto bg-white rounded-4xl shadow-3xl shadow-primary/10 border border-gray-100 overflow-hidden">
           <div className="p-8 sm:p-16 space-y-16">

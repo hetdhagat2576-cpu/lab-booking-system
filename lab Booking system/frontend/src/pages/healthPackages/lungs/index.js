@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import IconConfig from "../../../components/icon/index.js";
 import Theme from "../../../config/theam/index.js";
@@ -6,6 +6,7 @@ import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 import CButton from "../../../components/cButton";
 import { LUNG_HEALTH_PACKAGES, RECOMMENDED_TESTS, getTestCount } from "../../../config/staticData";
+import { getSynchronizedTests, formatTestForDisplay } from "../../../services/testSync";
 
 const { Home, UserCheck, FileBarChart } = IconConfig;
 
@@ -15,12 +16,22 @@ export default function Lungs() {
   // State for toggling views
   const [showAllPackages, setShowAllPackages] = useState(false);
   const [showAllTests, setShowAllTests] = useState(false);
+  const [synchronizedTests, setSynchronizedTests] = useState([]);
 
   const { ArrowLeft, CheckCircle2, ShieldCheck, Clock, Activity } = IconConfig;
 
+  // Load synchronized tests from localStorage on component mount
+  useEffect(() => {
+    const tests = getSynchronizedTests('lungs');
+    setSynchronizedTests(tests);
+  }, []);
+
+  // Use synchronized tests if available, otherwise fall back to static data
+  const recommendedTests = synchronizedTests.length > 0 ? synchronizedTests : RECOMMENDED_TESTS.lungs;
+
   // Slicing logic
   const displayPackages = showAllPackages ? LUNG_HEALTH_PACKAGES : LUNG_HEALTH_PACKAGES.slice(0, 3);
-  const displayTests = showAllTests ? RECOMMENDED_TESTS.lungs : RECOMMENDED_TESTS.lungs.slice(0, 3);
+  const displayTests = showAllTests ? recommendedTests : recommendedTests.slice(0, 3);
 
   const handleBook = (packageId) => {
     navigate(`/new-booking?package=${packageId}`);

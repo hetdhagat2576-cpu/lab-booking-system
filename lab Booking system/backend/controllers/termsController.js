@@ -150,7 +150,7 @@ const addSection = async (req, res) => {
 // Update a section
 const updateSection = async (req, res) => {
   try {
-    const { sectionId } = req.params;
+    const { id } = req.params;
     const { title, content, order, isActive } = req.body;
     
     const termsContent = await TermsContent.findOne({});
@@ -162,7 +162,7 @@ const updateSection = async (req, res) => {
       });
     }
     
-    const section = termsContent.sections.id(sectionId);
+    const section = termsContent.sections.id(id);
     
     if (!section) {
       return res.status(404).json({
@@ -197,7 +197,7 @@ const updateSection = async (req, res) => {
 // Delete a section
 const deleteSection = async (req, res) => {
   try {
-    const { sectionId } = req.params;
+    const { id } = req.params;
     
     const termsContent = await TermsContent.findOne({});
     
@@ -208,7 +208,7 @@ const deleteSection = async (req, res) => {
       });
     }
     
-    const section = termsContent.sections.id(sectionId);
+    const section = termsContent.sections.id(id);
     
     if (!section) {
       return res.status(404).json({
@@ -217,7 +217,7 @@ const deleteSection = async (req, res) => {
       });
     }
     
-    section.remove();
+    termsContent.sections.pull(id);
     termsContent.lastUpdated = new Date();
     await termsContent.save();
 

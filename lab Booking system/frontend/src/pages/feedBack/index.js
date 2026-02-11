@@ -176,7 +176,7 @@ export default function FeedbackIndex() {
     <div className="space-y-1">
       <label className="text-sm font-medium text-gray-700">{label}</label>
       <select
-        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+        className="w-full h-10 border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
         value={form[name]}
         onChange={(e) => handleChange(name, Number(e.target.value))}
       >
@@ -190,9 +190,9 @@ export default function FeedbackIndex() {
   const RadioGroup = ({ label, name, options }) => (
     <div className="space-y-1">
       <label className="text-sm font-medium text-gray-700">{label}</label>
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-2">
         {options.map(({ label: l, value }) => (
-          <label key={value} className="inline-flex items-center gap-2">
+          <label key={value} className="inline-flex items-center gap-1 text-sm">
             <input
               type="radio"
               name={name}
@@ -201,7 +201,7 @@ export default function FeedbackIndex() {
               onChange={(e) => handleChange(name, e.target.value)}
               className="text-primary focus:ring-primary"
             />
-            <span className="text-sm text-gray-700">{l}</span>
+            <span className="text-gray-700">{l}</span>
           </label>
         ))}
       </div>
@@ -286,7 +286,7 @@ export default function FeedbackIndex() {
               <div className="space-y-1">
                 <label className="text-sm font-medium text-gray-700">Feedback Status</label>
                 <select
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full h-10 border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   value={form.status}
                   onChange={(e) => handleChange("status", e.target.value)}
                 >
@@ -299,13 +299,14 @@ export default function FeedbackIndex() {
                 placeholder="Write your suggestion"
                 value={form.comment}
                 onChange={(e) => handleChange("comment", e.target.value)}
+                className="h-10 text-sm"
               />
             </div>
           </section>
 
 
 
-          <div className="flex justify-end">
+          <div className="flex justify-center mt-6">
             <CButton type="submit" disabled={submitting}>
               <Send size={18} /> {submitting ? "Submitting..." : "Submit Feedback"}
             </CButton>

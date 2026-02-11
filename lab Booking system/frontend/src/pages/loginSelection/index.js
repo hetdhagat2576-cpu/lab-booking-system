@@ -46,8 +46,9 @@ export default function LoginSelection() {
           </Box>
 
           {/* Role Selection Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {roleOptions.map((role) => {
+          <div className="flex flex-col items-center justify-center gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl w-full">
+              {roleOptions.map((role) => {
               return (
                 <Card
                   key={role.id}
@@ -108,6 +109,7 @@ export default function LoginSelection() {
                 </Card>
               );
             })}
+            </div>
           </div>
 
           {/* Footer Note */}

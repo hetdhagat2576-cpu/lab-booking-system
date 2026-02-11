@@ -63,12 +63,13 @@ export default function AllTests() {
       <main className="flex-grow bg-slate-50/50">
         <div className="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
           <div className="container mx-auto px-4 py-3 flex items-center gap-4">
-            <button
+            <CButton
               onClick={() => navigate(-1)}
               className="p-2 hover:bg-slate-50 rounded-lg transition-all border border-gray-100 group shadow-sm"
+              variant="outline"
             >
               <ArrowLeft className="w-4 h-4 text-slate-600 group-hover:text-primary" />
-            </button>
+            </CButton>
             <h1 className="text-lg md:text-xl font-bold text-slate-800 tracking-tight">
               All Tests
             </h1>

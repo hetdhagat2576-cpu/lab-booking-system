@@ -6,22 +6,29 @@ import CButton from "../../components/cButton";
 import IconConfig from "../../components/icon/index.js";
 import Theme from "../../config/theam/index.js";
 import LogoutConfirmation from "../../components/logoutConfirmation/index.js";
+import { PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { } from "../../config/staticData";
 
 
 const SidebarItem = ({ id, label, icon: Icon, activeTab, setActiveTab, ChevronRight }) => (
   <button
     onClick={() => setActiveTab(id)}
-    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-      activeTab === id ? "text-white shadow-md" : "text-gray-600 hover:bg-gray-100"
+    className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl transition-all duration-300 group ${
+      activeTab === id 
+        ? "text-white shadow-lg shadow-blue-100/50" 
+        : "text-gray-600 hover:bg-gray-50/80 hover:shadow-md hover:translate-x-1"
     }`}
     style={{
       backgroundColor: activeTab === id ? Theme.colors.primary : 'transparent'
     }}
   >
-    <Icon size={20} />
-    <span className="font-medium">{label}</span>
-    {activeTab === id && <ChevronRight size={16} className="ml-auto" />}
+    <div className={`flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-300 ${
+      activeTab === id ? 'bg-white/20 backdrop-blur-sm' : 'bg-gray-100 group-hover:bg-gray-200'
+    }`}>
+      <Icon size={22} className={activeTab === id ? 'text-white' : 'text-gray-600 group-hover:text-gray-800'} />
+    </div>
+    <span className="font-semibold flex-1 text-left text-sm">{label}</span>
+    {activeTab === id && <ChevronRight size={18} className="text-white animate-pulse" />}
   </button>
 );
 
@@ -31,14 +38,96 @@ export default function AdminDashboardIndex() {
   const { 
     CheckCircle2, XCircle, LayoutDashboard, 
     ClipboardList, MessageSquare, PhoneCall, ChevronRight, Menu, X, Trash2, LogOut,
-    FileText, Settings, HelpCircle, ShieldCheck, Globe, Home, TestTube, Package, Plus, Edit2, Calendar, Zap, Cloud, Eye, Lock
+    FileText, Settings, HelpCircle, ShieldCheck, Globe, Home, TestTube, Package, Plus, Edit2, Calendar, Zap, Cloud, Eye, Lock, Clock, TrendingUp, Mail, Phone
   } = IconConfig;
+
+  // WebSocket connection for real-time notifications
+  const [ws, setWs] = useState(null);
+
+  // Initialize WebSocket connection
+  useEffect(() => {
+    if (user?.token) {
+      const websocketUrl = `${process.env.REACT_APP_WS_URL || 'ws://localhost:5001'}`;
+      const websocket = new WebSocket(websocketUrl);
+      
+      websocket.onopen = () => {
+        console.log('Admin WebSocket connected');
+        setWs(websocket);
+      };
+      
+      websocket.onerror = (error) => {
+        console.error('Admin WebSocket error:', error);
+      };
+      
+      websocket.onclose = () => {
+        console.log('Admin WebSocket disconnected');
+        setWs(null);
+      };
+      
+      return () => {
+        if (websocket.readyState === WebSocket.OPEN) {
+          websocket.close();
+        }
+      };
+    }
+  }, [user]);
 
   const [activeTab, setActiveTab] = useState("registration");
   const [bookings, setBookings] = useState([]);
   const [bookingFilter, setBookingFilter] = useState('all');
   const [stats, setStats] = useState({ totalBookings: 0, pendingBookings: 0, approvedBookings: 0, rejectedBookings: 0, totalUsers: 0, adminUsers: 0, labtechUsers: 0, regularUsers: 0 });
   const [feedbackStats, setFeedbackStats] = useState({ totalFeedbacks: 0, pendingFeedbacks: 0, reviewedFeedbacks: 0, resolvedFeedbacks: 0 });
+  
+  // Chart data processing
+  const [bookingStatusData, setBookingStatusData] = useState([]);
+  const [userRoleData, setUserRoleData] = useState([]);
+  const [monthlyBookingData, setMonthlyBookingData] = useState([]);
+  
+  // Process data for charts whenever stats or bookings change
+  useEffect(() => {
+    // Booking status pie chart data
+    const statusData = [
+      { name: 'Pending', value: stats.pendingBookings, color: '#f59e0b' },
+      { name: 'Approved', value: stats.approvedBookings, color: '#10b981' },
+      { name: 'Rejected', value: stats.rejectedBookings, color: '#ef4444' }
+    ].filter(item => item.value > 0);
+    setBookingStatusData(statusData);
+    
+    // User role distribution data
+    const roleData = [
+      { name: 'Admins', value: stats.adminUsers, color: '#3b82f6' },
+      { name: 'Technicians', value: stats.labtechUsers, color: '#8b5cf6' },
+      { name: 'Users', value: stats.regularUsers, color: '#06b6d4' }
+    ].filter(item => item.value > 0);
+    setUserRoleData(roleData);
+    
+    // Monthly booking trend data (last 6 months)
+    const monthlyData = [];
+    const currentMonth = new Date().getMonth();
+    const currentYear = new Date().getFullYear();
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    for (let i = 5; i >= 0; i--) {
+      const monthIndex = (currentMonth - i + 12) % 12;
+      const year = currentMonth - i >= 0 ? currentYear : currentYear - 1;
+      const monthStart = new Date(year, monthIndex, 1);
+      const monthEnd = new Date(year, monthIndex + 1, 0);
+      
+      const monthBookings = bookings.filter(booking => {
+        const bookingDate = new Date(booking.createdAt || booking.date);
+        return bookingDate >= monthStart && bookingDate <= monthEnd;
+      });
+      
+      monthlyData.push({
+        month: monthNames[monthIndex],
+        bookings: monthBookings.length,
+        approved: monthBookings.filter(b => (b.adminStatus || '').toLowerCase() === 'approved').length,
+        pending: monthBookings.filter(b => (b.adminStatus || '').toLowerCase() === 'pending').length
+      });
+    }
+    setMonthlyBookingData(monthlyData);
+  }, [stats, bookings]);
+  
   const [loading, setLoading] = useState(true);
   const [feedbacks, setFeedbacks] = useState([]);
   const [contacts, setContacts] = useState([]);
@@ -131,7 +220,8 @@ export default function AdminDashboardIndex() {
   const [termsFormData, setTermsFormData] = useState({
     title: '',
     content: '',
-    sectionNumber: 1
+    sectionNumber: 1,
+    order: 0
   });
   
   const [privacyFormData, setPrivacyFormData] = useState({
@@ -171,17 +261,15 @@ export default function AdminDashboardIndex() {
   const [testFormData, setTestFormData] = useState({
     name: '',
     description: '',
-    icon: '',
     price: '',
     category: '',
-    sampleType: 'blood',
+    sampleType: 'Blood',
     time: '',
     preTestRequirements: 'No specific requirements.'
   });
   const [packageFormData, setPackageFormData] = useState({
     name: '',
     description: '',
-    icon: '',
     includedTests: [],
     price: '',
     category: '',
@@ -213,7 +301,7 @@ export default function AdminDashboardIndex() {
   const fetchBookings = useCallback(async () => {
     if (!user?.token) return;
     try {
-      const resp = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/bookings`, {
+      const resp = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/bookings`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
@@ -253,7 +341,7 @@ export default function AdminDashboardIndex() {
   const fetchFeedbacksAdmin = useCallback(async () => {
     if (!user?.token) return;
     try {
-      const resp = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/feedback?limit=100`, {
+      const resp = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/feedback?limit=100`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
@@ -289,7 +377,7 @@ export default function AdminDashboardIndex() {
   const fetchContactsAdmin = useCallback(async () => {
     if (!user?.token) return;
     try {
-      const resp = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/contact`, {
+      const resp = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/contact`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
@@ -325,7 +413,7 @@ export default function AdminDashboardIndex() {
       console.log('Fetching users with token:', token.substring(0, 20) + '...');
       console.log('Token length:', token.length);
       
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/admin/users`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/admin/users`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -381,7 +469,7 @@ export default function AdminDashboardIndex() {
     }
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/admin/users/${userId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/admin/users/${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -432,37 +520,37 @@ export default function AdminDashboardIndex() {
       setContentLoading(true);
       // Fetch real data from APIs
       const [whyBookResponse, howItWorksResponse, serviceContentResponse, aboutResponse, termsResponse, privacyResponse, faqResponse] = await Promise.all([
-        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/content/home/why-book`, {
+        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/why-book`, {
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
         }),
-        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/content/home/how-it-works`, {
+        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/how-it-works`, {
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
         }),
-        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/service-content`, {
+        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content`, {
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
         }),
-        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/about`, {
+        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/about`, {
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
         }),
-        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/terms`, {
+        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/terms`, {
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
         }),
-        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/privacy`, {
+        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/privacy`, {
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
         }),
-        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/faq/admin`, {
+        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq/admin`, {
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
@@ -649,6 +737,7 @@ export default function AdminDashboardIndex() {
         features: serviceFeaturesData,
         highlights: serviceHighlightsData
       });
+      console.log('Service content set:', { features: serviceFeaturesData, highlights: serviceHighlightsData });
       setAboutContent(aboutData);
       setTermsContent({ 
         sections: termsData
@@ -671,7 +760,7 @@ export default function AdminDashboardIndex() {
     
     try {
       setTestLoading(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/tests`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
@@ -698,7 +787,7 @@ export default function AdminDashboardIndex() {
   const handleDeleteTest = async (id) => {
     if (window.confirm('Are you sure you want to delete this test?')) {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/tests/${id}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${user.token}`
@@ -721,12 +810,17 @@ export default function AdminDashboardIndex() {
     try {
       const testData = {
         ...testFormData,
-        price: parseFloat(testFormData.price)
+        price: parseFloat(testFormData.price),
+        duration: testFormData.time, // Map time to duration
+        preparation: testFormData.preTestRequirements, // Map preTestRequirements to preparation
+        // Remove the old fields
+        time: undefined,
+        preTestRequirements: undefined
       };
 
       const url = editingTest 
-        ? `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/tests/${editingTest._id}`
-        : `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/tests`;
+        ? `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests/${editingTest._id}`
+        : `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests`;
       
       const method = editingTest ? 'PUT' : 'POST';
 
@@ -746,10 +840,9 @@ export default function AdminDashboardIndex() {
         setTestFormData({
           name: '',
           description: '',
-          icon: '',
           price: '',
           category: '',
-          sampleType: 'blood',
+          sampleType: 'Blood',
           time: '',
           preTestRequirements: 'No specific requirements.'
         });
@@ -770,8 +863,8 @@ export default function AdminDashboardIndex() {
       };
 
       const url = editingPackage 
-        ? `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/packages/${editingPackage._id}`
-        : `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/packages`;
+        ? `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages/${editingPackage._id}`
+        : `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages`;
       
       const method = editingPackage ? 'PUT' : 'POST';
 
@@ -813,7 +906,7 @@ export default function AdminDashboardIndex() {
     
     try {
       setPackageLoading(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/packages`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
@@ -841,7 +934,7 @@ export default function AdminDashboardIndex() {
     
     try {
       setTestDetailsLoading(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/test-details/${testId}/details`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/test-details/${testId}/details`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
@@ -871,7 +964,7 @@ export default function AdminDashboardIndex() {
     
     try {
       setPackageDetailsLoading(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/package-details/${packageId}/details`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/package-details/${packageId}/details`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
@@ -901,7 +994,7 @@ export default function AdminDashboardIndex() {
     if (!user?.token || !testId) return false;
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/test-details/${testId}/details`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/test-details/${testId}/details`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -929,7 +1022,7 @@ export default function AdminDashboardIndex() {
     if (!user?.token || !packageId) return false;
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/package-details/${packageId}/details`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/package-details/${packageId}/details`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -955,7 +1048,7 @@ export default function AdminDashboardIndex() {
   const handleDeletePackage = async (id) => {
     if (window.confirm('Are you sure you want to delete this package?')) {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/packages/${id}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${user.token}`
@@ -976,7 +1069,7 @@ export default function AdminDashboardIndex() {
   // Service Content Functions
   const createServiceFeature = async (formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/service-content/features`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/features`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1000,7 +1093,7 @@ export default function AdminDashboardIndex() {
 
   const updateServiceFeature = async (id, formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/service-content/features/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/features/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1026,7 +1119,7 @@ export default function AdminDashboardIndex() {
     if (!window.confirm('Are you sure you want to delete this feature?')) return false;
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/service-content/features/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/features/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -1046,18 +1139,34 @@ export default function AdminDashboardIndex() {
     }
   };
 
-  // Highlight Functions (Mock Data)
+  // Highlight Functions (API Integration)
   const addHighlight = async (formData) => {
-    const newHighlight = {
-      _id: Date.now().toString(),
-      title: formData.title,
-      description: formData.description
-    };
-    setServiceContent(prev => ({
-      ...prev,
-      highlights: [...prev.highlights, newHighlight]
-    }));
-    return true;
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/highlights`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        const newHighlight = result.data;
+        setServiceContent(prev => ({
+          ...prev,
+          highlights: [...prev.highlights, newHighlight]
+        }));
+        return true;
+      } else {
+        console.error('Failed to add highlight');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error adding highlight:', error);
+      return false;
+    }
   };
 
   const createHighlight = async (formData) => {
@@ -1065,31 +1174,93 @@ export default function AdminDashboardIndex() {
   };
 
   const updateHighlight = async (id, formData) => {
-    setServiceContent(prev => ({
-      ...prev,
-      highlights: prev.highlights.map(highlight => 
-        highlight._id === id 
-          ? { ...highlight, title: formData.title, description: formData.description }
-          : highlight
-      )
-    }));
-    return true;
+    console.log('=== DEBUG: Frontend Update Highlight ===');
+    console.log('ID type:', typeof id);
+    console.log('ID value:', id);
+    console.log('FormData:', formData);
+    console.log('ID stringified:', JSON.stringify(id));
+    
+    // Check if the ID exists in current highlights
+    console.log('Current highlights in state:', serviceContent.highlights.map(h => ({ 
+      _id: h._id, 
+      id: h.id, 
+      title: h.title,
+      _idType: typeof h._id,
+      idType: typeof h.id
+    })));
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/highlights/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      console.log('Update response status:', response.status);
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Update response data:', result);
+        const updatedHighlight = result.data;
+        setServiceContent(prev => ({
+          ...prev,
+          highlights: prev.highlights.map(highlight => 
+            highlight._id === id || highlight.id === id ? updatedHighlight : highlight
+          )
+        }));
+        return true;
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to update highlight:', errorData);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error updating highlight:', error);
+      return false;
+    }
   };
 
   const deleteHighlight = async (id) => {
     if (!window.confirm('Are you sure you want to delete this highlight?')) return false;
     
-    setServiceContent(prev => ({
-      ...prev,
-      highlights: prev.highlights.filter(highlight => highlight._id !== id)
-    }));
-    return true;
+    console.log('Deleting highlight with ID:', id);
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/highlights/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
+      
+      console.log('Delete response status:', response.status);
+      
+      if (response.ok) {
+        setServiceContent(prev => ({
+          ...prev,
+          highlights: prev.highlights.filter(highlight => 
+            highlight._id !== id && highlight.id !== id
+          )
+        }));
+        return true;
+      } else {
+        const errorData = await response.json();
+        console.error('Failed to delete highlight:', errorData);
+        return false;
+      }
+    } catch (error) {
+      console.error('Error deleting highlight:', error);
+      return false;
+    }
   };
 
   // About Content Functions
   const createAboutSection = async (formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/about/section`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/about/section`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1113,7 +1284,7 @@ export default function AdminDashboardIndex() {
 
   const updateAboutSection = async (id, formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/about/section/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/about/section/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1139,7 +1310,7 @@ export default function AdminDashboardIndex() {
     if (!window.confirm('Are you sure you want to delete this section?')) return false;
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/about/section/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/about/section/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -1161,7 +1332,7 @@ export default function AdminDashboardIndex() {
 
   const updateAboutContent = async (formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/about`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/about`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1216,7 +1387,7 @@ export default function AdminDashboardIndex() {
   // FAQ Functions (Persist to backend)
   const createFAQ = async (formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/faq`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1240,7 +1411,7 @@ export default function AdminDashboardIndex() {
 
   const updateFAQ = async (id, formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/faq/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1265,7 +1436,7 @@ export default function AdminDashboardIndex() {
   const deleteFAQ = async (id) => {
     if (!window.confirm('Are you sure you want to delete this FAQ?')) return false;
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/faq/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -1286,7 +1457,7 @@ export default function AdminDashboardIndex() {
 
   const toggleFAQStatus = async (id) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/faq/${id}/toggle`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq/${id}/toggle`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -1308,7 +1479,7 @@ export default function AdminDashboardIndex() {
   // Terms Functions
   const addTermsSection = async (formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/terms-and-conditions`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/terms-and-conditions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1332,20 +1503,45 @@ export default function AdminDashboardIndex() {
 
   const createTermsSection = async (formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/terms/sections`, {
+      // Check user authentication
+      console.log('User object:', user);
+      console.log('User token:', user?.token);
+      console.log('User role:', user?.role);
+      
+      // Get next available section number - always generate a new one
+      let nextSectionNumber = 1;
+      if (termsContent.sections && termsContent.sections.length > 0) {
+        const existingNumbers = termsContent.sections.map(s => s.sectionNumber || 1);
+        nextSectionNumber = Math.max(...existingNumbers) + 1;
+      }
+      
+      // Always use the generated section number, ignore the form value
+      const dataToSend = {
+        sectionNumber: nextSectionNumber,
+        title: formData.title,
+        content: formData.content,
+        order: termsContent.sections?.length || 0
+      };
+
+      console.log('Creating terms section with data:', dataToSend);
+      console.log('Terms content sections:', termsContent.sections);
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/terms/sections`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user.token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(dataToSend)
       });
       
       if (response.ok) {
         fetchContentData();
         return true;
       } else {
-        console.error('Failed to create terms section');
+        const errorData = await response.json();
+        console.error('Failed to create terms section - Response:', errorData);
+        console.error('Status:', response.status);
         return false;
       }
     } catch (error) {
@@ -1356,7 +1552,7 @@ export default function AdminDashboardIndex() {
 
   const updateTermsSection = async (id, formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/terms/sections/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/terms/sections/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1382,7 +1578,7 @@ export default function AdminDashboardIndex() {
     if (!window.confirm('Are you sure you want to delete this terms section?')) return false;
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/terms/sections/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/terms/sections/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -1405,7 +1601,7 @@ export default function AdminDashboardIndex() {
   // Privacy Functions
   const createPrivacySection = async (formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/privacy/sections`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/privacy/sections`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1429,7 +1625,7 @@ export default function AdminDashboardIndex() {
 
   const updatePrivacySection = async (id, formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/privacy/sections/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/privacy/sections/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1455,7 +1651,7 @@ export default function AdminDashboardIndex() {
     if (!window.confirm('Are you sure you want to delete this privacy section?')) return false;
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/privacy/sections/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/privacy/sections/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -1845,7 +2041,7 @@ export default function AdminDashboardIndex() {
         };
 
         // Store packages data (only if not already exists)
-        const existingPackagesResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/packages`, {
+        const existingPackagesResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages`, {
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
@@ -1859,7 +2055,7 @@ export default function AdminDashboardIndex() {
           if (existingPackages.length === 0) {
             for (const packageData of seedPackagesData) {
               try {
-                const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/packages`, {
+                const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -1878,7 +2074,7 @@ export default function AdminDashboardIndex() {
         }
 
         // Store service features data (only if not already exists)
-        const existingServiceContentResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/service-content`, {
+        const existingServiceContentResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content`, {
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
@@ -1894,7 +2090,7 @@ export default function AdminDashboardIndex() {
           if (existingFeatures.length === 0) {
             for (const featureData of seedServiceData.features) {
               try {
-                const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/service-content/features`, {
+                const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/features`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -1915,7 +2111,7 @@ export default function AdminDashboardIndex() {
           if (existingHighlights.length === 0) {
             for (const highlightData of seedServiceData.highlights) {
               try {
-                const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/service-content/highlights`, {
+                const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/highlights`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -2083,7 +2279,7 @@ export default function AdminDashboardIndex() {
 
         // Store terms data
         try {
-          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/terms`, {
+          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/terms`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -2103,7 +2299,7 @@ export default function AdminDashboardIndex() {
           }
 
         // Store FAQ data (only if not already exists)
-        const existingFAQsResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/faq/admin`, {
+        const existingFAQsResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq/admin`, {
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
@@ -2117,7 +2313,7 @@ export default function AdminDashboardIndex() {
           if (existingFAQs.length === 0) {
             for (const faqData of seedFAQData) {
               try {
-                const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/faq`, {
+                const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -2239,7 +2435,7 @@ export default function AdminDashboardIndex() {
         )
       );
       
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/bookings/${id}/status`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/bookings/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -2282,6 +2478,20 @@ export default function AdminDashboardIndex() {
         alert('Booking approved successfully! The lab technician can now access this booking.');
         console.log(`Booking ${id} approved successfully`);
         
+        // Emit WebSocket event to notify technicians
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          const approvedBooking = bookings.find(b => b._id === id);
+          ws.send(JSON.stringify({
+            type: 'booking_approved',
+            data: {
+              bookingId: id,
+              booking: approvedBooking,
+              timestamp: new Date().toISOString()
+            }
+          }));
+          console.log('WebSocket event sent for booking approval');
+        }
+        
         // Refresh bookings to ensure data consistency
         setTimeout(() => fetchBookings(), 1000);
       } else {
@@ -2315,7 +2525,7 @@ export default function AdminDashboardIndex() {
         )
       );
       
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/bookings/${id}/status`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/bookings/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -2374,7 +2584,7 @@ export default function AdminDashboardIndex() {
 
   const updateFeedbackStatus = async (id, newStatus) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/feedback/${id}/status`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/feedback/${id}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -2415,7 +2625,7 @@ export default function AdminDashboardIndex() {
   const deleteFeedback = async (id) => {
     if (!window.confirm('Are you sure you want to delete this feedback?')) return;
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/feedback/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/feedback/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -2434,7 +2644,7 @@ export default function AdminDashboardIndex() {
   const deleteContact = async (id) => {
     if (!window.confirm('Are you sure you want to delete this contact?')) return;
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/contact/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/contact/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -2452,7 +2662,7 @@ export default function AdminDashboardIndex() {
 
   const updateContactStatus = async (id, newStatus) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/contact/${id}/status`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/contact/${id}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -2475,7 +2685,7 @@ export default function AdminDashboardIndex() {
   // Home Content Functions
   const createHomeWhyBookItem = async (itemData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/content/home/why-book`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/why-book`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2499,7 +2709,7 @@ export default function AdminDashboardIndex() {
 
   const updateHomeWhyBookItem = async (id, itemData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/content/home/why-book/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/why-book/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -2525,7 +2735,7 @@ export default function AdminDashboardIndex() {
     if (!window.confirm('Are you sure you want to delete this item?')) return false;
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/content/home/why-book/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/why-book/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -2547,7 +2757,7 @@ export default function AdminDashboardIndex() {
 
   const createHomeHowItWorksItem = async (itemData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/content/home/how-it-works`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/how-it-works`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2571,7 +2781,7 @@ export default function AdminDashboardIndex() {
 
   const updateHomeHowItWorksItem = async (id, itemData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/content/home/how-it-works/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/how-it-works/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -2597,7 +2807,7 @@ export default function AdminDashboardIndex() {
     if (!window.confirm('Are you sure you want to delete this step?')) return false;
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/content/home/how-it-works/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/how-it-works/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -2622,8 +2832,8 @@ export default function AdminDashboardIndex() {
     e.preventDefault();
     let success = false;
     
-    if (editingWhyBookItem) {
-      success = await updateHomeWhyBookItem(editingWhyBookItem._id, whyBookFormData);
+    if (editingWhyBookItem && editingWhyBookItem.id) {
+      success = await updateHomeWhyBookItem(editingWhyBookItem.id, whyBookFormData);
     } else {
       success = await createHomeWhyBookItem(whyBookFormData);
     }
@@ -2639,8 +2849,8 @@ export default function AdminDashboardIndex() {
     e.preventDefault();
     let success = false;
     
-    if (editingHowItWorksItem) {
-      success = await updateHomeHowItWorksItem(editingHowItWorksItem._id, howItWorksFormData);
+    if (editingHowItWorksItem && editingHowItWorksItem.id) {
+      success = await updateHomeHowItWorksItem(editingHowItWorksItem.id, howItWorksFormData);
     } else {
       success = await createHomeHowItWorksItem(howItWorksFormData);
     }
@@ -2720,7 +2930,7 @@ export default function AdminDashboardIndex() {
   // FAQ Functions
   const createFAQItem = async (faqData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/faq`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2741,7 +2951,7 @@ export default function AdminDashboardIndex() {
 
   const updateFAQItem = async (id, faqData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/faq/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -2764,7 +2974,7 @@ export default function AdminDashboardIndex() {
     if (!window.confirm('Are you sure you want to delete this FAQ item?')) return false;
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/faq/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq/${id}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${user.token}`
@@ -2784,7 +2994,7 @@ export default function AdminDashboardIndex() {
   // Privacy Policy Functions
   const updatePrivacyPolicy = async (policyData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/privacy-policy`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/privacy-policy`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2806,7 +3016,7 @@ export default function AdminDashboardIndex() {
   // Terms & Conditions Functions
   const updateTermsConditions = async (termsData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/terms-and-conditions`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/terms-and-conditions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2832,24 +3042,25 @@ export default function AdminDashboardIndex() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-blue-50/20">
       <Header hideNavItems={true} />
-      <div className="flex flex-1 container mx-auto px-4 py-8 gap-8">
+      <div className="flex flex-1 container mx-auto px-4 py-8 gap-8 max-w-screen-2xl">
         {/* Mobile Menu Button */}
-        <button
+        <CButton 
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="md:hidden fixed top-20 left-4 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200"
+          variant="outline"
         >
           {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        </CButton>
 
         {/* Sidebar */}
-        <aside className={`${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed md:relative top-0 left-0 h-full md:h-auto w-64 bg-white md:bg-transparent border-r md:border-r-0 border-gray-200 md:border-none z-40 transition-transform duration-300 ease-in-out pt-20 md:pt-0`}>
-          <div className="p-4 mb-4">
-            <h2 className="text-xl font-bold" style={{ color: Theme.colors.primary }}>Admin Panel</h2>
-            <p className="text-xs text-gray-500">Hospital Management</p>
+        <aside className={`${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed md:relative top-0 left-0 h-full md:h-auto w-72 bg-white/90 backdrop-blur-xl border-r border-gray-200/30 z-40 transition-transform duration-300 ease-in-out pt-20 md:pt-0 rounded-2xl md:rounded-none shadow-2xl md:shadow-none`}>
+          <div className="p-6 mb-4 border-b border-gray-100/50">
+            <h2 className="text-2xl font-bold capitalize tracking-tight" style={{ color: Theme.colors.primary }}>Admin Panel</h2>
+            <p className="text-sm mt-1 font-medium" style={{ color: Theme.colors.primaryHover }}>Hospital Management System</p>
           </div>
-          <div className="flex flex-col gap-2 p-4 md:p-0">
+          <div className="flex flex-col gap-3 p-4 md:p-0">
             <SidebarItem id="registration" label="Registration" icon={LayoutDashboard} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
             <SidebarItem id="bookings" label="Lab Bookings" icon={ClipboardList} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
             <SidebarItem id="feedback" label="User Feedback" icon={MessageSquare} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
@@ -2880,27 +3091,18 @@ export default function AdminDashboardIndex() {
         )}
 
         {/* Main Content */}
+        
         <main className="flex-1 md:ml-0 ml-0">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r p-6 border-b border-gray-100"
+          <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-100/50 overflow-hidden">
+            <div className="bg-gradient-to-r p-8 border-b border-gray-100/30"
               style={{
-                background: `linear-gradient(to right, ${Theme.colors.primary}, ${Theme.colors.secondary})`
+                background: `linear-gradient(135deg, ${Theme.colors.secondary} 0%, ${Theme.colors.secondaryLight} 100%)`
               }}
             >
               <div className="flex justify-between items-center">
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold text-white capitalize">{activeTab}</h1>
-                  <p className="text-white/80 text-sm mt-1">Manage your {activeTab} efficiently</p>
-                </div>
-                <div className="flex gap-3">
-                  <CButton variant="secondary" onClick={fetchDashboardData} className="text-xs py-2 px-3 text-white border-white"
-                    style={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                      borderColor: 'rgba(255, 255, 255, 0.3)'
-                    }}
-                  >
-                    Refresh Data
-                  </CButton>
+                  <h1 className="text-3xl md:text-4xl font-bold capitalize tracking-tight" style={{ color: Theme.colors.primary }}>{activeTab.replace('-', ' ')}</h1>
+                  <p className="text-sm mt-2 font-medium" style={{ color: Theme.colors.primaryHover }}>Manage your {activeTab.replace('-', ' ')} efficiently</p>
                 </div>
               </div>
             </div>
@@ -2908,19 +3110,11 @@ export default function AdminDashboardIndex() {
             <div className="p-4 md:p-6">
               {activeTab === "registration" && (
                 <div className="space-y-6">
-                  {/* User Statistics Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-1 gap-4 mb-6">
-                    <div className="p-6 rounded-xl border border-gray-100 bg-white shadow-sm">
-                      <p className="text-gray-400 text-xs font-bold uppercase">Total Users</p>
-                      <p className="text-3xl font-black mt-2" style={{ color: Theme.colors.primary }}>{usersLoading ? "..." : stats.totalUsers}</p>
-                    </div>
-                  </div>
-
-                  {/* Users Table */}
+                  {/* User Management Table */}
                   <div className="overflow-x-auto">
                       {usersLoading ? (
                         <div className="text-center py-8">
-                          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2" style={{borderColor: Theme.colors.primary}}></div>
                           <p className="mt-2 text-gray-500">Loading users...</p>
                         </div>
                       ) : getFilteredUsers().length === 0 ? (
@@ -2956,7 +3150,7 @@ export default function AdminDashboardIndex() {
                                     userItem.role === 'admin' ? 'bg-emerald-100 text-emerald-800' :
                                     userItem.role === 'labtechnician' ? 'bg-blue-100 text-blue-800' :
                                     'bg-gray-100 text-gray-800'
-                                  }`}>
+                                  }`} style={userItem.role === 'labtechnician' ? {backgroundColor: Theme.colors.primary, color: 'white'} : {}}>
                                     {userItem.role || 'user'}
                                   </span>
                                 </td>
@@ -2969,199 +3163,272 @@ export default function AdminDashboardIndex() {
                                 </td>
                                 <td className="p-4 text-sm">
                                   {userItem.createdAt ? new Date(userItem.createdAt).toLocaleDateString() : 'N/A'}
-                                </td>
-                                <td className="p-4 text-sm">
-                                  {userItem.lastLogin ? new Date(userItem.lastLogin).toLocaleDateString() : 'Never'}
-                                </td>
-                                <td className="p-4 text-right">
-                                  <button
-                                    onClick={() => handleDeleteUser(userItem._id, userItem.name)}
-                                    className="p-2 rounded-full text-red-600 hover:bg-red-50 transition-colors"
-                                    title="Delete User"
-                                    disabled={userItem.role === 'admin' && userItem._id === user._id}
-                                  >
-                                    <Trash2 size={16} />
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      )}
-                    </div>
-                </div>
-              )}
-
-              {activeTab === "bookings" && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                    <div 
-                      className={`p-6 rounded-xl border shadow-sm cursor-pointer transition-all ${
-                        bookingFilter === 'all' 
-                          ? 'border-blue-500 bg-blue-50 shadow-md' 
-                          : 'border-gray-100 bg-white hover:shadow-md'
-                      }`}
-                      onClick={() => setBookingFilter('all')}
-                    >
-                      <p className="text-gray-400 text-xs font-bold uppercase">Total Bookings</p>
-                      <p className="text-3xl font-black mt-2" style={{ color: Theme.colors.primary }}>{loading ? "..." : stats.totalBookings}</p>
-                    </div>
-                    <div 
-                      className={`p-6 rounded-xl border shadow-sm cursor-pointer transition-all ${
-                        bookingFilter === 'pending' 
-                          ? 'border-yellow-500 bg-yellow-50 shadow-md' 
-                          : 'border-gray-100 bg-white hover:shadow-md'
-                      }`}
-                      onClick={() => setBookingFilter('pending')}
-                    >
-                      <p className="text-gray-400 text-xs font-bold uppercase">Pending Bookings</p>
-                      <p className="text-3xl font-black mt-2" style={{ color: Theme.colors.yellow600 }}>{loading ? "..." : stats.pendingBookings}</p>
-                    </div>
-                    <div 
-                      className={`p-6 rounded-xl border shadow-sm cursor-pointer transition-all ${
-                        bookingFilter === 'approved' 
-                          ? 'border-emerald-500 bg-emerald-50 shadow-md' 
-                          : 'border-gray-100 bg-white hover:shadow-md'
-                      }`}
-                      onClick={() => setBookingFilter('approved')}
-                    >
-                      <p className="text-gray-400 text-xs font-bold uppercase">Approved Bookings</p>
-                      <p className="text-3xl font-black mt-2" style={{ color: Theme.colors.emerald600 }}>{loading ? "..." : stats.approvedBookings}</p>
-                    </div>
-                  </div>
-                  <div className="mt-8">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold">Lab Booking Management</h3>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-500">Filter:</span>
-                        <span 
-                          className="px-3 py-1 text-xs rounded-full font-medium"
-                          style={{
-                            backgroundColor: bookingFilter === 'all' ? Theme.colors.primary : Theme.colors.gray100,
-                            color: bookingFilter === 'all' ? 'white' : Theme.colors.gray600
-                          }}
-                        >
-                          {bookingFilter === 'all' ? 'All Bookings' : 
-                           bookingFilter === 'pending' ? 'Pending Bookings' : 
-                           'Approved Bookings'}
-                        </span>
-                      </div>
-                    </div>
-                    {/* Desktop Table View */}
-                    <div className="hidden md:block overflow-x-auto">
-                      <table className="w-full text-left">
-                        <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
-                          <tr>
-                            <th className="p-4">User Details</th>
-                            <th className="p-4">Lab/Service</th>
-                            <th className="p-4">Date & Time</th>
-                            <th className="p-4">Purpose</th>
-                            <th className="p-4">Status</th>
-                            <th className="p-4 text-right">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {bookings
-                            .filter(b => {
-                              if (bookingFilter === 'all') return true;
-                              if (bookingFilter === 'pending') return (b.adminStatus || '').toLowerCase() === 'pending';
-                              if (bookingFilter === 'approved') return (b.adminStatus || '').toLowerCase() === 'approved';
-                              return true;
-                            })
-                            .map((b) => (
-                            <tr key={b._id || b.id} className="border-b border-gray-100 hover:bg-gray-50">
-                              <td className="p-4 text-sm">
-                                <div className="font-medium">{b.patientName || b.user?.name || 'Unknown User'}</div>
-                                <div className="text-xs text-gray-500">{b.user?.email || 'No email'}</div>
-                                {b.user?.phone && <div className="text-xs text-gray-500">{b.user.phone}</div>}
                               </td>
                               <td className="p-4 text-sm">
-                                <div className="font-medium">{b.labName || b.labAppointment}</div>
-                                <>
-                                  {b.packageName && <div className="text-xs text-gray-500">{b.packageName}</div>}
-                                  {b.packagePrice > 0 && <div className="text-xs font-semibold" style={{ color: Theme.colors.primary }}>₹{b.packagePrice}</div>}
-                                </>
-                              </td>
-                              <td className="p-4 text-sm">
-                                <div className="font-medium">{b.date}</div>
-                                <div className="text-xs font-medium" style={{ color: Theme.colors.accentBlue }}>{b.time}</div>
-                                <div className="text-xs text-gray-500">{b.duration}</div>
-                              </td>
-                              <td className="p-4 text-sm">
-                                <div className="max-w-xs truncate" title={b.purpose}>
-                                  {b.purpose}
-                                </div>
-                              </td>
-                              <td className="p-4">
-                                <span className={`px-2 py-1 text-xs rounded-full`}
-                                  style={{
-                                    backgroundColor: b.adminStatus === 'approved' ? Theme.colors.emerald100 : 
-                                                   b.adminStatus === 'rejected' ? Theme.colors.red50 : Theme.colors.yellow50,
-                                    color: b.adminStatus === 'approved' ? Theme.colors.emerald600 : 
-                                           b.adminStatus === 'rejected' ? Theme.colors.red600 : Theme.colors.yellow600
-                                  }}
-                                >
-                                  {b.adminStatus || 'pending'}
-                                </span>
-                                {b.rejectionReason && (
-                                  <div className="text-xs mt-1" style={{ color: Theme.colors.red600 }} title={b.rejectionReason}>
-                                    {b.rejectionReason.length > 20 ? b.rejectionReason.substring(0, 20) + '...' : b.rejectionReason}
-                                  </div>
-                                )}
+                                {userItem.lastLogin ? new Date(userItem.lastLogin).toLocaleDateString() : 'Never'}
                               </td>
                               <td className="p-4 text-right">
-                                {b.adminStatus === 'pending' && (
-                                  <div className="flex justify-end gap-2">
-                                    <button 
-                                      onClick={() => handleApprove(b._id || b.id)} 
-                                      className="p-2 rounded-full transition-colors" 
-                                      title="Approve"
-                                      style={{
-                                        color: Theme.colors.emerald600
-                                      }}
-                                      onMouseEnter={(e) => {
-                                        e.target.style.backgroundColor = Theme.colors.emerald50;
-                                      }}
-                                      onMouseLeave={(e) => {
-                                        e.target.style.backgroundColor = 'transparent';
-                                      }}
-                                    >
-                                      <CheckCircle2 size={20}/>
-                                    </button>
-                                    <button 
-                                      onClick={() => {
-                                        const reason = prompt('Please enter rejection reason:');
-                                        if (reason) {
-                                          handleRejectWithReason(b._id || b.id, reason);
-                                        }
-                                      }} 
-                                      className="p-2 rounded-full transition-colors" 
-                                      title="Reject"
-                                      style={{
-                                        color: Theme.colors.red600
-                                      }}
-                                      onMouseEnter={(e) => {
-                                        e.target.style.backgroundColor = Theme.colors.red50;
-                                      }}
-                                      onMouseLeave={(e) => {
-                                        e.target.style.backgroundColor = 'transparent';
-                                      }}
-                                    >
-                                      <XCircle size={20}/>
-                                    </button>
-                                  </div>
-                                )}
-                                {b.adminStatus === 'approved' && (
-                                  <span className="text-sm font-medium" style={{ color: Theme.colors.emerald600 }}>Approved</span>
-                                )}
-                                {b.adminStatus === 'rejected' && (
-                                  <span className="text-sm font-medium" style={{ color: Theme.colors.red600 }}>Rejected</span>
-                                )}
+                                <CButton
+                                  onClick={() => handleDeleteUser(userItem._id, userItem.name)}
+                                  className="p-2 rounded-full text-red-600 hover:bg-red-50 transition-colors"
+                                  variant="outline"
+                                  title="Delete User"
+                                >
+                                  <Trash2 size={16} />
+                                </CButton>
                               </td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Bookings Section */}
+              {activeTab === "bookings" && (
+                <>
+                {/* Statistics Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  <div 
+                    onClick={() => setBookingFilter('all')}
+                    className={`bg-white rounded-xl p-6 border-2 cursor-pointer transition-all duration-300 hover:shadow-lg ${
+                      bookingFilter === 'all' ? 'border-blue-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Total Bookings</p>
+                        <p className="text-3xl font-bold text-gray-900 mt-2">{stats.totalBookings}</p>
+                      </div>
+                      <div className="p-3 bg-blue-100 rounded-lg">
+                        <ClipboardList size={24} className="text-blue-600" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div 
+                    onClick={() => setBookingFilter('approved')}
+                    className={`bg-white rounded-xl p-6 border-2 cursor-pointer transition-all duration-300 hover:shadow-lg ${
+                      bookingFilter === 'approved' ? 'border-green-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Approved Bookings</p>
+                        <p className="text-3xl font-bold text-green-600 mt-2">{stats.approvedBookings}</p>
+                      </div>
+                      <div className="p-3 bg-green-100 rounded-lg">
+                        <CheckCircle2 size={24} className="text-green-600" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div 
+                    onClick={() => setBookingFilter('pending')}
+                    className={`bg-white rounded-xl p-6 border-2 cursor-pointer transition-all duration-300 hover:shadow-lg ${
+                      bookingFilter === 'pending' ? 'border-yellow-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Pending Bookings</p>
+                        <p className="text-3xl font-bold text-yellow-600 mt-2">{stats.pendingBookings}</p>
+                      </div>
+                      <div className="p-3 bg-yellow-100 rounded-lg">
+                        <Clock size={24} className="text-yellow-600" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Visual Statistics Charts */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                  {/* Booking Status Pie Chart */}
+                  <div className="bg-white rounded-xl p-6 border border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Booking Status Distribution</h3>
+                    {bookingStatusData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={bookingStatusData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {bookingStatusData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="h-64 flex items-center justify-center text-gray-500">
+                        No booking data available
+                      </div>
+                    )}
+                  </div>
+
+                  {/* User Role Distribution */}
+                  <div className="bg-white rounded-xl p-6 border border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">User Role Distribution</h3>
+                    {userRoleData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie
+                            data={userRoleData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="value"
+                          >
+                            {userRoleData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="h-64 flex items-center justify-center text-gray-500">
+                        No user data available
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Monthly Booking Trend */}
+                <div className="bg-white rounded-xl p-6 border border-gray-200 mb-8">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Booking Trend (Last 6 Months)</h3>
+                  {monthlyBookingData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <LineChart data={monthlyBookingData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip />
+                        <Legend />
+                        <Line type="monotone" dataKey="bookings" stroke="#3b82f6" strokeWidth={2} name="Total Bookings" />
+                        <Line type="monotone" dataKey="approved" stroke="#10b981" strokeWidth={2} name="Approved" />
+                        <Line type="monotone" dataKey="pending" stroke="#f59e0b" strokeWidth={2} name="Pending" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-64 flex items-center justify-center text-gray-500">
+                      No monthly data available
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-6">
+                  <div className="overflow-x-auto">
+                      {loading ? (
+                        <div className="text-center py-8">
+                          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2" style={{borderColor: Theme.colors.primary}}></div>
+                          <p className="mt-2 text-gray-500">Loading bookings...</p>
+                        </div>
+                      ) : bookings.length === 0 ? (
+                        <div className="text-center py-8">
+                          <p className="text-gray-500">No bookings found.</p>
+                        </div>
+                      ) : (
+                        <table className="w-full text-left">
+                          <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+                            <tr>
+                              <th className="p-4">Patient Info</th>
+                              <th className="p-4">Lab Details</th>
+                              <th className="p-4">Schedule</th>
+                              <th className="p-4">Status</th>
+                              <th className="p-4 text-right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {bookings
+                              .filter(b => {
+                                if (bookingFilter === 'all') return true;
+                                if (bookingFilter === 'pending') return (b.adminStatus || '').toLowerCase() === 'pending';
+                                if (bookingFilter === 'approved') return (b.adminStatus || '').toLowerCase() === 'approved';
+                                return true;
+                              })
+                              .map((b) => (
+                                <tr key={b._id || b.id} className="border-b border-gray-100 hover:bg-gray-50">
+                                  <td className="p-4">
+                                    <div>
+                                      <div className="font-medium text-gray-900">{b.patientName || b.user?.name || 'Unknown'}</div>
+                                      <div className="text-sm text-gray-500">{b.user?.email || 'No email'}</div>
+                                      {b.user?.phone && <div className="text-xs text-gray-400">{b.user.phone}</div>}
+                                    </div>
+                                  </td>
+                                  <td className="p-4">
+                                    <div className="text-sm">
+                                      <div className="font-medium">{b.labName || b.labAppointment}</div>
+                                      {b.packageName && <div className="text-gray-500">{b.packageName}</div>}
+                                    </div>
+                                  </td>
+                                  <td className="p-4 text-sm">
+                                    <div>{b.date}</div>
+                                    <div className="text-gray-500">{b.time} ({b.duration})</div>
+                                  </td>
+                                  <td className="p-4">
+                                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                                      b.adminStatus === 'approved' ? 'bg-green-100 text-green-800' :
+                                      b.adminStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+                                      'bg-yellow-100 text-yellow-800'
+                                    }`}>
+                                      {b.adminStatus || 'pending'}
+                                    </span>
+                                  </td>
+                                  <td className="p-4 text-right">
+                                    {b.adminStatus === 'pending' && (
+                                      <div className="flex justify-end gap-2">
+                                        <CButton 
+                                          onClick={() => handleApprove(b._id || b.id)} 
+                                          className="p-2 rounded-full transition-colors" 
+                                          variant="outline"
+                                          title="Approve"
+                                          style={{
+                                            backgroundColor: '#10b981',
+                                            color: 'white',
+                                            borderColor: '#10b981'
+                                          }}
+                                        >
+                                          <CheckCircle2 size={20}/>
+                                        </CButton>
+                                        <CButton 
+                                          onClick={() => {
+                                            const reason = prompt('Please enter rejection reason:');
+                                            if (reason) {
+                                              handleRejectWithReason(b._id || b.id, reason);
+                                            }
+                                          }} 
+                                          className="p-2 rounded-full transition-colors" 
+                                          variant="outline"
+                                          title="Reject"
+                                          style={{
+                                            backgroundColor: '#ef4444',
+                                            color: 'white',
+                                            borderColor: '#ef4444'
+                                          }}
+                                        >
+                                          <XCircle size={20}/>
+                                        </CButton>
+                                      </div>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                          </tbody>
+                        </table>
+                      )}
                     </div>
 
                     {/* Mobile Card View */}
@@ -3226,129 +3493,89 @@ export default function AdminDashboardIndex() {
                           </div>
                           {b.adminStatus === 'pending' && (
                             <div className="flex justify-end gap-2 mt-4">
-                              <button 
+                              <CButton 
                                 onClick={() => handleApprove(b._id || b.id)} 
-                                className="px-3 py-1 rounded-full text-sm transition-colors text-white"
+                                className="px-3 py-1 rounded-full text-sm text-white"
+                                variant="primary"
                                 style={{
                                   backgroundColor: Theme.colors.emerald600
                                 }}
-                                onMouseEnter={(e) => {
-                                  e.target.style.backgroundColor = Theme.colors.emerald700;
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.target.style.backgroundColor = Theme.colors.emerald600;
-                                }}
                               >
                                 Approve
-                              </button>
-                              <button 
+                              </CButton>
+                              <CButton 
                                 onClick={() => {
                                   const reason = prompt('Please enter rejection reason:');
                                   if (reason) {
                                     handleRejectWithReason(b._id || b.id, reason);
                                   }
                                 }} 
-                                className="px-3 py-1 rounded-full text-sm transition-colors text-white"
+                                className="px-3 py-1 rounded-full text-sm text-white"
+                                variant="primary"
                                 style={{
                                   backgroundColor: Theme.colors.red600
                                 }}
-                                onMouseEnter={(e) => {
-                                  e.target.style.backgroundColor = Theme.colors.red700;
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.target.style.backgroundColor = Theme.colors.red600;
-                                }}
                               >
                                 Reject
-                              </button>
+                              </CButton>
                             </div>
                           )}
                         </div>
                       ))}
                     </div>
-                    {bookings.length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        No bookings found.
-                      </div>
-                    )}
                   </div>
-                </div>
+                </>
               )}
 
-              
-
               {activeTab === "feedback" && (
-                <div className="space-y-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                    <div className="p-4 rounded-lg border"
-                      style={{
-                        backgroundColor: `${Theme.colors.primary}10`,
-                        borderColor: `${Theme.colors.primary}30`
-                      }}
-                    >
-                      <div className="text-2xl font-bold" style={{ color: Theme.colors.primary }}>{loading ? "..." : feedbackStats.totalFeedbacks}</div>
-                      <div className="text-sm" style={{ color: Theme.colors.primary }}>Total Feedbacks</div>
-                    </div>
-                    <div className="p-4 rounded-lg border"
-                      style={{
-                        backgroundColor: Theme.colors.emerald50,
-                        borderColor: Theme.colors.emerald100
-                      }}
-                    >
-                      <div className="text-2xl font-bold" style={{ color: Theme.colors.emerald600 }}>{loading ? "..." : feedbackStats.reviewedFeedbacks}</div>
-                      <div className="text-sm" style={{ color: Theme.colors.emerald600 }}>Reviewed</div>
-                    </div>
-                  </div>
-
-                  {/* Filter buttons */}
-                  <div className="flex gap-2 mb-4">
-                    <button
-                      onClick={() => setFeedbackFilter('all')}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        feedbackFilter === 'all'
-                          ? 'text-white'
-                          : 'text-gray-600 bg-gray-100 hover:bg-gray-200'
-                      }`}
-                      style={{
-                        backgroundColor: feedbackFilter === 'all' ? Theme.colors.primary : undefined
-                      }}
-                    >
-                      All Feedbacks
-                    </button>
-                    <button
-                      onClick={() => setFeedbackFilter('reviewed')}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        feedbackFilter === 'reviewed'
-                          ? 'text-white'
-                          : 'text-gray-600 bg-gray-100 hover:bg-gray-200'
-                      }`}
-                      style={{
-                        backgroundColor: feedbackFilter === 'reviewed' ? Theme.colors.emerald600 : undefined
-                      }}
-                    >
-                      Reviewed
-                    </button>
-                  </div>
-                  
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                      <thead className="bg-gray-50">
+                <div className="space-y-8">
+                  <div className="overflow-x-auto rounded-2xl border border-gray-200/50 shadow-xl backdrop-blur-sm">
+                    <div className="min-w-[800px]">
+                      <table className="w-full text-sm bg-white/80 backdrop-blur-sm">
+                      <thead className="bg-gradient-to-r border-b border-gray-200/50 backdrop-blur-sm"
+                        style={{
+                          background: `linear-gradient(135deg, ${Theme.colors.primary}05, ${Theme.colors.secondary}10)`
+                        }}
+                      >
                         <tr>
-                          <th className="p-4">User Info</th>
-                          <th className="p-4">Rating</th>
-                          <th className="p-4">Feedback</th>
-                          <th className="p-4">Status</th>
-                          <th className="p-4">Date</th>
-                          <th className="p-4 text-right">Actions</th>
+                          <th className="p-4 font-bold text-left text-xs uppercase tracking-wider" style={{ color: Theme.colors.primary }}>User Info</th>
+                          <th className="p-4 font-bold text-left text-xs uppercase tracking-wider" style={{ color: Theme.colors.primary }}>Rating</th>
+                          <th className="p-4 font-bold text-left text-xs uppercase tracking-wider" style={{ color: Theme.colors.primary }}>Feedback</th>
+                          <th className="p-4 font-bold text-left text-xs uppercase tracking-wider" style={{ color: Theme.colors.primary }}>Status</th>
+                          <th className="p-4 font-bold text-left text-xs uppercase tracking-wider" style={{ color: Theme.colors.primary }}>Date</th>
+                          <th className="p-4 font-bold text-right text-xs uppercase tracking-wider" style={{ color: Theme.colors.primary }}>Actions</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {feedbacks.filter(f => feedbackFilter === 'all' || f.status === feedbackFilter).map((f) => (
-                          <tr key={f._id} className="border-b">
+                        {feedbacks.filter(f => f.status !== 'pending' && f.status !== 'reviewed' && f.status !== 'resolved').map((f, index) => (
+                          <tr key={f._id} className={`border-b border-gray-100/30 hover:bg-gradient-to-r transition-all duration-300 ${index % 2 === 0 ? 'bg-white/70' : 'bg-gray-50/40'}`}
+                            style={{
+                              backgroundImage: `linear-gradient(135deg, ${Theme.colors.primary}08, ${Theme.colors.secondary}12)`,
+                              backgroundSize: '0% 100%',
+                              backgroundPosition: 'left',
+                              transition: 'background-size 0.3s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundSize = '100% 100%';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundSize = '0% 100%';
+                            }}
+                          >
                             <td className="p-4">
-                              <div className="font-bold">{f.user?.name || f.userName || 'Anonymous'}</div>
-                              <div className="text-xs text-gray-400">{f.user?.email || f.userEmail || 'No email'}</div>
-                              {f.user?.phone && <div className="text-xs text-gray-400">{f.user.phone}</div>}
+                              <div className="flex flex-col space-y-1">
+                                <div className="font-semibold text-gray-800">{f.user?.name || f.userName || 'Anonymous'}</div>
+                                <div className="text-xs text-gray-500 flex items-center gap-1">
+                                  <Mail size={12} />
+                                  {f.user?.email || f.userEmail || 'No email'}
+                                </div>
+                                {f.user?.phone && (
+                                  <div className="text-xs text-gray-500 flex items-center gap-1">
+                                    <Phone size={12} />
+                                    {f.user.phone}
+                                  </div>
+                                )}
+                              </div>
                             </td>
                             <td className="p-4">
                               <div className="flex items-center gap-1">
@@ -3373,28 +3600,28 @@ export default function AdminDashboardIndex() {
                               </div>
                             </td>
                             <td className="p-4">
-                              <span className={`px-2 py-1 text-xs rounded-full capitalize`}
+                              <span className={`px-3 py-1 text-xs rounded-full font-medium capitalize inline-flex items-center gap-1`}
                                 style={{
-                                  backgroundColor: f.status === 'pending' ? Theme.colors.yellow50 :
-                                                 f.status === 'reviewed' ? Theme.colors.emerald50 : `${Theme.colors.secondary}20`,
+                                  backgroundColor: f.status === 'pending' ? `${Theme.colors.yellow50}CC` :
+                                                 f.status === 'reviewed' ? `${Theme.colors.emerald50}CC` : `${Theme.colors.secondary}20CC`,
                                   color: f.status === 'pending' ? Theme.colors.yellow600 :
-                                         f.status === 'reviewed' ? Theme.colors.emerald600 : Theme.colors.primary
+                                         f.status === 'reviewed' ? Theme.colors.emerald600 : Theme.colors.primary,
+                                  border: `1px solid ${f.status === 'pending' ? `${Theme.colors.yellow50}` :
+                                                 f.status === 'reviewed' ? `${Theme.colors.emerald50}` : `${Theme.colors.secondary}30`}`
                                 }}
                               >
+                                {f.status === 'pending' && <Clock size={10} />}
+                                {f.status === 'reviewed' && <CheckCircle2 size={10} />}
                                 {f.status || 'pending'}
                               </span>
                             </td>
                             <td className="p-4 text-xs text-gray-500">{new Date(f.createdAt || Date.now()).toLocaleDateString()}</td>
-                            <td className="p-4 text-right">
-                              <div className="flex gap-2 justify-end">
+                            <td className="p-4">
+                              <div className="flex items-center gap-2 justify-end">
                                 {f.status === 'pending' && (
                                   <CButton 
                                     variant="primary" 
-                                    className="py-1 px-3 text-xs text-white border"
-                                    style={{
-                                      backgroundColor: Theme.colors.emerald600,
-                                      borderColor: Theme.colors.emerald600
-                                    }}
+                                    size="sm"
                                     onClick={() => markFeedbackAsReviewed(f._id)}
                                   >
                                     Mark Reviewed
@@ -3403,17 +3630,7 @@ export default function AdminDashboardIndex() {
                                 {f.status === 'reviewed' && (
                                   <CButton 
                                     variant="outline" 
-                                    className="py-1 px-3 text-xs border text-gray-600"
-                                    style={{
-                                      borderColor: '#e5e7eb',
-                                      backgroundColor: 'transparent'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                      e.target.style.backgroundColor = '#f9fafb';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      e.target.style.backgroundColor = 'transparent';
-                                    }}
+                                    size="sm"
                                     onClick={() => updateFeedbackStatus(f._id, 'pending')}
                                   >
                                     Back to Pending
@@ -3421,7 +3638,7 @@ export default function AdminDashboardIndex() {
                                 )}
                                 <CButton 
                                   variant="danger" 
-                                  className="py-1 px-3 text-xs" 
+                                  size="sm"
                                   onClick={() => deleteFeedback(f._id)}
                                 >
                                   Delete
@@ -3432,9 +3649,19 @@ export default function AdminDashboardIndex() {
                         ))}
                       </tbody>
                     </table>
-                    {feedbacks.filter(f => feedbackFilter === 'all' || f.status === feedbackFilter).length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        No {feedbackFilter === 'all' ? '' : feedbackFilter} feedback found.
+                    </div>
+                    {feedbacks.filter(f => feedbackFilter === 'all' || f.status === feedbackFilter).filter(f => f.status !== 'pending').length === 0 && (
+                      <div className="text-center py-20">
+                        <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-50 to-teal-50 flex items-center justify-center shadow-xl border border-gray-200/50"
+                          style={{
+                            background: `linear-gradient(135deg, ${Theme.colors.primary}10, ${Theme.colors.secondary}20)`,
+                            borderColor: `${Theme.colors.primary}30`
+                          }}
+                        >
+                          <MessageSquare size={48} className="text-blue-400" style={{ color: Theme.colors.primary }} />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-800 mb-3" style={{ color: Theme.colors.textDark }}>No {feedbackFilter === 'all' ? '' : feedbackFilter} feedback found</h3>
+                        <p className="text-sm text-gray-500 max-w-md mx-auto">There are currently no {feedbackFilter === 'all' ? '' : feedbackFilter} feedbacks to display.</p>
                       </div>
                     )}
                   </div>
@@ -3629,36 +3856,42 @@ export default function AdminDashboardIndex() {
                                 </td>
                                 <td className="px-3 py-3 text-sm font-medium" data-label="Actions">
                                   <div className="flex flex-col sm:flex-row gap-2">
-                                    <button 
+                                    <CButton 
                                       className="text-green-600 hover:text-green-900 p-1"
                                       onClick={() => fetchTestDetails(test._id)}
+                                      variant="outline"
                                       title="View Details"
                                     >
                                       <FileText size={16} />
-                                    </button>
-                                    <button 
-                                      className="text-blue-600 hover:text-blue-900 p-1"
+                                    </CButton>
+                                    <CButton 
+                                      className="p-1"
                                       onClick={() => {
                                         setEditingTest(test);
                                         setTestFormData({
                                           name: test.name || '',
                                           description: test.description || '',
-                                          icon: test.icon || '',
                                           price: test.price?.toString() || '',
-                                          sampleType: test.sampleType || 'blood',
-                                          time: test.time || '',
-                                          category: test.category || 'general',
-                                          preTestRequirements: test.preTestRequirements || 'No specific requirements.'
+                                          category: test.category || 'General',
+                                          sampleType: test.sampleType || 'Blood',
+                                          time: test.duration || '', // Map duration to time for form
+                                          preTestRequirements: test.preparation || 'No specific requirements.' // Map preparation to preTestRequirements for form
                                         });
                                         setShowTestForm(true);
                                       }}
+                                      variant="outline"
                                       title="Edit Test"
                                     >
                                       <Edit2 size={16} />
-                                    </button>
-                                    <button className="text-red-600 hover:text-red-900 p-1" onClick={() => handleDeleteTest(test._id)}>
+                                    </CButton>
+                                    <CButton 
+                                      className="text-red-600 hover:text-red-900 p-1" 
+                                      onClick={() => handleDeleteTest(test._id)}
+                                      variant="outline"
+                                      title="Delete Test"
+                                    >
                                       <Trash2 size={16} />
-                                    </button>
+                                    </CButton>
                                   </div>
                                 </td>
                               </tr>
@@ -3762,15 +3995,16 @@ export default function AdminDashboardIndex() {
                                 </td>
                                 <td className="px-3 py-3 text-sm font-medium" data-label="Actions">
                                   <div className="flex flex-col sm:flex-row gap-2">
-                                    <button 
+                                    <CButton 
                                       className="text-green-600 hover:text-green-900 p-1"
                                       onClick={() => fetchPackageDetails(pkg._id)}
+                                      variant="outline"
                                       title="View Details"
                                     >
                                       <FileText size={16} />
-                                    </button>
-                                    <button 
-                                      className="text-blue-600 hover:text-blue-900 p-1"
+                                    </CButton>
+                                    <CButton 
+                                      className="p-1"
                                       onClick={() => {
                                         setEditingPackage(pkg);
                                         setPackageFormData({
@@ -3786,13 +4020,19 @@ export default function AdminDashboardIndex() {
                                         });
                                         setShowPackageForm(true);
                                       }}
+                                      variant="outline"
                                       title="Edit Package"
                                     >
                                       <Edit2 size={16} />
-                                    </button>
-                                    <button className="text-red-600 hover:text-red-900 p-1" onClick={() => handleDeletePackage(pkg._id)}>
+                                    </CButton>
+                                    <CButton 
+                                      className="text-red-600 hover:text-red-900 p-1" 
+                                      onClick={() => handleDeletePackage(pkg._id)}
+                                      variant="outline"
+                                      title="Delete Package"
+                                    >
                                       <Trash2 size={16} />
-                                    </button>
+                                    </CButton>
                                   </div>
                                 </td>
                               </tr>
@@ -3825,8 +4065,8 @@ export default function AdminDashboardIndex() {
                         onClick={switchToWhyBookTab}
                         className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                           homeContentSubTab === 'why-book'
-                            ? 'border-blue-500 text-blue-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ? 'text-[#2a7a8e] border-[#2a7a8e]'
+                            : 'border-transparent text-gray-500 hover:text-[#2a7a8e] hover:border-[#2a7a8e]'
                         }`}
                       >
                         Why Book With Us
@@ -3835,8 +4075,8 @@ export default function AdminDashboardIndex() {
                         onClick={switchToHowItWorksTab}
                         className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                           homeContentSubTab === 'how-it-works'
-                            ? 'border-blue-500 text-blue-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ? 'text-[#2a7a8e] border-[#2a7a8e]'
+                            : 'border-transparent text-gray-500 hover:text-[#2a7a8e] hover:border-[#2a7a8e]'
                         }`}
                       >
                         How It Works
@@ -3879,7 +4119,7 @@ export default function AdminDashboardIndex() {
                                   <select 
                                     value={whyBookFormData.iconKey}
                                     onChange={(e) => setWhyBookFormData(prev => ({ ...prev, iconKey: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
                                   >
                                     <option value="Home">Home</option>
                                     <option value="CheckCircle">CheckCircle</option>
@@ -3896,7 +4136,7 @@ export default function AdminDashboardIndex() {
                                     type="text"
                                     value={whyBookFormData.title}
                                     onChange={(e) => setWhyBookFormData(prev => ({ ...prev, title: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
                                     placeholder="Enter title"
                                     required
                                   />
@@ -3908,7 +4148,7 @@ export default function AdminDashboardIndex() {
                                   <textarea 
                                     value={whyBookFormData.desc}
                                     onChange={(e) => setWhyBookFormData(prev => ({ ...prev, desc: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
                                     placeholder="Enter description"
                                     rows="3"
                                     required
@@ -3917,7 +4157,7 @@ export default function AdminDashboardIndex() {
                               </div>
                               <div className="flex gap-3">
                                 <CButton type="submit" variant="primary">
-                                  {editingWhyBookItem ? 'Update Item' : 'Add Item'}
+                                  {editingWhyBookItem ? 'Update' : 'Add Item'}
                                 </CButton>
                                 <CButton type="button" variant="secondary" onClick={resetWhyBookForm}>
                                   Cancel
@@ -3944,12 +4184,12 @@ export default function AdminDashboardIndex() {
                               <div className="flex gap-2">
                                 <button 
                                   onClick={() => startEditWhyBookItem(item)}
-                                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                  className="text-sm font-medium"
                                 >
                                   Edit
                                 </button>
                                 <button 
-                                  onClick={() => deleteHomeWhyBookItem(item._id)}
+                                  onClick={() => deleteHomeWhyBookItem(item.id)}
                                   className="text-red-600 hover:text-red-800 text-sm font-medium"
                                 >
                                   Delete
@@ -4012,7 +4252,7 @@ export default function AdminDashboardIndex() {
                                     min="1"
                                     value={howItWorksFormData.stepNumber}
                                     onChange={(e) => setHowItWorksFormData(prev => ({ ...prev, stepNumber: parseInt(e.target.value) || 1 }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
                                     placeholder="Enter step number"
                                     required
                                   />
@@ -4024,7 +4264,7 @@ export default function AdminDashboardIndex() {
                                   <select 
                                     value={howItWorksFormData.iconKey}
                                     onChange={(e) => setHowItWorksFormData(prev => ({ ...prev, iconKey: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
                                   >
                                     <option value="Search">Search</option>
                                     <option value="CreditCard">CreditCard</option>
@@ -4043,7 +4283,7 @@ export default function AdminDashboardIndex() {
                                     type="text"
                                     value={howItWorksFormData.title}
                                     onChange={(e) => setHowItWorksFormData(prev => ({ ...prev, title: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
                                     placeholder="Enter title"
                                     required
                                   />
@@ -4055,7 +4295,7 @@ export default function AdminDashboardIndex() {
                                   <textarea 
                                     value={howItWorksFormData.desc}
                                     onChange={(e) => setHowItWorksFormData(prev => ({ ...prev, desc: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
                                     placeholder="Enter description"
                                     rows="3"
                                     required
@@ -4064,7 +4304,7 @@ export default function AdminDashboardIndex() {
                               </div>
                               <div className="flex gap-3">
                                 <CButton type="submit" variant="primary">
-                                  {editingHowItWorksItem ? 'Update Step' : 'Add Step'}
+                                  {editingHowItWorksItem ? 'Update' : 'Add Step'}
                                 </CButton>
                                 <CButton type="button" variant="secondary" onClick={resetHowItWorksForm}>
                                   Cancel
@@ -4091,12 +4331,12 @@ export default function AdminDashboardIndex() {
                               <div className="flex gap-2">
                                 <button 
                                   onClick={() => startEditHowItWorksItem(item)}
-                                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                  className="text-sm font-medium"
                                 >
                                   Edit
                                 </button>
                                 <button 
-                                  onClick={() => deleteHomeHowItWorksItem(item._id)}
+                                  onClick={() => deleteHomeHowItWorksItem(item.id)}
                                   className="text-red-600 hover:text-red-800 text-sm font-medium"
                                 >
                                   Delete
@@ -4144,8 +4384,8 @@ export default function AdminDashboardIndex() {
                         onClick={switchToFeaturesTab}
                         className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                           serviceContentSubTab === 'features'
-                            ? 'border-blue-500 text-blue-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ? 'text-[#2a7a8e] border-[#2a7a8e]'
+                            : 'border-transparent text-gray-500 hover:text-[#2a7a8e] hover:border-[#2a7a8e]'
                         }`}
                       >
                         Service Features
@@ -4154,8 +4394,8 @@ export default function AdminDashboardIndex() {
                         onClick={switchToHighlightsTab}
                         className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
                           serviceContentSubTab === 'highlights'
-                            ? 'border-blue-500 text-blue-600'
-                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ? 'text-[#2a7a8e] border-[#2a7a8e]'
+                            : 'border-transparent text-gray-500 hover:text-[#2a7a8e] hover:border-[#2a7a8e]'
                         }`}
                       >
                         Service Highlights
@@ -4284,7 +4524,7 @@ export default function AdminDashboardIndex() {
                                     });
                                     setShowServiceForm(true);
                                   }}
-                                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                  className="text-sm font-medium"
                                 >
                                   Edit
                                 </button>
@@ -4335,7 +4575,8 @@ export default function AdminDashboardIndex() {
                               let success = false;
                               
                               if (editingHighlightItem) {
-                                success = await updateHighlight(editingHighlightItem._id, highlightFormData);
+                                const highlightId = editingHighlightItem._id || editingHighlightItem.id;
+                                success = await updateHighlight(highlightId, highlightFormData);
                               } else {
                                 success = await createHighlight(highlightFormData);
                               }
@@ -4400,7 +4641,7 @@ export default function AdminDashboardIndex() {
 
                         {/* Service Highlights Items List */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                          {serviceContent.highlights.slice(0, 4).map((highlight, index) => (
+                          {serviceContent.highlights.map((highlight, index) => (
                             <div key={highlight._id || highlight.id || index} className="border rounded-lg p-4 bg-gray-50 hover:shadow-md transition-shadow">
                               <div className="flex justify-between items-start mb-3">
                                 <div className="flex items-center gap-2">
@@ -4416,6 +4657,7 @@ export default function AdminDashboardIndex() {
                               <div className="flex gap-2">
                                 <button 
                                   onClick={() => {
+                                    console.log('Editing highlight:', highlight);
                                     setEditingHighlightItem(highlight);
                                     setHighlightFormData({
                                       title: highlight.title,
@@ -4424,12 +4666,15 @@ export default function AdminDashboardIndex() {
                                     });
                                     setShowHighlightForm(true);
                                   }}
-                                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                  className="text-sm font-medium"
                                 >
                                   Edit
                                 </button>
                                 <button 
-                                  onClick={() => deleteHighlight(highlight._id)}
+                                  onClick={() => {
+                                    const highlightId = highlight._id || highlight.id;
+                                    deleteHighlight(highlightId);
+                                  }}
                                   className="text-red-600 hover:text-red-800 text-sm font-medium"
                                 >
                                   Delete
@@ -4463,10 +4708,11 @@ export default function AdminDashboardIndex() {
                   <div className="bg-white rounded-lg border p-4">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-md font-medium">Main Heading</h4>
-                      <div className="flex gap-2">
+                      <div className="flex justify-end">
                         <CButton 
                           variant="outline"
-                          size="sm"
+                          fullWidth={false}
+                          className="px-3 py-2 text-xs rounded-md"
                           onClick={() => {
                             const newHeading = prompt('Enter main heading:', aboutContent.mainHeading);
                             if (newHeading && newHeading.trim()) {
@@ -4491,18 +4737,21 @@ export default function AdminDashboardIndex() {
                   <div className="bg-white rounded-lg border">
                     <div className="flex items-center justify-between p-4 border-b">
                       <h4 className="text-md font-medium">About Sections</h4>
-                      <CButton 
-                        variant="primary"
-                        size="sm"
-                        onClick={() => {
-                          setEditingAboutItem(null);
-                          setAboutFormData({ icon: 'bolt', title: '', description: '' });
-                          setShowAboutForm(true);
-                        }}
-                      >
-                        <Plus size={14} className="mr-1" />
-                        Add Section
-                      </CButton>
+                      <div className="flex justify-end">
+                        <CButton 
+                          variant="primary"
+                          fullWidth={false}
+                          className="px-3 py-2 text-xs rounded-md"
+                          onClick={() => {
+                            setEditingAboutItem(null);
+                            setAboutFormData({ icon: 'bolt', title: '', description: '' });
+                            setShowAboutForm(true);
+                          }}
+                        >
+                          <Plus size={14} className="mr-1" />
+                          Add Section
+                        </CButton>
+                      </div>
                     </div>
                     
                     {showAboutForm && (
@@ -4600,7 +4849,7 @@ export default function AdminDashboardIndex() {
                             <div className="flex items-start justify-between mb-3">
                               <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                  {section.icon === 'bolt' && <Zap size={16} className="text-blue-600" />}
+                                  {section.icon === 'bolt' && <Zap size={16} style={{color: Theme.colors.primary}} />}
                                   {section.icon === 'heart' && <span className="text-red-500">❤️</span>}
                                   {section.icon === 'shield' && <ShieldCheck size={16} className="text-green-600" />}
                                   {section.icon === 'star' && <span className="text-yellow-500">⭐</span>}
@@ -4682,14 +4931,14 @@ export default function AdminDashboardIndex() {
                       </h5>
                       <form onSubmit={(e) => {
                         e.preventDefault();
-                        if (editingTermsItem) {
-                          updateTermsSection(editingTermsItem._id, termsFormData);
+                        if (editingTermsItem && editingTermsItem.id) {
+                          updateTermsSection(editingTermsItem.id, termsFormData);
                         } else {
                           createTermsSection(termsFormData);
                         }
                         setShowTermsForm(false);
                         setEditingTermsItem(null);
-                        setTermsFormData({ title: '', content: '', sectionNumber: 1 });
+                        setTermsFormData({ title: '', content: '', sectionNumber: 1, order: 0 });
                       }}>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
@@ -4733,7 +4982,7 @@ export default function AdminDashboardIndex() {
                             onClick={() => {
                               setShowTermsForm(false);
                               setEditingTermsItem(null);
-                              setTermsFormData({ title: '', content: '', sectionNumber: 1 });
+                              setTermsFormData({ title: '', content: '', sectionNumber: 1, order: 0 });
                             }}
                           >
                             Cancel
@@ -4775,7 +5024,7 @@ export default function AdminDashboardIndex() {
                               });
                               setShowTermsForm(true);
                             }}
-                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                            className="text-sm font-medium"
                           >
                             Edit
                           </button>
@@ -4909,7 +5158,7 @@ export default function AdminDashboardIndex() {
                               });
                               setShowPrivacyForm(true);
                             }}
-                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                            className="text-sm font-medium"
                           >
                             Edit
                           </button>
@@ -5053,7 +5302,7 @@ export default function AdminDashboardIndex() {
                               });
                               setShowFAQForm(true);
                             }}
-                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                            className="text-sm font-medium"
                           >
                             Edit
                           </button>
@@ -5079,28 +5328,28 @@ export default function AdminDashboardIndex() {
           </div>
         </main>
       </div>
-      {/* Footer hidden for admin users */}
-      {/* <Footer /> */}
 
+      {/* Modals */}
+      <>
       {/* Test Form Modal */}
       {showTestForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h3 className="text-lg font-semibold mb-4">
-              {editingTest ? 'Edit Test' : 'Add New Test'}
-            </h3>
-            <form onSubmit={handleTestSubmit}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Test Name *
-                  </label>
-                  <input
-                    type="text"
+              <h3 className="text-lg font-semibold mb-4">
+                {editingTest ? 'Edit Test' : 'Add New Test'}
+              </h3>
+              <form onSubmit={handleTestSubmit}>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Test Name *
+                    </label>
+                    <input
+                      type="text"
                     required
                     value={testFormData.name}
                     onChange={(e) => setTestFormData({...testFormData, name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   />
                 </div>
                 <div>
@@ -5111,19 +5360,7 @@ export default function AdminDashboardIndex() {
                     value={testFormData.description}
                     onChange={(e) => setTestFormData({...testFormData, description: e.target.value})}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Icon URL
-                  </label>
-                  <input
-                    type="text"
-                    value={testFormData.icon}
-                    onChange={(e) => setTestFormData({...testFormData, icon: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter icon URL or icon name"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   />
                 </div>
                 <div>
@@ -5136,7 +5373,7 @@ export default function AdminDashboardIndex() {
                     step="0.01"
                     value={testFormData.price}
                     onChange={(e) => setTestFormData({...testFormData, price: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   />
                 </div>
                 <div>
@@ -5147,7 +5384,7 @@ export default function AdminDashboardIndex() {
                     required
                     value={testFormData.sampleType}
                     onChange={(e) => setTestFormData({...testFormData, sampleType: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   >
                     <option value="blood">Blood</option>
                     <option value="urine">Urine</option>
@@ -5166,7 +5403,7 @@ export default function AdminDashboardIndex() {
                     required
                     value={testFormData.time}
                     onChange={(e) => setTestFormData({...testFormData, time: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                     placeholder="e.g., 24 hours, 2-3 days"
                   />
                 </div>
@@ -5178,7 +5415,7 @@ export default function AdminDashboardIndex() {
                     type="text"
                     value={testFormData.category}
                     onChange={(e) => setTestFormData({...testFormData, category: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   />
                 </div>
               </div>
@@ -5195,11 +5432,10 @@ export default function AdminDashboardIndex() {
                     setTestFormData({
                       name: '',
                       description: '',
-                      icon: '',
                       price: '',
-                      sampleType: 'blood',
+                      sampleType: 'Blood',
                       time: '',
-                      category: 'general',
+                      category: '',
                       preTestRequirements: 'No specific requirements.'
                     });
                   }}
@@ -5230,7 +5466,7 @@ export default function AdminDashboardIndex() {
                     required
                     value={packageFormData.name}
                     onChange={(e) => setPackageFormData({...packageFormData, name: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   />
                 </div>
                 <div>
@@ -5241,34 +5477,10 @@ export default function AdminDashboardIndex() {
                     value={packageFormData.description}
                     onChange={(e) => setPackageFormData({...packageFormData, description: e.target.value})}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Icon URL
-                  </label>
-                  <input
-                    type="text"
-                    value={packageFormData.icon}
-                    onChange={(e) => setPackageFormData({...packageFormData, icon: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter icon URL or icon name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Included Tests
-                  </label>
-                  <textarea
-                    value={packageFormData.includedTests.join('\n')}
-                    onChange={(e) => setPackageFormData({...packageFormData, includedTests: e.target.value.split('\n').filter(test => test.trim())})}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Enter each test on a new line"
-                  />
-                </div>
-                <div>
+                                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Price *
                   </label>
@@ -5278,7 +5490,7 @@ export default function AdminDashboardIndex() {
                     step="0.01"
                     value={packageFormData.price}
                     onChange={(e) => setPackageFormData({...packageFormData, price: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   />
                 </div>
                 <div>
@@ -5290,7 +5502,7 @@ export default function AdminDashboardIndex() {
                     required
                     value={packageFormData.timeDuration}
                     onChange={(e) => setPackageFormData({...packageFormData, timeDuration: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                     placeholder="e.g., 24 hours, 2-3 days"
                   />
                 </div>
@@ -5302,7 +5514,7 @@ export default function AdminDashboardIndex() {
                     required
                     value={packageFormData.requiredSample}
                     onChange={(e) => setPackageFormData({...packageFormData, requiredSample: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   >
                     <option value="blood">Blood</option>
                     <option value="urine">Urine</option>
@@ -5321,7 +5533,7 @@ export default function AdminDashboardIndex() {
                     type="text"
                     value={packageFormData.category}
                     onChange={(e) => setPackageFormData({...packageFormData, category: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   />
                 </div>
                 <div className="flex items-center">
@@ -5386,7 +5598,7 @@ export default function AdminDashboardIndex() {
                       });
                       setEditingTestDetails(true);
                     }}
-                    className="text-blue-600 hover:text-blue-900 p-1"
+                    className="p-1"
                     title="Edit Details"
                   >
                     <Edit2 size={16} />
@@ -5420,7 +5632,7 @@ export default function AdminDashboardIndex() {
                           type="text"
                           value={testDetailsFormData.testName}
                           onChange={(e) => setTestDetailsFormData(prev => ({ ...prev, testName: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                         />
                       </div>
                       <div>
@@ -5432,7 +5644,7 @@ export default function AdminDashboardIndex() {
                             ...prev, 
                             requiredSamples: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
                           }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                           placeholder="blood, urine, saliva"
                         />
                       </div>
@@ -5442,13 +5654,13 @@ export default function AdminDashboardIndex() {
                           type="text"
                           value={testDetailsFormData.reportingTime}
                           onChange={(e) => setTestDetailsFormData(prev => ({ ...prev, reportingTime: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                           placeholder="24-48 hours"
                         />
                       </div>
                       <div className="flex gap-2">
                         <CButton type="submit" variant="primary">
-                          Save Changes
+                          Update
                         </CButton>
                         <CButton 
                           type="button" 
@@ -5508,7 +5720,7 @@ export default function AdminDashboardIndex() {
                       });
                       setEditingPackageDetails(true);
                     }}
-                    className="text-blue-600 hover:text-blue-900 p-1"
+                    className="p-1"
                     title="Edit Details"
                   >
                     <Edit2 size={16} />
@@ -5542,7 +5754,7 @@ export default function AdminDashboardIndex() {
                           type="text"
                           value={packageDetailsFormData.packageName}
                           onChange={(e) => setPackageDetailsFormData(prev => ({ ...prev, packageName: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                         />
                       </div>
                       <div>
@@ -5554,7 +5766,7 @@ export default function AdminDashboardIndex() {
                             ...prev, 
                             requiredSamples: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
                           }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                           placeholder="blood, urine, saliva"
                         />
                       </div>
@@ -5564,7 +5776,7 @@ export default function AdminDashboardIndex() {
                           type="text"
                           value={packageDetailsFormData.reportingTime}
                           onChange={(e) => setPackageDetailsFormData(prev => ({ ...prev, reportingTime: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                           placeholder="24-48 hours"
                         />
                       </div>
@@ -5580,13 +5792,13 @@ export default function AdminDashboardIndex() {
                               // Invalid JSON, don't update state
                             }
                           }}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 h-32 font-mono text-sm"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 h-32 font-mono text-sm"
                           placeholder='[{"name": "Test Name", "description": "Test Description"}]'
                         />
                       </div>
                       <div className="flex gap-2">
                         <CButton type="submit" variant="primary">
-                          Save Changes
+                          Update
                         </CButton>
                         <CButton 
                           type="button" 
@@ -5599,7 +5811,7 @@ export default function AdminDashboardIndex() {
                     </div>
                   </form>
                 ) : (
-                  <>
+                  <div>
                     <div>
                       <h4 className="font-medium text-gray-900">Package Name</h4>
                       <p className="text-gray-600">{details.packageName}</p>
@@ -5638,13 +5850,14 @@ export default function AdminDashboardIndex() {
                         <p className="text-gray-500 mt-1">No tests included</p>
                       )}
                     </div>
-                  </>
+                  </div>
                 )}
               </div>
             ))}
           </div>
         </div>
       )}
+      </>
     </div>
   );
 }

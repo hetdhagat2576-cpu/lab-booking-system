@@ -48,6 +48,9 @@ const TechnicianDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showAllToday, setShowAllToday] = useState(false);
   const [activeView, setActiveView] = useState('overview');
+  
+  // WebSocket connection for real-time notifications
+  const [ws, setWs] = useState(null);
 
   useEffect(() => {
     const styleElement = document.createElement('style');
@@ -81,6 +84,56 @@ const TechnicianDashboard = () => {
       setLoading(false);
     }
   }, [user]);
+
+  // Initialize WebSocket connection
+  useEffect(() => {
+    if (user?.token) {
+      const websocketUrl = `${process.env.REACT_APP_WS_URL || 'ws://localhost:5001'}`;
+      const websocket = new WebSocket(websocketUrl);
+      
+      websocket.onopen = () => {
+        console.log('Technician WebSocket connected');
+        setWs(websocket);
+      };
+      
+      websocket.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          console.log('Technician WebSocket message received:', message);
+          
+          if (message.type === 'booking_approved') {
+            console.log('New booking approved by admin:', message.data);
+            // Refresh bookings immediately when a new booking is approved
+            fetchBookings();
+            
+            // Show notification to technician
+            if (message.data.booking) {
+              const booking = message.data.booking;
+              alerts.reportSuccess();
+              console.log(`New approved booking: ${booking.patientName || booking.user?.name} - ${booking.labName || booking.labAppointment}`);
+            }
+          }
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+      
+      websocket.onerror = (error) => {
+        console.error('Technician WebSocket error:', error);
+      };
+      
+      websocket.onclose = () => {
+        console.log('Technician WebSocket disconnected');
+        setWs(null);
+      };
+      
+      return () => {
+        if (websocket.readyState === WebSocket.OPEN) {
+          websocket.close();
+        }
+      };
+    }
+  }, [user, fetchBookings]);
 
   const fetchPendingReports = useCallback(async () => {
     try {
