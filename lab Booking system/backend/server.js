@@ -76,7 +76,6 @@ app.use('/api/test-details', require('./routes/testDetailRoutes'));
 app.use('/api/package-details', require('./routes/packageDetailRoutes'));
 app.use('/api/faq', require('./routes/faqRoutes'));
 app.use('/api/health-concerns', require('./routes/healthConcernRoutes'));
-app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 // Admin routes (list users, etc.)
 app.use('/api/admin', require('./routes/adminRoutes'));
 

@@ -8,7 +8,7 @@ const {
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 // Public routes
-router.get('/:id/details', getPackageDetails);
+router.get('/:id', getPackageDetails);
 
 // Admin only routes
 router.put('/:id/details', protect, authorize('admin'), updatePackageDetails);

@@ -122,15 +122,7 @@ export default function AllHealthPackages() {
                     </div>
                   </div>
                   <h3 className="text-lg font-bold text-slate-900">{pkg.title}</h3>
-                  <div className="flex items-center gap-2 mt-2 mb-4">
-                    <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
-                      {pkg.tests ? `${pkg.tests} Tests` : 'Package'}
-                    </span>
-                    <span className="text-xs font-medium text-slate-500">
-                      {pkg.reportTime}
-                    </span>
-                  </div>
-                  <div className="flex items-baseline gap-3 mt-4 mb-4">
+                                    <div className="flex items-baseline gap-3 mt-4 mb-4">
                     <span className="text-2xl font-black text-slate-900">₹{pkg.price}</span>
                     {pkg.originalPrice && (
                       <span className="text-slate-400 line-through text-xs font-medium">₹{pkg.originalPrice}</span>
@@ -149,7 +141,7 @@ export default function AllHealthPackages() {
                         onClick={() => {
                           const packageId = pkg._id || pkg.packageId || pkg.id;
                           if (packageId) {
-                            navigate(`/recommended-detail?type=${pkg.type || 'package'}&category=${pkg.category}&id=${packageId}`);
+                            navigate(`/package-details?id=${packageId}`);
                           } else {
                             console.error('Package ID is missing:', pkg);
                           }

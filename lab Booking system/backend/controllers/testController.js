@@ -52,14 +52,23 @@ const getTestById = async (req, res) => {
   try {
     const { id } = req.params;
     
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid test ID'
-      });
+    let test;
+    
+    // First try to find by ObjectId if it's a valid ObjectId
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      test = await Test.findById(id);
     }
     
-    const test = await Test.findById(id);
+    // If not found by ObjectId, try to find by other fields
+    if (!test) {
+      test = await Test.findOne({ 
+        $or: [
+          { name: id },
+          { title: id },
+          { category: id }
+        ]
+      });
+    }
     
     if (!test) {
       return res.status(404).json({

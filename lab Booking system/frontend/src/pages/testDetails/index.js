@@ -140,9 +140,15 @@ export default function TestDetails() {
         <main className="flex-grow container mx-auto px-4 py-8 mt-20">
           <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
             <h2 className="text-2xl font-bold text-slate-800 mb-4">Test Not Found</h2>
-            <CButton variant="primary" onClick={() => navigate("/dashboard")}>
-              Go to Dashboard
-            </CButton>
+            <p className="text-slate-600 mb-6">The test you're looking for is not available in our database.</p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <CButton variant="primary" onClick={() => navigate("/dashboard")}>
+                Go to Dashboard
+              </CButton>
+              <CButton variant="outline" onClick={() => navigate(-1)}>
+                Go Back
+              </CButton>
+            </div>
           </div>
         </main>
         <Footer />

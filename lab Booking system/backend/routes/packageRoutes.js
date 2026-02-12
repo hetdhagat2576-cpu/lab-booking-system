@@ -19,7 +19,6 @@ router.get('/categories', getPackageCategories);
 router.get('/popular', getPopularPackages);
 router.get('/recommended', getRecommendedPackages);
 router.get('/:id', getPackageById);
-router.get('/:id/details', getPackageDetails);
 
 // Admin only routes
 router.post('/', protect, authorize('admin'), createPackage);

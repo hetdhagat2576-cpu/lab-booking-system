@@ -7,20 +7,19 @@ const getPackageDetails = async (req, res) => {
   try {
     const { id } = req.params;
     
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid package ID'
-      });
+    let package;
+    
+    // First try to find by ObjectId if it's a valid ObjectId
+    if (mongoose.Types.ObjectId.isValid(id)) {
+      package = await Package.findById(id)
+        .populate({
+          path: 'testsIncluded',
+          select: 'name description duration sampleType',
+          options: { sort: { name: 1 } }
+        });
     }
     
-    const package = await Package.findById(id)
-      .populate({
-        path: 'testsIncluded',
-        select: 'name description duration sampleType',
-        options: { sort: { name: 1 } }
-      });
-    
+    // If not found by ObjectId, return 404
     if (!package) {
       return res.status(404).json({
         success: false,

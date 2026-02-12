@@ -57,6 +57,13 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   }
 
   if (requiredRole && user.role !== requiredRole) {
+    // Debug logging
+    console.log('ProtectedRoute - Role mismatch:', {
+      requiredRole,
+      userRole: user.role,
+      userType: typeof user.role,
+      user
+    });
     // Redirect to appropriate login page based on required role
     const loginRoutes = {
       'admin': '/admin-login',
