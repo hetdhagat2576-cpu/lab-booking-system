@@ -121,7 +121,7 @@ export default function LabTechnicianLogin() {
             showCancelButton: true,
             confirmButtonText: confirmButtonText,
             cancelButtonText: 'Cancel',
-            confirmButtonColor: '#3085d6',
+            confirmButtonColor: Theme.colors.primary,
             cancelButtonColor: '#d33',
             didOpen: () => {
               // Render reCAPTCHA inside the SweetAlert
@@ -242,7 +242,7 @@ export default function LabTechnicianLogin() {
           icon: 'success',
           title: 'Lab Technician Login Successful!',
           text: 'Welcome back, Technician!',
-          confirmButtonColor: '#3085d6',
+          confirmButtonColor: Theme.colors.primary,
           timer: 2000,
           timerProgressBar: true,
           showConfirmButton: false

@@ -8,58 +8,108 @@ const LabReport = ({ patientInfo, testResults, reportInfo }) => {
       fontFamily: 'Arial, sans-serif', 
       maxWidth: '800px', 
       margin: '0 auto', 
-      padding: '20px',
+      padding: '30px',
       backgroundColor: 'white',
-      border: '1px solid #ddd'
+      border: '2px solid #2a7a8e',
+      borderRadius: '12px',
+      boxShadow: '0 8px 32px rgba(42, 122, 142, 0.15)'
     }}>
       {/* Header */}
-      <div style={{ textAlign: 'center', borderBottom: '3px solid #007bff', paddingBottom: '20px', marginBottom: '30px' }}>
-        <h1 style={{ color: '#2c3e50', margin: '0', fontSize: '28px', fontWeight: 'bold' }}>
+      <div style={{ 
+        textAlign: 'center', 
+        borderBottom: '3px solid #2a7a8e', 
+        paddingBottom: '25px', 
+        marginBottom: '30px',
+        background: 'linear-gradient(135deg, #2a7a8e 0%, #98d2e0 100%)',
+        margin: '-30px -30px 30px -30px',
+        padding: '30px',
+        borderRadius: '12px 12px 0 0'
+      }}>
+        <h1 style={{ 
+          color: 'white', 
+          margin: '0', 
+          fontSize: '32px', 
+          fontWeight: 'bold',
+          textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          letterSpacing: '1px'
+        }}>
           LABORATORY TEST REPORT
         </h1>
-        <p style={{ color: '#666', margin: '5px 0', fontSize: '14px' }}>
+        <p style={{ 
+          color: 'rgba(255, 255, 255, 0.9)', 
+          margin: '8px 0 0 0', 
+          fontSize: '16px',
+          fontWeight: '500'
+        }}>
           Report ID: {patientInfo?.appointmentId || 'N/A'}
-        </p>
-        <p style={{ color: '#666', margin: '5px 0', fontSize: '14px' }}>
-          Generated on: {currentDate}
         </p>
       </div>
 
       {/* Patient Information */}
-      <div style={{ marginBottom: '30px' }}>
+      <div style={{ marginBottom: '35px' }}>
         <h2 style={{ 
-          backgroundColor: '#f8f9fa', 
-          padding: '10px 15px', 
-          margin: '0 0 15px 0', 
-          borderLeft: '4px solid #007bff',
-          fontSize: '18px',
-          color: '#2c3e50'
+          background: 'linear-gradient(135deg, #2a7a8e 0%, #98d2e0 100%)', 
+          padding: '12px 20px', 
+          margin: '0 0 20px 0', 
+          borderRadius: '8px',
+          fontSize: '20px',
+          color: 'white',
+          fontWeight: '600',
+          boxShadow: '0 4px 12px rgba(42, 122, 142, 0.2)'
         }}>
           Patient Information
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: '1fr 1fr', 
+          gap: '25px',
+          padding: '20px',
+          backgroundColor: '#f8fafc',
+          borderRadius: '8px',
+          border: '1px solid #e2e8f0'
+        }}>
           <div>
-            <p style={{ margin: '5px 0' }}><strong>Name:</strong> {patientInfo?.name || 'N/A'}</p>
-            <p style={{ margin: '5px 0' }}><strong>Patient ID:</strong> {patientInfo?.patientId || 'N/A'}</p>
-            <p style={{ margin: '5px 0' }}><strong>Age:</strong> {patientInfo?.age || 'N/A'}</p>
+            <p style={{ margin: '8px 0', fontSize: '15px' }}>
+              <strong style={{ color: '#2a7a8e' }}>Name:</strong> 
+              <span style={{ color: '#334155', marginLeft: '8px' }}>{patientInfo?.name || 'N/A'}</span>
+            </p>
+            <p style={{ margin: '8px 0', fontSize: '15px' }}>
+              <strong style={{ color: '#2a7a8e' }}>Patient ID:</strong> 
+              <span style={{ color: '#334155', marginLeft: '8px' }}>{patientInfo?.patientId || 'N/A'}</span>
+            </p>
+            <p style={{ margin: '8px 0', fontSize: '15px' }}>
+              <strong style={{ color: '#2a7a8e' }}>Age:</strong> 
+              <span style={{ color: '#334155', marginLeft: '8px' }}>{patientInfo?.age || 'N/A'}</span>
+            </p>
           </div>
           <div>
-            <p style={{ margin: '5px 0' }}><strong>Gender:</strong> {patientInfo?.gender || 'N/A'}</p>
-            <p style={{ margin: '5px 0' }}><strong>Collection Date:</strong> {reportInfo?.collectionDate || 'N/A'}</p>
-            <p style={{ margin: '5px 0' }}><strong>Referred By:</strong> {reportInfo?.referredBy || 'N/A'}</p>
+            <p style={{ margin: '8px 0', fontSize: '15px' }}>
+              <strong style={{ color: '#2a7a8e' }}>Gender:</strong> 
+              <span style={{ color: '#334155', marginLeft: '8px' }}>{patientInfo?.gender || 'N/A'}</span>
+            </p>
+            <p style={{ margin: '8px 0', fontSize: '15px' }}>
+              <strong style={{ color: '#2a7a8e' }}>Collection Date:</strong> 
+              <span style={{ color: '#334155', marginLeft: '8px' }}>{reportInfo?.collectionDate || 'N/A'}</span>
+            </p>
+            <p style={{ margin: '8px 0', fontSize: '15px' }}>
+              <strong style={{ color: '#2a7a8e' }}>Referred By:</strong> 
+              <span style={{ color: '#334155', marginLeft: '8px' }}>{reportInfo?.referredBy || 'N/A'}</span>
+            </p>
           </div>
         </div>
       </div>
 
       {/* Test Results */}
-      <div style={{ marginBottom: '30px' }}>
+      <div style={{ marginBottom: '35px' }}>
         <h2 style={{ 
-          backgroundColor: '#f8f9fa', 
-          padding: '10px 15px', 
-          margin: '0 0 15px 0', 
-          borderLeft: '4px solid #007bff',
-          fontSize: '18px',
-          color: '#2c3e50'
+          background: 'linear-gradient(135deg, #2a7a8e 0%, #98d2e0 100%)', 
+          padding: '12px 20px', 
+          margin: '0 0 20px 0', 
+          borderRadius: '8px',
+          fontSize: '20px',
+          color: 'white',
+          fontWeight: '600',
+          boxShadow: '0 4px 12px rgba(42, 122, 142, 0.2)'
         }}>
           Test Results
         </h2>
@@ -67,52 +117,61 @@ const LabReport = ({ patientInfo, testResults, reportInfo }) => {
           <table style={{ 
             width: '100%', 
             borderCollapse: 'collapse', 
-            border: '1px solid #ddd',
-            fontSize: '14px'
+            borderRadius: '8px',
+            overflow: 'hidden',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.05)'
           }}>
             <thead>
-              <tr style={{ backgroundColor: '#007bff', color: 'white' }}>
-                <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #ddd' }}>Test Name</th>
-                <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #ddd' }}>Result</th>
-                <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #ddd' }}>Unit</th>
-                <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #ddd' }}>Reference Range</th>
-                <th style={{ padding: '12px', textAlign: 'left', border: '1px solid #ddd' }}>Status</th>
+              <tr style={{ 
+                background: 'linear-gradient(135deg, #2a7a8e 0%, #98d2e0 100%)', 
+                color: 'white',
+                textAlign: 'left'
+              }}>
+                <th style={{ padding: '12px 15px', border: '1px solid #2a7a8e' }}>Test Name</th>
+                <th style={{ padding: '12px 15px', border: '1px solid #2a7a8e' }}>Result</th>
+                <th style={{ padding: '12px 15px', border: '1px solid #2a7a8e' }}>Unit</th>
+                <th style={{ padding: '12px 15px', border: '1px solid #2a7a8e' }}>Reference Range</th>
+                <th style={{ padding: '12px 15px', border: '1px solid #2a7a8e' }}>Status</th>
               </tr>
             </thead>
             <tbody>
               {testResults.map((test, index) => (
                 <tr key={index} style={{
-                  backgroundColor: test.status === 'High' || test.status === 'Low' ? '#fff5f5' : 'white'
+                  backgroundColor: index % 2 === 0 ? '#f8fafc' : '#ffffff',
+                  transition: 'all 0.3s ease'
                 }}>
-                  <td style={{ padding: '10px', border: '1px solid #ddd', fontWeight: 'bold' }}>
+                  <td style={{ padding: '12px 15px', border: '1px solid #e2e8f0', fontWeight: 'bold', color: '#334155' }}>
                     {test.testName}
                   </td>
                   <td style={{ 
-                    padding: '10px', 
-                    border: '1px solid #ddd',
-                    color: test.status === 'High' || test.status === 'Low' ? '#d9534f' : '#333',
-                    fontWeight: test.status === 'High' || test.status === 'Low' ? 'bold' : 'normal'
+                    padding: '12px 15px', 
+                    border: '1px solid #e2e8f0',
+                    color: test.status === 'High' || test.status === 'Low' ? '#dc2626' : '#059669',
+                    fontWeight: '600'
                   }}>
                     {test.result}
                   </td>
-                  <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                  <td style={{ padding: '12px 15px', border: '1px solid #e2e8f0', color: '#334155' }}>
                     {test.unit || 'N/A'}
                   </td>
-                  <td style={{ padding: '10px', border: '1px solid #ddd', fontSize: '12px' }}>
+                  <td style={{ padding: '12px 15px', border: '1px solid #e2e8f0', fontSize: '13px', color: '#64748b' }}>
                     {test.referenceRange || 'N/A'}
                   </td>
-                  <td style={{ padding: '10px', border: '1px solid #ddd' }}>
+                  <td style={{ padding: '12px 15px', border: '1px solid #e2e8f0' }}>
                     <span style={{
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      fontSize: '11px',
-                      fontWeight: 'bold',
-                      backgroundColor: test.status === 'Normal' ? '#d4edda' : 
-                                     test.status === 'High' ? '#f8d7da' : 
-                                     test.status === 'Low' ? '#fff3cd' : '#e2e3e5',
-                      color: test.status === 'Normal' ? '#155724' : 
-                             test.status === 'High' ? '#721c24' : 
-                             test.status === 'Low' ? '#856404' : '#6c757d'
+                      padding: '6px 12px',
+                      borderRadius: '20px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      backgroundColor: test.status === 'Normal' ? '#dcfce7' : 
+                                     test.status === 'High' ? '#fee2e2' : 
+                                     test.status === 'Low' ? '#fef3c7' : '#f1f5f9',
+                      color: test.status === 'Normal' ? '#166534' : 
+                             test.status === 'High' ? '#dc2626' : 
+                             test.status === 'Low' ? '#d97706' : '#64748b',
+                      border: `1px solid ${test.status === 'Normal' ? '#bbf7d0' : 
+                                          test.status === 'High' ? '#fecaca' : 
+                                          test.status === 'Low' ? '#fed7aa' : '#e2e8f0'}`
                     }}>
                       {test.status || 'Normal'}
                     </span>
@@ -122,62 +181,42 @@ const LabReport = ({ patientInfo, testResults, reportInfo }) => {
             </tbody>
           </table>
         ) : (
-          <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-            <p>No test results available</p>
+          <div style={{ 
+            textAlign: 'center', 
+            padding: '40px', 
+            color: '#64748b',
+            backgroundColor: '#f8fafc',
+            borderRadius: '8px',
+            border: '1px solid #e2e8f0'
+          }}>
+            <p style={{ fontSize: '16px' }}>No test results available</p>
           </div>
         )}
       </div>
 
-      {/* Summary */}
-      <div style={{ marginBottom: '30px' }}>
-        <h2 style={{ 
-          backgroundColor: '#f8f9fa', 
-          padding: '10px 15px', 
-          margin: '0 0 15px 0', 
-          borderLeft: '4px solid #007bff',
-          fontSize: '18px',
-          color: '#2c3e50'
-        }}>
-          Test Summary
-        </h2>
-        <div style={{ 
-          padding: '15px', 
-          backgroundColor: '#f8f9fa', 
-          borderRadius: '5px',
-          lineHeight: '1.6'
-        }}>
-          <p style={{ margin: '0', color: '#555' }}>
-            This report includes {testResults?.length || 0} laboratory tests performed on the specified collection date.
-            {testResults?.some(test => test.status === 'High' || test.status === 'Low') && 
-              ` Some results fall outside the normal reference range and may require further medical attention.`
-            }
-            {testResults?.every(test => test.status === 'Normal' || !test.status) && 
-              ` All results are within normal limits.`
-            }
-          </p>
-        </div>
-      </div>
-
       {/* Recommendations */}
-      <div style={{ marginBottom: '30px' }}>
+      <div style={{ marginBottom: '35px' }}>
         <h2 style={{ 
-          backgroundColor: '#f8f9fa', 
-          padding: '10px 15px', 
-          margin: '0 0 15px 0', 
-          borderLeft: '4px solid #007bff',
-          fontSize: '18px',
-          color: '#2c3e50'
+          background: 'linear-gradient(135deg, #2a7a8e 0%, #98d2e0 100%)', 
+          padding: '12px 20px', 
+          margin: '0 0 20px 0', 
+          borderRadius: '8px',
+          fontSize: '20px',
+          color: 'white',
+          fontWeight: '600',
+          boxShadow: '0 4px 12px rgba(42, 122, 142, 0.2)'
         }}>
           Recommendations
         </h2>
         <div style={{ 
-          padding: '15px', 
-          backgroundColor: '#fff3cd', 
-          borderRadius: '5px',
-          border: '1px solid #ffeaa7',
-          lineHeight: '1.6'
+          padding: '20px', 
+          backgroundColor: '#f0f9ff', 
+          borderRadius: '8px',
+          border: '1px solid #bae6fd',
+          lineHeight: '1.6',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
         }}>
-          <p style={{ margin: '0', color: '#856404' }}>
+          <p style={{ margin: '0', color: '#1e40af', fontSize: '15px' }}>
             Please consult with your healthcare provider for detailed interpretation of these results.
             {testResults?.some(test => test.status === 'High' || test.status === 'Low') && 
               ` Some abnormal values were detected. Follow-up consultation is recommended.`
