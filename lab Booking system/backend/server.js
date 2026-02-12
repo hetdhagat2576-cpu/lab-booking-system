@@ -113,6 +113,10 @@ const server = http.createServer(app);
 // WebSocket setup
 const wss = new WebSocket.Server({ server });
 
+// Initialize WebSocket server in booking controller for real-time notifications
+const bookingController = require('./controllers/bookingController');
+bookingController.setWebSocketServer(wss);
+
 wss.on('connection', (ws) => {
   console.log('New WebSocket connection established');
   

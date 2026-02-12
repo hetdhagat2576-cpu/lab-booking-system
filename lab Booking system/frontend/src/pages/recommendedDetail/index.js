@@ -367,41 +367,7 @@ export default function RecommendedDetail() {
             {/* RIGHT COLUMN - SIDEBAR */}
             <div className="lg:w-1/3 flex flex-col justify-center">
 
-              {/* Most Booked Package Card */}
-              <div className="bg-emerald-50 rounded-3xl p-6 border border-emerald-100 sticky top-24 w-full">
-                <h3 className="font-bold text-slate-900 mb-4">Most Booked Package</h3>
-                
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-emerald-100">
-                  
-                  <h4 className="font-bold text-slate-900 mb-2 leading-tight">{FULL_BODY_PACKAGES[0].title}</h4>
-                  
-                  <div className="flex items-center gap-4 text-xs text-slate-500 mb-3">
-                    <div className="flex items-center gap-1">
-                      <FlaskConical className="w-3 h-3" /> {FULL_BODY_PACKAGES[0].tests} tests
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <FileText className="w-3 h-3" /> Reports in {FULL_BODY_PACKAGES[0].reportTime}
-                    </div>
-                  </div>
-
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-lg font-black text-slate-900">₹{FULL_BODY_PACKAGES[0].price}</span>
-                        <span className="text-xs text-slate-400 line-through">₹{FULL_BODY_PACKAGES[0].originalPrice}</span>
-                      </div>
-                      <div className="text-[10px] text-red-500 font-bold">{FULL_BODY_PACKAGES[0].discount}% OFF</div>
-                    </div>
-                    <button 
-                      onClick={() => navigate(`/new-booking?package=${FULL_BODY_PACKAGES[0].id}&price=${FULL_BODY_PACKAGES[0].price}`)}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors"
-                    >
-                      Book Now
-                    </button>
-                  </div>
-                </div>
-              </div>
-
+              
             </div>
           </div>
         </div>

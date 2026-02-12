@@ -173,35 +173,35 @@ export default function FeedbackIndex() {
   };
 
   const RatingSelect = ({ label, name }) => (
-    <div className="space-y-1">
-      <label className="text-sm font-medium text-gray-700">{label}</label>
+    <div className="space-y-2">
+      <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">{label}</label>
       <select
-        className="w-full h-10 border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        className="w-full h-8 border border-gray-300 rounded-lg px-3 py-1 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all bg-white hover:border-gray-400"
         value={form[name]}
         onChange={(e) => handleChange(name, Number(e.target.value))}
       >
         {[1,2,3,4,5].map((n) => (
-          <option key={n} value={n}>{n}</option>
+          <option key={n} value={n}>{n} - {n === 1 ? 'Poor' : n === 2 ? 'Fair' : n === 3 ? 'Good' : n === 4 ? 'Very Good' : 'Excellent'}</option>
         ))}
       </select>
     </div>
   );
 
   const RadioGroup = ({ label, name, options }) => (
-    <div className="space-y-1">
-      <label className="text-sm font-medium text-gray-700">{label}</label>
-      <div className="flex flex-wrap gap-2">
+    <div className="space-y-2">
+      <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">{label}</label>
+      <div className="flex flex-wrap gap-3">
         {options.map(({ label: l, value }) => (
-          <label key={value} className="inline-flex items-center gap-1 text-sm">
+          <label key={value} className="inline-flex items-center gap-2 text-sm cursor-pointer group">
             <input
               type="radio"
               name={name}
               value={value}
               checked={form[name] === value}
               onChange={(e) => handleChange(name, e.target.value)}
-              className="text-primary focus:ring-primary"
+              className="w-4 h-4 text-blue-600 focus:ring-blue-500 focus:ring-2 border-gray-300 group-hover:border-blue-400 transition-colors"
             />
-            <span className="text-gray-700">{l}</span>
+            <span className="text-gray-700 group-hover:text-gray-900 transition-colors">{l}</span>
           </label>
         ))}
       </div>
@@ -229,86 +229,45 @@ export default function FeedbackIndex() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-6 space-y-6 border border-secondary/30">
-          <section>
-            <h2 className="text-xl font-bold text-gray-800 mb-3">Online Booking Experience</h2>
+        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-lg p-8 space-y-6 border border-gray-200">
+          <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <RatingSelect label="Ease of using online appointment system (1-5)" name="bookingEaseRating" />
-              <RadioGroup
-                label="Was the appointment confirmation clear and on time?"
-                name="confirmationExperience"
-                options={[
-                  { label: "Yes, immediately", value: "immediate" },
-                  { label: "Yes, but it was delayed", value: "delayed" },
-                  { label: "No, I didn't receive a confirmation", value: "none" },
-                ]}
-              />
-            </div>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-bold text-gray-800 mb-3">Lab Visit & Clinical Care</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <RatingSelect label="Friendliness and professionalism of the lab staff (1-5)" name="staffFriendlinessRating" />
               <RatingSelect label="Satisfaction with wait time (1-5)" name="waitTimeSatisfactionRating" />
-              <RadioGroup
-                label="Average wait time"
-                name="averageWaitCategory"
-                options={[
-                  { label: "< 10 mins", value: "<10" },
-                  { label: "10–20 mins", value: "10-20" },
-                  { label: "20+ mins", value: "20+" },
-                ]}
-              />
-              <RadioGroup
-                label="Was the sample collection process explained clearly?"
-                name="sampleExplanationClarity"
-                options={[
-                  { label: "Yes, very clearly", value: "very" },
-                  { label: "Somewhat clearly", value: "somewhat" },
-                  { label: "Not at all", value: "not" },
-                ]}
-              />
-            </div>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-bold text-gray-800 mb-3">Results & Follow-up</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <RatingSelect label="Turnaround time for test results (1-5)" name="turnaroundSatisfactionRating" />
               <RatingSelect label="Ease of accessing reports through online portal (1-5)" name="portalEaseRating" />
-            </div>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-bold text-gray-800 mb-3">Overall & Comments</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <label className="text-sm font-medium text-gray-700">Feedback Status</label>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Feedback Status</label>
                 <select
-                  className="w-full h-10 border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full h-8 border border-gray-300 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   value={form.status}
                   onChange={(e) => handleChange("status", e.target.value)}
                 >
-                  <option value="positive">Positive</option>
-                  <option value="negative">Negative</option>
+                  <option value="positive">😊 Positive</option>
+                  <option value="negative">😞 Negative</option>
                 </select>
               </div>
-              <CInput
-                label="One thing we could do to make your next visit better"
-                placeholder="Write your suggestion"
-                value={form.comment}
-                onChange={(e) => handleChange("comment", e.target.value)}
-                className="h-10 text-sm"
-              />
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Suggestions for Improvement</label>
+                <CInput
+                  placeholder="Share your thoughts on how we can improve..."
+                  value={form.comment}
+                  onChange={(e) => handleChange("comment", e.target.value)}
+                  className="h-8 text-sm border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
             </div>
-          </section>
+          </div>
 
-
-
-          <div className="flex justify-center mt-6">
-            <CButton type="submit" disabled={submitting}>
-              <Send size={18} /> {submitting ? "Submitting..." : "Submit Feedback"}
+          <div className="flex justify-center pt-4 border-t border-gray-200">
+            <CButton 
+              type="submit" 
+              disabled={submitting}
+              className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Send size={18} className="mr-2" />
+              {submitting ? "Submitting..." : "Submit Feedback"}
             </CButton>
           </div>
         </form>

@@ -66,7 +66,8 @@ const getPackageDetails = async (req, res) => {
     const packageDetails = {
       packageName: package.name,
       requiredSamples: Array.from(allSampleTypes),
-      reportingTime: maxDuration
+      reportingTime: maxDuration,
+      includedTests: package.testsIncluded.map(test => test.name)
     };
     
     res.status(200).json({
@@ -124,7 +125,43 @@ const updatePackageDetails = async (req, res) => {
   }
 };
 
+// Delete package details
+const deletePackageDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid package ID'
+      });
+    }
+    
+    const package = await Package.findByIdAndDelete(id);
+    
+    if (!package) {
+      return res.status(404).json({
+        success: false,
+        message: 'Package not found'
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: 'Package details deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting package details:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting package details',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getPackageDetails,
-  updatePackageDetails
+  updatePackageDetails,
+  deletePackageDetails
 };

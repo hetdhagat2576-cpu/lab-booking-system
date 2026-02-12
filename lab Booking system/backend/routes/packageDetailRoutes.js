@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const {
   getPackageDetails,
-  updatePackageDetails
+  updatePackageDetails,
+  deletePackageDetails
 } = require('../controllers/packageDetailController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -11,5 +12,6 @@ router.get('/:id/details', getPackageDetails);
 
 // Admin only routes
 router.put('/:id/details', protect, authorize('admin'), updatePackageDetails);
+router.delete('/:id/details', protect, authorize('admin'), deletePackageDetails);
 
 module.exports = router;

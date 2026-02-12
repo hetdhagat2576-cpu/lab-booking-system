@@ -6,9 +6,45 @@ import CButton from "../../components/cButton";
 import IconConfig from "../../components/icon/index.js";
 import Theme from "../../config/theam/index.js";
 import LogoutConfirmation from "../../components/logoutConfirmation/index.js";
-import { PieChart, Pie, Cell, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import Swal from 'sweetalert2';
 import { } from "../../config/staticData";
+
+// Icon rendering function for health concerns
+const renderHealthConcernIcon = (iconKey) => {
+  const IconComponent = IconConfig[iconKey] || IconConfig.FlaskConical;
+  return <IconComponent size={20} className="text-blue-600" />;
+};
+
+// StarRating Component
+const StarRating = ({ rating, maxRating = 5, size = 'small', showValue = true, className = '' }) => {
+  const sizeClasses = {
+    small: 'w-4 h-4',
+    medium: 'w-5 h-5',
+    large: 'w-6 h-6'
+  };
+
+  const starSize = sizeClasses[size] || sizeClasses.small;
+
+  return (
+    <div className={`flex items-center gap-1 ${className}`}>
+      {[...Array(maxRating)].map((_, i) => (
+        <svg
+          key={i}
+          className={`${starSize} ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'} transition-colors duration-200`}
+          viewBox="0 0 20 20"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+        </svg>
+      ))}
+      {showValue && (
+        <span className="ml-1 text-sm font-medium text-gray-700">
+          {rating}/{maxRating}
+        </span>
+      )}
+    </div>
+  );
+};
 
 
 const SidebarItem = ({ id, label, icon: Icon, activeTab, setActiveTab, ChevronRight }) => (
@@ -87,59 +123,11 @@ export default function AdminDashboardIndex() {
     id: '',
     title: '',
     iconKey: 'FlaskConical',
-    description: ''
+    description: '',
+    isActive: true,
+    order: 0,
+    rating: 3
   });
-  
-  // Chart data processing
-  const [bookingStatusData, setBookingStatusData] = useState([]);
-  const [userRoleData, setUserRoleData] = useState([]);
-  const [monthlyBookingData, setMonthlyBookingData] = useState([]);
-  
-  // Process data for charts whenever stats or bookings change
-  useEffect(() => {
-    // Booking status pie chart data
-    const statusData = [
-      { name: 'Pending', value: stats.pendingBookings, color: '#f59e0b' },
-      { name: 'Approved', value: stats.approvedBookings, color: '#10b981' },
-      { name: 'Rejected', value: stats.rejectedBookings, color: '#ef4444' }
-    ].filter(item => item.value > 0);
-    setBookingStatusData(statusData);
-    
-    // User role distribution data
-    const roleData = [
-      { name: 'Admins', value: stats.adminUsers, color: '#3b82f6' },
-      { name: 'Technicians', value: stats.labtechUsers, color: '#8b5cf6' },
-      { name: 'Users', value: stats.regularUsers, color: '#06b6d4' }
-    ].filter(item => item.value > 0);
-    setUserRoleData(roleData);
-    
-    // Monthly booking trend data (last 6 months)
-    const monthlyData = [];
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    
-    for (let i = 5; i >= 0; i--) {
-      const monthIndex = (currentMonth - i + 12) % 12;
-      const year = currentMonth - i >= 0 ? currentYear : currentYear - 1;
-      const monthStart = new Date(year, monthIndex, 1);
-      const monthEnd = new Date(year, monthIndex + 1, 0);
-      
-      const monthBookings = bookings.filter(booking => {
-        const bookingDate = new Date(booking.createdAt || booking.date);
-        return bookingDate >= monthStart && bookingDate <= monthEnd;
-      });
-      
-      monthlyData.push({
-        month: monthNames[monthIndex],
-        bookings: monthBookings.length,
-        approved: monthBookings.filter(b => (b.adminStatus || '').toLowerCase() === 'approved').length,
-        pending: monthBookings.filter(b => (b.adminStatus || '').toLowerCase() === 'pending').length
-      });
-    }
-    setMonthlyBookingData(monthlyData);
-  }, [stats, bookings]);
-  
   const [loading, setLoading] = useState(true);
   const [feedbacks, setFeedbacks] = useState([]);
   const [contacts, setContacts] = useState([]);
@@ -275,7 +263,6 @@ export default function AdminDashboardIndex() {
     description: '',
     price: '',
     category: '',
-    sampleType: 'Blood',
     time: '',
     preTestRequirements: 'No specific requirements.'
   });
@@ -891,15 +878,7 @@ export default function AdminDashboardIndex() {
         fetchTests();
         setShowTestForm(false);
         setEditingTest(null);
-        setTestFormData({
-          name: '',
-          description: '',
-          price: '',
-          category: '',
-          sampleType: 'Blood',
-          time: '',
-          preTestRequirements: 'No specific requirements.'
-        });
+        resetTestForm();
       } else {
         console.error('Failed to save test');
       }
@@ -956,8 +935,7 @@ export default function AdminDashboardIndex() {
 
   // User Dashboard Management Functions
   const fetchHealthConcerns = useCallback(async () => {
-    // For now, use the static data from config
-    // In a real implementation, this would fetch from an API
+    if (!user?.token) return;
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns`, {
         headers: {
@@ -968,13 +946,15 @@ export default function AdminDashboardIndex() {
       if (response.ok) {
         const result = await response.json();
         setHealthConcerns(result.data || []);
+        console.log('Health concerns fetched:', result.data);
       } else {
+        console.error('Failed to fetch health concerns - Status:', response.status);
         // Fallback to static data if API doesn't exist
         const { DASHBOARD_HEALTH_CONCERNS } = await import('../../config/staticData/index.js');
         setHealthConcerns(DASHBOARD_HEALTH_CONCERNS);
       }
     } catch (error) {
-      console.log('Health concerns API not available, using static data');
+      console.error('Error fetching health concerns:', error);
       // Fallback to static data
       const { DASHBOARD_HEALTH_CONCERNS } = await import('../../config/staticData/index.js');
       setHealthConcerns(DASHBOARD_HEALTH_CONCERNS);
@@ -1050,7 +1030,21 @@ export default function AdminDashboardIndex() {
       id: '',
       title: '',
       iconKey: 'FlaskConical',
-      description: ''
+      description: '',
+      isActive: true,
+      order: 0,
+      rating: 3
+    });
+  };
+
+  const resetTestForm = () => {
+    setTestFormData({
+      name: '',
+      description: '',
+      price: '',
+      category: '',
+      time: '',
+      preTestRequirements: 'No specific requirements.'
     });
   };
 
@@ -1060,7 +1054,10 @@ export default function AdminDashboardIndex() {
       id: concern.id,
       title: concern.title,
       iconKey: concern.iconKey,
-      description: concern.description
+      description: concern.description,
+      isActive: concern.isActive !== undefined ? concern.isActive : true,
+      order: concern.order || 0,
+      rating: concern.rating || 3
     });
     setShowHealthConcernForm(true);
   };
@@ -1129,7 +1126,7 @@ export default function AdminDashboardIndex() {
     
     try {
       setPackageDetailsLoading(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/package-details/${packageId}/details`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/package-details/${packageId}`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
@@ -1169,8 +1166,9 @@ export default function AdminDashboardIndex() {
       });
       
       if (response.ok) {
-        // Refresh the test details
+        // Refresh the test details and tests list
         await fetchTestDetails(testId);
+        await fetchTests(); // Refresh the tests list to show updated data
         return true;
       } else {
         console.error('Failed to update test details');
@@ -1178,6 +1176,50 @@ export default function AdminDashboardIndex() {
       }
     } catch (error) {
       console.error('Error updating test details:', error);
+      return false;
+    }
+  };
+
+  // Delete Test Details Function
+  const deleteTestDetails = async (testId) => {
+    if (!user?.token || !testId) return false;
+    
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete these test details? This action cannot be undone.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3741',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (!result.isConfirmed) return false;
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/test-details/${testId}/details`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
+      
+      if (response.ok) {
+        // Clear test details and refresh tests list
+        setTestDetails(prev => {
+          const newDetails = { ...prev };
+          delete newDetails[testId];
+          return newDetails;
+        });
+        await fetchTests(); // Refresh the tests list
+        return true;
+      } else {
+        console.error('Failed to delete test details');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error deleting test details:', error);
       return false;
     }
   };
@@ -1197,8 +1239,9 @@ export default function AdminDashboardIndex() {
       });
       
       if (response.ok) {
-        // Refresh the package details
+        // Refresh the package details and packages list
         await fetchPackageDetails(packageId);
+        await fetchPackages(); // Refresh the packages list to show updated data
         return true;
       } else {
         console.error('Failed to update package details');
@@ -1206,6 +1249,50 @@ export default function AdminDashboardIndex() {
       }
     } catch (error) {
       console.error('Error updating package details:', error);
+      return false;
+    }
+  };
+
+  // Delete Package Details Function
+  const deletePackageDetails = async (packageId) => {
+    if (!user?.token || !packageId) return false;
+    
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Are you sure you want to delete these package details? This action cannot be undone.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc3741',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel'
+    });
+    
+    if (!result.isConfirmed) return false;
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/package-details/${packageId}/details`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
+      
+      if (response.ok) {
+        // Clear package details and refresh packages list
+        setPackageDetails(prev => {
+          const newDetails = { ...prev };
+          delete newDetails[packageId];
+          return newDetails;
+        });
+        await fetchPackages(); // Refresh the packages list
+        return true;
+      } else {
+        console.error('Failed to delete package details');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error deleting package details:', error);
       return false;
     }
   };
@@ -3593,92 +3680,6 @@ export default function AdminDashboardIndex() {
                   </div>
                 </div>
 
-                {/* Visual Statistics Charts */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                  {/* Booking Status Pie Chart */}
-                  <div className="bg-white rounded-xl p-6 border border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Booking Status Distribution</h3>
-                    {bookingStatusData.length > 0 ? (
-                      <ResponsiveContainer width="100%" height={300}>
-                        <PieChart>
-                          <Pie
-                            data={bookingStatusData}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                            outerRadius={80}
-                            fill="#8884d8"
-                            dataKey="value"
-                          >
-                            {bookingStatusData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div className="h-64 flex items-center justify-center text-gray-500">
-                        No booking data available
-                      </div>
-                    )}
-                  </div>
-
-                  {/* User Role Distribution */}
-                  <div className="bg-white rounded-xl p-6 border border-gray-200">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">User Role Distribution</h3>
-                    {userRoleData.length > 0 ? (
-                      <ResponsiveContainer width="100%" height={300}>
-                        <PieChart>
-                          <Pie
-                            data={userRoleData}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                            outerRadius={80}
-                            fill="#8884d8"
-                            dataKey="value"
-                          >
-                            {userRoleData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    ) : (
-                      <div className="h-64 flex items-center justify-center text-gray-500">
-                        No user data available
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Monthly Booking Trend */}
-                <div className="bg-white rounded-xl p-6 border border-gray-200 mb-8">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Monthly Booking Trend (Last 6 Months)</h3>
-                  {monthlyBookingData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={monthlyBookingData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Line type="monotone" dataKey="bookings" stroke="#3b82f6" strokeWidth={2} name="Total Bookings" />
-                        <Line type="monotone" dataKey="approved" stroke="#10b981" strokeWidth={2} name="Approved" />
-                        <Line type="monotone" dataKey="pending" stroke="#f59e0b" strokeWidth={2} name="Pending" />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-64 flex items-center justify-center text-gray-500">
-                      No monthly data available
-                    </div>
-                  )}
-                </div>
-
                 <div className="space-y-6">
                   <div className="overflow-x-auto">
                       {loading ? (
@@ -3928,25 +3929,39 @@ export default function AdminDashboardIndex() {
                               </div>
                             </td>
                             <td className="p-4">
-                              <div className="flex items-center gap-1">
-                                {[...Array(5)].map((_, i) => (
-                                  <svg
-                                    key={i}
-                                    className={`w-4 h-4 ${i < (f.rating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-                                    viewBox="0 0 20 20"
-                                  >
-                                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-                                  </svg>
-                                ))}
-                                <span className="ml-1 text-sm font-medium">{f.rating || 0}/5</span>
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-medium text-gray-600 w-24">Booking:</span>
+                                  <StarRating rating={f.bookingEaseRating || 0} size="small" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-medium text-gray-600 w-24">Staff:</span>
+                                  <StarRating rating={f.staffFriendlinessRating || 0} size="small" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-medium text-gray-600 w-24">Wait Time:</span>
+                                  <StarRating rating={f.waitTimeSatisfactionRating || 0} size="small" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-medium text-gray-600 w-24">Turnaround:</span>
+                                  <StarRating rating={f.turnaroundSatisfactionRating || 0} size="small" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-medium text-gray-600 w-24">Portal:</span>
+                                  <StarRating rating={f.portalEaseRating || 0} size="small" />
+                                </div>
                               </div>
                             </td>
                             <td className="p-4">
                               <div className="max-w-xs">
-                                <div className="font-medium text-sm mb-1">{f.subject || 'No subject'}</div>
-                                <div className="text-xs text-gray-600 line-clamp-3" title={f.message}>
-                                  {f.message || 'No message'}
-                                </div>
+                                {f.subject && (
+                                  <div className="font-medium text-sm mb-1">{f.subject}</div>
+                                )}
+                                {f.message && (
+                                  <div className="text-xs text-gray-600 line-clamp-3" title={f.message}>
+                                    {f.message}
+                                  </div>
+                                )}
                               </div>
                             </td>
                             <td className="p-4">
@@ -4041,6 +4056,38 @@ export default function AdminDashboardIndex() {
                       </div>
                     </div>
                     
+                    {/* Toggle between All Contacts and Reviewed Contacts */}
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex items-center gap-4">
+                        <span className="font-semibold text-gray-700">Filter:</span>
+                        <div className="flex bg-gray-100 rounded-lg p-1">
+                          <button
+                            onClick={() => setContactFilter('all')}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                              contactFilter === 'all'
+                                ? 'bg-white text-gray-900 shadow-sm'
+                                : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                          >
+                            All Contacts
+                          </button>
+                          <button
+                            onClick={() => setContactFilter('reviewed')}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                              contactFilter === 'reviewed'
+                                ? 'bg-white text-gray-900 shadow-sm'
+                                : 'text-gray-600 hover:text-gray-900'
+                            }`}
+                          >
+                            Reviewed Contacts
+                          </button>
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        Showing {contacts.filter(c => contactFilter === 'all' ? true : c.status === 'reviewed').length} of {contacts.length} contacts
+                      </div>
+                    </div>
+                    
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-sm">
                         <thead className="bg-gray-50">
@@ -4054,7 +4101,9 @@ export default function AdminDashboardIndex() {
                           </tr>
                         </thead>
                         <tbody>
-                          {contacts.map((c) => (
+                          {contacts
+                            .filter(c => contactFilter === 'all' ? true : c.status === 'reviewed')
+                            .map((c) => (
                             <tr key={c._id} className="border-b">
                               <td className="p-4">
                                 <div className="font-bold">{c.name}</div>
@@ -4158,22 +4207,20 @@ export default function AdminDashboardIndex() {
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Icon</th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">Name</th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Price</th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Sample Type</th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Time</th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">Lab</th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                           {testLoading ? (
                             <tr>
-                              <td colSpan="8" className="px-4 py-8 text-center text-gray-500">
+                              <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
                                 Loading tests...
                               </td>
                             </tr>
                           ) : tests.length === 0 ? (
                             <tr>
-                              <td colSpan="8" className="px-4 py-8 text-center text-gray-500">
+                              <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
                                 No tests found
                               </td>
                             </tr>
@@ -4194,16 +4241,8 @@ export default function AdminDashboardIndex() {
                                 <td className="px-3 py-3 text-sm text-gray-900" data-label="Price">
                                   ₹{test.price}
                                 </td>
-                                <td className="px-3 py-3" data-label="Sample Type">
-                                  <span className="inline-block px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full capitalize">
-                                    {test.sampleType}
-                                  </span>
-                                </td>
                                 <td className="px-3 py-3 text-sm text-gray-900" data-label="Time">
                                   {test.time}
-                                </td>
-                                <td className="px-3 py-3 text-sm text-gray-900" data-label="Lab">
-                                  {test.labId?.name || 'N/A'}
                                 </td>
                                 <td className="px-3 py-3 text-sm font-medium" data-label="Actions">
                                   <div className="flex flex-col sm:flex-row gap-2">
@@ -4297,20 +4336,19 @@ export default function AdminDashboardIndex() {
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Price</th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Tests</th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Time Duration</th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-28">Required Sample</th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                           {packageLoading ? (
                             <tr>
-                              <td colSpan="8" className="px-4 py-8 text-center text-gray-500">
+                              <td colSpan="7" className="px-4 py-8 text-center text-gray-500">
                                 Loading packages...
                               </td>
                             </tr>
                           ) : packages.length === 0 ? (
                             <tr>
-                              <td colSpan="8" className="px-4 py-8 text-center text-gray-500">
+                              <td colSpan="7" className="px-4 py-8 text-center text-gray-500">
                                 No packages found
                               </td>
                             </tr>
@@ -4339,11 +4377,6 @@ export default function AdminDashboardIndex() {
                                 </td>
                                 <td className="px-3 py-3 text-sm text-gray-900" data-label="Time Duration">
                                   {pkg.timeDuration || pkg.reportTime || 'N/A'}
-                                </td>
-                                <td className="px-3 py-3" data-label="Required Sample">
-                                  <span className="inline-block px-2 py-1 text-xs font-medium bg-orange-100 text-orange-800 rounded-full capitalize">
-                                    {pkg.requiredSample || 'N/A'}
-                                  </span>
                                 </td>
                                 <td className="px-3 py-3 text-sm font-medium" data-label="Actions">
                                   <div className="flex flex-col sm:flex-row gap-2">
@@ -5751,24 +5784,6 @@ export default function AdminDashboardIndex() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Sample Type *
-                  </label>
-                  <select
-                    required
-                    value={testFormData.sampleType}
-                    onChange={(e) => setTestFormData({...testFormData, sampleType: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
-                  >
-                    <option value="blood">Blood</option>
-                    <option value="urine">Urine</option>
-                    <option value="swab">Swab</option>
-                    <option value="saliva">Saliva</option>
-                    <option value="stool">Stool</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Time Duration *
                   </label>
                   <input
@@ -5802,15 +5817,7 @@ export default function AdminDashboardIndex() {
                   onClick={() => {
                     setShowTestForm(false);
                     setEditingTest(null);
-                    setTestFormData({
-                      name: '',
-                      description: '',
-                      price: '',
-                      sampleType: 'Blood',
-                      time: '',
-                      category: '',
-                      preTestRequirements: 'No specific requirements.'
-                    });
+                    resetTestForm();
                   }}
                 >
                   Cancel
@@ -5960,22 +5967,38 @@ export default function AdminDashboardIndex() {
               <h3 className="text-lg font-semibold">Test Details</h3>
               <div className="flex gap-2">
                 {!editingTestDetails && (
-                  <button 
-                    onClick={() => {
-                      const testId = Object.keys(testDetails)[0];
-                      const details = testDetails[testId];
-                      setTestDetailsFormData({
-                        testName: details.testName || '',
-                        requiredSamples: details.requiredSamples || [],
-                        reportingTime: details.reportingTime || ''
-                      });
-                      setEditingTestDetails(true);
-                    }}
-                    className="p-1"
-                    title="Edit Details"
-                  >
-                    <Edit2 size={16} />
-                  </button>
+                  <>
+                    <button 
+                      onClick={() => {
+                        const testId = Object.keys(testDetails)[0];
+                        const details = testDetails[testId];
+                        setTestDetailsFormData({
+                          testName: details.testName || '',
+                          requiredSamples: details.requiredSamples || [],
+                          reportingTime: details.reportingTime || ''
+                        });
+                        setEditingTestDetails(true);
+                      }}
+                      className="p-1"
+                      title="Edit Details"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button 
+                      onClick={async () => {
+                        const testId = Object.keys(testDetails)[0];
+                        const success = await deleteTestDetails(testId);
+                        if (success) {
+                          setTestDetails({});
+                          setEditingTestDetails(false);
+                        }
+                      }}
+                      className="p-1 text-red-600 hover:text-red-800"
+                      title="Delete Details"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </>
                 )}
                 <button 
                   onClick={() => {
@@ -6081,23 +6104,39 @@ export default function AdminDashboardIndex() {
               <h3 className="text-lg font-semibold">Package Details</h3>
               <div className="flex gap-2">
                 {!editingPackageDetails && (
-                  <button 
-                    onClick={() => {
-                      const packageId = Object.keys(packageDetails)[0];
-                      const details = packageDetails[packageId];
-                      setPackageDetailsFormData({
-                        packageName: details.packageName || '',
-                        requiredSamples: details.requiredSamples || [],
-                        reportingTime: details.reportingTime || '',
-                        includedTests: details.includedTests || []
-                      });
-                      setEditingPackageDetails(true);
-                    }}
-                    className="p-1"
-                    title="Edit Details"
-                  >
-                    <Edit2 size={16} />
-                  </button>
+                  <>
+                    <button 
+                      onClick={() => {
+                        const packageId = Object.keys(packageDetails)[0];
+                        const details = packageDetails[packageId];
+                        setPackageDetailsFormData({
+                          packageName: details.packageName || '',
+                          requiredSamples: details.requiredSamples || [],
+                          reportingTime: details.reportingTime || '',
+                          includedTests: details.includedTests || []
+                        });
+                        setEditingPackageDetails(true);
+                      }}
+                      className="p-1"
+                      title="Edit Details"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button 
+                      onClick={async () => {
+                        const packageId = Object.keys(packageDetails)[0];
+                        const success = await deletePackageDetails(packageId);
+                        if (success) {
+                          setPackageDetails({});
+                          setEditingPackageDetails(false);
+                        }
+                      }}
+                      className="p-1 text-red-600 hover:text-red-800"
+                      title="Delete Details"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </>
                 )}
                 <button 
                   onClick={() => {
@@ -6275,6 +6314,42 @@ export default function AdminDashboardIndex() {
                       required
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Order</label>
+                    <input
+                      type="number"
+                      value={healthConcernFormData.order}
+                      onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, order: parseInt(e.target.value) || 0 }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                      placeholder="Display order (0 = first)"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Rating (1-5)</label>
+                    <select
+                      value={healthConcernFormData.rating}
+                      onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, rating: parseInt(e.target.value) || 3 }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                    >
+                      <option value={1}>1 Star</option>
+                      <option value={2}>2 Stars</option>
+                      <option value={3}>3 Stars</option>
+                      <option value={4}>4 Stars</option>
+                      <option value={5}>5 Stars</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={healthConcernFormData.isActive}
+                        onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+                        className="mr-2"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Active (visible to users)</span>
+                    </label>
+                  </div>
                 </div>
                 <div className="flex gap-2 mt-4">
                   <CButton type="submit" variant="primary">
@@ -6308,6 +6383,9 @@ export default function AdminDashboardIndex() {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Icon</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
@@ -6321,10 +6399,25 @@ export default function AdminDashboardIndex() {
                           {concern.title}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {concern.iconKey}
+                          <div className="flex items-center justify-center">
+                            {renderHealthConcernIcon(concern.iconKey)}
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500">
                           {concern.description}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <StarRating rating={concern.rating || 0} size="small" showValue={false} />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {concern.order || 0}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            concern.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {concern.isActive ? 'Active' : 'Inactive'}
+                          </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <button

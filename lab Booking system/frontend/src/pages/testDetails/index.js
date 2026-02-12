@@ -268,36 +268,7 @@ export default function TestDetails() {
             {/* RIGHT COLUMN - SIDEBAR */}
             <div className="lg:w-1/3 flex flex-col justify-center">
 
-              {/* Most Booked Test Card */}
-              <div className="bg-emerald-50 rounded-3xl p-6 border border-emerald-100 sticky top-24 w-full">
-                <h3 className="font-bold text-slate-900 mb-4">Popular Test</h3>
-                
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-emerald-100">
-                  
-                  <h4 className="font-bold text-slate-900 mb-2 leading-tight">Complete Blood Count</h4>
-                  
-                  <div className="flex items-center gap-4 text-xs text-slate-500 mb-3">
-                    <div className="flex items-center gap-1">
-                      <FileText className="w-3 h-3" /> Reports in 24 Hrs
-                    </div>
-                  </div>
-
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-lg font-black text-slate-900">₹300</span>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => navigate(`/test-details?id=cbc`)}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors"
-                    >
-                      View Details
-                    </button>
-                  </div>
-                </div>
-              </div>
-
+              
             </div>
           </div>
         </div>

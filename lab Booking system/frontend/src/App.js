@@ -29,7 +29,6 @@ import PrivacyPolicy from "./pages/privacy Policy";
 import UserProfile from "./pages/userprofile";
 import UserHistory from "./pages/userHistory";
 import TermsCondition from "./pages/termsCondition";
-import LabTechnicianProfile from "./pages/labTechnicianProfile";
 import Feedback from "./pages/feedBack";
 import FAQ from "./pages/faq";
 import RazorpayPaymentPage from "./pages/razorepay";
@@ -103,11 +102,6 @@ export default function App() {
             <AdminDashboard />
           </ProtectedRoute>
         } />
-        <Route path="/lab-technician-dashboard" element={
-          <ProtectedRoute requiredRole="labtechnician">
-            <LabTechnicianDashboard />
-          </ProtectedRoute>
-        } />
         <Route path="/health-packages/full-body-checkups" element={<FullBodyCheckups />} />
         <Route path="/health-packages/liver" element={<Liver />} />
         <Route path="/health-packages/lungs" element={<Lungs />} />
@@ -134,11 +128,6 @@ export default function App() {
         <Route path="/user-history" element={
           <ProtectedRoute requiredRole="user">
             <UserHistory />
-          </ProtectedRoute>
-        } />
-        <Route path="/lab-technician-profile" element={
-          <ProtectedRoute requiredRole="labtechnician">
-            <LabTechnicianProfile />
           </ProtectedRoute>
         } />
         <Route path="/terms-condition" element={<TermsCondition />} />

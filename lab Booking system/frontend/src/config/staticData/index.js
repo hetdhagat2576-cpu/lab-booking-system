@@ -601,12 +601,12 @@ export const HOME_HOW_IT_WORKS = [
 ];
 
 export const DASHBOARD_HEALTH_CONCERNS = [
-  { id: "liver", title: "Liver", iconKey: "FlaskConical", description: "Liver function tests" },
-  { id: "lungs", title: "Lungs", iconKey: "Activity", description: "Respiratory health screening" },
-  { id: "kidney", title: "Kidney", iconKey: "Droplets", description: "Kidney function tests" },
-  { id: "fever", title: "Fever", iconKey: "Droplets", description: "Fever and infection tests" },
-  { id: "thyroid", title: "Thyroid", iconKey: "FlaskConical", description: "Thyroid function tests" },
-  { id: "diabetes", title: "Diabetes", iconKey: "Droplets", description: "Blood sugar monitoring" }
+  { id: "liver", title: "Liver", iconKey: "FlaskConical", description: "Liver function tests", rating: 4, order: 1, status: "active" },
+  { id: "lungs", title: "Lungs", iconKey: "Activity", description: "Respiratory health screening", rating: 5, order: 2, status: "active" },
+  { id: "kidney", title: "Kidney", iconKey: "Droplets", description: "Kidney function tests", rating: 4, order: 3, status: "active" },
+  { id: "fever", title: "Fever", iconKey: "Droplets", description: "Fever and infection tests", rating: 3, order: 4, status: "active" },
+  { id: "thyroid", title: "Thyroid", iconKey: "FlaskConical", description: "Thyroid function tests", rating: 4, order: 5, status: "active" },
+  { id: "diabetes", title: "Diabetes", iconKey: "Droplets", description: "Blood sugar monitoring", rating: 5, order: 6, status: "active" }
 ];
 
 export const LAB_TECH_STATS_META = [

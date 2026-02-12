@@ -39,6 +39,10 @@ const LogoutConfirmation = ({ onConfirm, userRole = 'user', children }) => {
         .logout-title{margin:8px 0 4px;color:${Theme.colors.textDark};font-weight:700;font-size:20px}
         .logout-sub{margin:0 0 8px;color:${Theme.colors.textPrimary}} .logout-msg{color:${Theme.colors.textMuted};margin-bottom:16px}
         .swal2-container{z-index:9999}
+        .logout-confirm-btn { background-color: ${Theme.colors.primary} !important; color: white !important; border: none !important; border-radius: 8px !important; padding: 10px 20px !important; font-weight: 600 !important; transition: all 0.2s ease !important; }
+        .logout-confirm-btn:hover { background-color: ${Theme.colors.primaryHover || Theme.colors.primary} !important; transform: translateY(-1px) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; }
+        .logout-cancel-btn { background-color: #6b7280 !important; color: white !important; border: none !important; border-radius: 8px !important; padding: 10px 20px !important; font-weight: 600 !important; transition: all 0.2s ease !important; }
+        .logout-cancel-btn:hover { background-color: #4b5563 !important; transform: translateY(-1px) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important; }
       </style>
     `;
 
@@ -51,8 +55,12 @@ const LogoutConfirmation = ({ onConfirm, userRole = 'user', children }) => {
       backdrop: true,
       allowOutsideClick: false,
       allowEscapeKey: true,
+      confirmButtonColor: Theme.colors.primary,
+      cancelButtonColor: '#6b7280',
       customClass: {
-        popup: 'logout-popup'
+        popup: 'logout-popup',
+        confirmButton: 'logout-confirm-btn',
+        cancelButton: 'logout-cancel-btn'
       },
       showClass: { popup: 'swal2-show' },
       hideClass: { popup: 'swal2-hide' }

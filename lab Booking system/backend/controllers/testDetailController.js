@@ -95,7 +95,43 @@ const updateTestDetails = async (req, res) => {
   }
 };
 
+// Delete test details
+const deleteTestDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid test ID'
+      });
+    }
+    
+    const test = await Test.findByIdAndDelete(id);
+    
+    if (!test) {
+      return res.status(404).json({
+        success: false,
+        message: 'Test not found'
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: 'Test details deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting test details:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting test details',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getTestDetails,
-  updateTestDetails
+  updateTestDetails,
+  deleteTestDetails
 };

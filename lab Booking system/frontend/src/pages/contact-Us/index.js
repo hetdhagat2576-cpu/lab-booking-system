@@ -38,8 +38,16 @@ export default function ContactUsIndex() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-    if (errors[name]) setErrors({ ...errors, [name]: "" });
+    
+    // Only allow digits for phone number field
+    if (name === 'phone') {
+      const digitsOnly = value.replace(/\D/g, '');
+      setFormData({ ...formData, [name]: digitsOnly });
+      if (errors[name]) setErrors({ ...errors, [name]: "" });
+    } else {
+      setFormData({ ...formData, [name]: value });
+      if (errors[name]) setErrors({ ...errors, [name]: "" });
+    }
   };
 
   const validateForm = () => {
@@ -209,13 +217,7 @@ export default function ContactUsIndex() {
             <div className="grid md:grid-cols-3 gap-8">
               {CONTACT_OPTIONS.map((item, index) => (
                 <div key={index} className="bg-white rounded-2xl shadow-lg p-8 text-center border border-secondary/30 hover:border-primary transition-all group flex flex-col h-full">
-                  <div className="mb-4 p-4 bg-secondary/20 rounded-full group-hover:bg-primary/10 transition-colors flex items-center justify-center w-16 h-16 mx-auto">
-                    {(() => {
-                      const Icon = IconConfig[item.iconKey];
-                      return <Icon className="w-8 h-8 text-primary" />;
-                    })()}
-                  </div>
-                  <h3 className="text-xl font-bold mb-2 text-gray-800">{item.title}</h3>
+                  <h3 className="text-xl font-bold mb-4 text-gray-800">{item.title}</h3>
                   <p className="text-gray-600 mb-auto text-sm">{item.desc}</p>
                   <div className="mt-4">
                     {item.title === "Coming Soon" ? (

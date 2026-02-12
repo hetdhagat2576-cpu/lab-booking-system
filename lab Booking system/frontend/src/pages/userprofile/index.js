@@ -456,10 +456,10 @@ export default function UserProfileIndex() {
                   </div>
                   
                   {feedbacks.length === 0 ? (
-                    <div className="rounded-2xl p-12 text-center" style={{ background: `linear-gradient(135deg, ${Theme.colors.secondary}20, ${Theme.colors.primary}20)`, border: `1px solid ${Theme.colors.primary}40` }}>
-                      <MessageSquare className="w-16 h-16 mx-auto mb-4" style={{ color: Theme.colors.primary }} />
+                    <div className="rounded-2xl p-8 text-center bg-gray-50 border border-gray-200">
+                      <MessageSquare className="w-12 h-12 mx-auto mb-3" style={{ color: Theme.colors.primary }} />
                       <Typography variant="h6" className="mb-2" style={{ color: Theme.colors.primary }}>No Feedback Submitted Yet</Typography>
-                      <Typography variant="body2" className="mb-4" style={{ color: Theme.colors.textMuted }}>Share your experience to help us improve our services</Typography>
+                      <Typography variant="body2" className="mb-4 text-gray-600">Share your experience to help us improve our services</Typography>
                       <Button 
                         variant="contained" 
                         onClick={() => navigate("/feedBack")}
@@ -469,70 +469,34 @@ export default function UserProfileIndex() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="space-y-3">
                       {feedbacks.map((fb) => (
-                        <Card key={fb._id} elevation={2} className="rounded-2xl hover:shadow-lg transition-all duration-300" style={{ border: `1px solid ${Theme.colors.primary}40` }}>
-                          <CardContent className="p-5">
-                            <div className="flex justify-between items-start mb-4">
+                        <div key={fb._id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <Typography variant="h6" fontWeight="600" className="text-gray-800 mb-1">
+                                Feedback from {new Date(fb.createdAt).toLocaleDateString()}
+                              </Typography>
                               <div className="flex items-center gap-2">
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                  getNpsColor(fb.npsScore) === 'success' ? 'bg-green-100' :
-                                  getNpsColor(fb.npsScore) === 'warning' ? 'bg-yellow-100' : 'bg-red-100'
-                                }`}>
-                                  <Star className={`w-5 h-5 ${
-                                    getNpsColor(fb.npsScore) === 'success' ? 'text-green-600' :
-                                    getNpsColor(fb.npsScore) === 'warning' ? 'text-yellow-600' : 'text-red-600'
-                                  }`} fill="currentColor" />
-                                </div>
-                                <div>
-                                  <Typography variant="h6" fontWeight="700" className="text-slate-800">
-                                    NPS Score: {fb.npsScore}/10
-                                  </Typography>
-                                  <Typography variant="caption" className="text-slate-500">
-                                    {new Date(fb.createdAt).toLocaleDateString()}
-                                  </Typography>
-                                </div>
+                                <span className="text-sm font-medium" style={{ color: Theme.colors.primary }}>
+                                  Rating: {fb.bookingEaseRating}/5
+                                </span>
+                                <Chip 
+                                  label={fb.status || "new"}
+                                  size="small"
+                                  color={getFeedbackStatusColor(fb.status)}
+                                  variant="outlined"
+                                />
                               </div>
-                              <Chip 
-                                label={fb.status || "new"}
-                                size="small"
-                                color={getFeedbackStatusColor(fb.status)}
-                                variant={fb.status === 'resolved' ? 'filled' : 'outlined'}
-                                icon={fb.status === 'resolved' ? <CheckCircle size={14} /> : fb.status === 'reviewed' ? <Clock size={14} /> : <AlertCircle size={14} />}
-                              />
                             </div>
-                            
-                            <div className="space-y-3">
-                              <div className="grid grid-cols-2 gap-3">
-                                <div className="rounded-lg p-3" style={{ backgroundColor: `${Theme.colors.primary}20` }}>
-                                  <Typography variant="caption" className="font-medium" style={{ color: Theme.colors.primary }}>Booking Ease</Typography>
-                                  <div className="flex items-center gap-1 mt-1">
-                                    {[...Array(5)].map((_, i) => (
-                                      <Star key={i} size={12} className={i < fb.bookingEaseRating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'} fill="currentColor" />
-                                    ))}
-                                    <span className="text-sm font-bold ml-1" style={{ color: Theme.colors.primary }}>{fb.bookingEaseRating}/5</span>
-                                  </div>
-                                </div>
-                                <div className="bg-purple-50 rounded-lg p-3">
-                                  <Typography variant="caption" className="text-purple-600 font-medium">Portal Ease</Typography>
-                                  <div className="flex items-center gap-1 mt-1">
-                                    {[...Array(5)].map((_, i) => (
-                                      <Star key={i} size={12} className={i < fb.portalEaseRating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'} fill="currentColor" />
-                                    ))}
-                                    <span className="text-sm font-bold text-purple-800 ml-1">{fb.portalEaseRating}/5</span>
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              {fb.comment && (
-                                <div className="bg-slate-50 rounded-lg p-3">
-                                  <Typography variant="caption" className="text-slate-600 font-medium">Comment</Typography>
-                                  <Typography variant="body2" className="text-slate-700 mt-1">{fb.comment}</Typography>
-                                </div>
-                              )}
+                          </div>
+                          
+                          {fb.comment && (
+                            <div className="bg-gray-50 rounded p-3">
+                              <Typography variant="body2" className="text-gray-700">{fb.comment}</Typography>
                             </div>
-                          </CardContent>
-                        </Card>
+                          )}
+                        </div>
                       ))}
                     </div>
                   )}
@@ -544,7 +508,7 @@ export default function UserProfileIndex() {
                 <div>
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
-                      <Mail className="w-6 h-6 text-purple-600" />
+                      <Mail className="w-6 h-6 text-blue-600" />
                       <Typography variant="h6" fontWeight="700">Your Contact Requests</Typography>
                       <Chip 
                         label={contacts.length} 
@@ -567,10 +531,10 @@ export default function UserProfileIndex() {
                   </div>
                   
                   {contacts.length === 0 ? (
-                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-2xl p-12 text-center">
-                      <Mail className="w-16 h-16 text-purple-400 mx-auto mb-4" />
-                      <Typography variant="h6" className="text-purple-800 mb-2">No Contact Requests Yet</Typography>
-                      <Typography variant="body2" className="text-purple-600 mb-4">Reach out to us for any questions or support</Typography>
+                    <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 text-center">
+                      <Mail className="w-12 h-12 text-blue-400 mx-auto mb-3" />
+                      <Typography variant="h6" className="text-gray-800 mb-2">No Contact Requests Yet</Typography>
+                      <Typography variant="body2" className="text-gray-600 mb-4">Reach out to us for any questions or support</Typography>
                       <Button 
                         variant="contained" 
                         onClick={() => navigate("/contact-Us")}
@@ -580,46 +544,35 @@ export default function UserProfileIndex() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="space-y-3">
                       {contacts.map((c) => (
-                        <Card key={c._id || c.id} elevation={2} className="rounded-2xl border border-purple-100 hover:shadow-lg transition-all duration-300">
-                          <CardContent className="p-5">
-                            <div className="flex justify-between items-start mb-4">
-                              <div className="flex items-center gap-2">
-                                <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                                  <Mail className="w-5 h-5 text-purple-600" />
-                                </div>
-                                <div>
-                                  <Typography variant="h6" fontWeight="700" className="text-slate-800">
-                                    {c.subject}
-                                  </Typography>
-                                  <Typography variant="caption" className="text-slate-500">
-                                    {new Date(c.createdAt).toLocaleDateString()}
-                                  </Typography>
-                                </div>
-                              </div>
+                        <div key={c._id || c.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <Typography variant="h6" fontWeight="600" className="text-gray-800 mb-1">
+                                {c.subject}
+                              </Typography>
+                              <Typography variant="caption" className="text-gray-500 mb-2">
+                                {new Date(c.createdAt).toLocaleDateString()}
+                              </Typography>
                               <Chip 
                                 label={c.status || "new"}
                                 size="small"
                                 color={getContactStatusColor(c.status)}
-                                variant={c.status === 'resolved' ? 'filled' : 'outlined'}
-                                icon={c.status === 'resolved' ? <CheckCircle size={14} /> : c.status === 'reviewed' ? <Clock size={14} /> : <AlertCircle size={14} />}
+                                variant="outlined"
                               />
                             </div>
-                            
-                            <div className="space-y-3">
-                              <div className="bg-slate-50 rounded-lg p-3">
-                                <Typography variant="caption" className="text-slate-600 font-medium">Message</Typography>
-                                <Typography variant="body2" className="text-slate-700 mt-1">{c.message}</Typography>
-                              </div>
-                              
-                              <div className="flex items-center gap-2 text-sm text-slate-500">
-                                <Mail size={14} />
-                                <span>{c.email}</span>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
+                          </div>
+                          
+                          <div className="bg-gray-50 rounded p-3 mb-3">
+                            <Typography variant="body2" className="text-gray-700">{c.message}</Typography>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <Mail size={14} />
+                            <span>{c.email}</span>
+                          </div>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -661,10 +614,10 @@ export default function UserProfileIndex() {
                   </div>
                   
                   {reports.length === 0 ? (
-                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-2xl p-12 text-center">
-                      <FileText className="w-16 h-16 text-green-400 mx-auto mb-4" />
-                      <Typography variant="h6" className="text-green-800 mb-2">No Reports Available Yet</Typography>
-                      <Typography variant="body2" className="text-green-600 mb-4">Your lab reports will appear here once they are generated by the lab technician</Typography>
+                    <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 text-center">
+                      <FileText className="w-12 h-12 text-green-400 mx-auto mb-3" />
+                      <Typography variant="h6" className="text-gray-800 mb-2">No Reports Available Yet</Typography>
+                      <Typography variant="body2" className="text-gray-600 mb-4">Your lab reports will appear here once they are generated by the lab technician</Typography>
                       <Button 
                         variant="contained" 
                         onClick={() => navigate("/dashboard")}
@@ -674,160 +627,100 @@ export default function UserProfileIndex() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="space-y-3">
                       {reports.map((report) => (
-                        <Card key={report._id} elevation={2} className="rounded-2xl border border-green-100 hover:shadow-lg transition-all duration-300">
-                          <CardContent className="p-5">
-                            <div className="flex justify-between items-start mb-4">
-                              <div className="flex items-center gap-2">
-                                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                                  <FileText className="w-5 h-5 text-green-600" />
-                                </div>
-                                <div>
-                                  <Typography variant="h6" fontWeight="700" className="text-slate-800">
-                                    {report.packageName}
-                                  </Typography>
-                                  <Typography variant="caption" className="text-slate-500">
-                                    {new Date(report.testDate).toLocaleDateString()}
-                                  </Typography>
-                                </div>
-                              </div>
+                        <div key={report._id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <Typography variant="h6" fontWeight="600" className="text-gray-800 mb-1">
+                                {report.packageName}
+                              </Typography>
+                              <Typography variant="caption" className="text-gray-500 mb-2">
+                                {new Date(report.testDate).toLocaleDateString()}
+                              </Typography>
                               <Chip 
                                 label="Completed"
                                 size="small"
                                 color="success"
-                                variant="filled"
-                                icon={<CheckCircle size={14} />}
+                                variant="outlined"
                               />
                             </div>
-                            
-                            <div className="space-y-3">
-                              <div className="bg-slate-50 rounded-lg p-3">
-                                <Typography variant="caption" className="text-slate-600 font-medium">Test Details</Typography>
-                                <Typography variant="body2" className="text-slate-700 mt-1">
-                                  {report.selectedTests?.length || 0} tests included
-                                </Typography>
-                                {report.bookingId && (
-                                  <Typography variant="body2" className="text-slate-600 mt-1">
-                                    Booking: {new Date(report.testDate).toLocaleDateString()}
-                                  </Typography>
-                                )}
-                                <Typography variant="body2" className="text-slate-600 mt-1">
-                                  Technician: {report.technicianId?.name || 'Lab Technician'}
-                                </Typography>
-                              </div>
-                              
-                              <div className="bg-slate-50 rounded-lg p-3">
-                                <Typography variant="caption" className="text-slate-600 font-medium">Summary</Typography>
-                                <Typography variant="body2" className="text-slate-700 mt-1">
-                                  {report.summary}
-                                </Typography>
-                              </div>
-                              
-                              <div className="bg-slate-50 rounded-lg p-3">
-                                <Typography variant="caption" className="text-slate-600 font-medium">Recommendations</Typography>
-                                <Typography variant="body2" className="text-slate-700 mt-1">
-                                  {report.recommendations}
-                                </Typography>
-                              </div>
-                              
-                              <div className="flex gap-2">
-                                <Button 
-                                  variant="contained" 
-                                  size="small"
-                                  onClick={async () => {
-                                    try {
-                                      const link = document.createElement('a');
-                                      link.href = createApiUrl(`/api/reports/${report._id}/download`);
-                                      link.target = '_blank';
-                                      link.download = `Lab_Report_${report.packageName}_${report._id.toString().slice(-8)}.pdf`;
-                                      document.body.appendChild(link);
-                                      link.click();
-                                      document.body.removeChild(link);
-                                      
-                                      // Show success message
-                                      Swal.fire({
-                                        icon: 'success',
-                                        title: 'Download Started',
-                                        text: 'Your lab report is being downloaded.',
-                                        timer: 2000,
-                                        showConfirmButton: false,
-                                        customClass: {
-                                          popup: 'rounded-lg shadow-xl',
-                                          title: 'text-lg font-semibold'
-                                        }
-                                      });
-                                    } catch (error) {
-                                      console.error('Download error:', error);
-                                      Swal.fire({
-                                        icon: 'error',
-                                        title: 'Download Failed',
-                                        text: 'Unable to download the report. Please try again.',
-                                        confirmButtonColor: Theme.colors.primary,
-                                        customClass: {
-                                          popup: 'rounded-lg shadow-xl',
-                                          title: 'text-lg font-semibold',
-                                          confirmButton: 'px-6 py-2 text-white font-medium rounded-lg hover:opacity-90 transition-opacity'
-                                        },
-                                        buttonsStyling: false
-                                      });
-                                    }
-                                  }}
-                                  sx={{ 
-                                    backgroundColor: Theme.colors.primary, 
-                                    "&:hover": { backgroundColor: Theme.colors.primaryHover },
-                                    borderRadius: '8px',
-                                    textTransform: 'none'
-                                  }}
-                                >
-                                  Download PDF
-                                </Button>
-                                <Button 
-                                  variant="outlined" 
-                                  size="small"
-                                  onClick={() => {
-                                    // Show detailed report information
-                                    const testDetails = report.selectedTests?.map(test => 
-                                      `${test.name}: ${test.result} ${test.unit || ''} (${test.status})`
-                                    ).join('\n') || 'No test details available';
-                                    
-                                    Swal.fire({
-                                      title: 'Report Details',
-                                      html: `<div style="text-align: left; white-space: pre-line; line-height: 1.5;">
-                                        <strong>Package:</strong> ${report.packageName}<br>
-                                        <strong>Test Date:</strong> ${new Date(report.testDate).toLocaleDateString()}<br><br>
-                                        <strong>Tests:</strong><br>
-                                        ${testDetails}<br><br>
-                                        <strong>Summary:</strong><br>
-                                        ${report.summary}<br><br>
-                                        <strong>Recommendations:</strong><br>
-                                        ${report.recommendations}
-                                      </div>`,
-                                      icon: 'info',
-                                      confirmButtonColor: Theme.colors.primary,
-                                      confirmButtonText: 'OK',
-                                      customClass: {
-                                        popup: 'rounded-lg shadow-xl',
-                                        title: 'text-xl font-semibold',
-                                        content: 'text-gray-700',
-                                        confirmButton: 'px-6 py-2 text-white font-medium rounded-lg hover:opacity-90 transition-opacity'
-                                      },
-                                      buttonsStyling: false
-                                    });
-                                  }}
-                                  sx={{ 
-                                    borderColor: Theme.colors.primary,
-                                    color: Theme.colors.primary,
-                                    borderRadius: '8px',
-                                    textTransform: 'none'
-                                  }}
-                                >
-                                  View Details
-                                </Button>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
+                          </div>
+                          
+                          <div className="bg-gray-50 rounded p-3 mb-3">
+                            <Typography variant="body2" className="text-gray-700">
+                              {report.selectedTests?.length || 0} tests included • Technician: {report.technicianId?.name || 'Lab Technician'}
+                            </Typography>
+                          </div>
+                          
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="contained" 
+                              size="small"
+                              onClick={async () => {
+                                try {
+                                  const link = document.createElement('a');
+                                  link.href = createApiUrl(`/api/reports/${report._id}/download`);
+                                  link.target = '_blank';
+                                  link.download = `Lab_Report_${report.packageName}_${report._id.toString().slice(-8)}.pdf`;
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                  
+                                  Swal.fire({
+                                    icon: 'success',
+                                    title: 'Download Started',
+                                    text: 'Your lab report is being downloaded.',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                  });
+                                } catch (error) {
+                                  Swal.fire({
+                                    icon: 'error',
+                                    title: 'Download Failed',
+                                    text: 'Unable to download the report. Please try again.',
+                                    confirmButtonColor: Theme.colors.primary
+                                  });
+                                }
+                              }}
+                              sx={{ 
+                                backgroundColor: Theme.colors.primary, 
+                                "&:hover": { backgroundColor: Theme.colors.primaryHover },
+                                borderRadius: '8px',
+                                textTransform: 'none'
+                              }}
+                            >
+                              Download PDF
+                            </Button>
+                            <Button 
+                              variant="outlined" 
+                              size="small"
+                              onClick={() => {
+                                Swal.fire({
+                                  title: 'Report Details',
+                                  html: `<div style="text-align: left; white-space: pre-line; line-height: 1.5;">
+                                    <strong>Package:</strong> ${report.packageName}<br>
+                                    <strong>Test Date:</strong> ${new Date(report.testDate).toLocaleDateString()}<br>
+                                    <strong>Tests:</strong> ${report.selectedTests?.length || 0} tests included<br>
+                                    <strong>Summary:</strong> ${report.summary}<br>
+                                    <strong>Recommendations:</strong> ${report.recommendations}
+                                  </div>`,
+                                  icon: 'info',
+                                  confirmButtonColor: Theme.colors.primary,
+                                  confirmButtonText: 'OK'
+                                });
+                              }}
+                              sx={{ 
+                                borderColor: Theme.colors.primary,
+                                color: Theme.colors.primary,
+                                borderRadius: '8px',
+                                textTransform: 'none'
+                              }}
+                            >
+                              View Details
+                            </Button>
+                          </div>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -865,6 +758,22 @@ const StyledTextField = ({ label, icon, ...props }) => (
     InputProps={{
       startAdornment: <InputAdornment position="start" className="text-slate-400">{icon}</InputAdornment>,
       sx: { borderRadius: '12px', bgcolor: Theme.colors.slate50 }
+    }}
+    InputLabelProps={{
+      sx: { 
+        '&.Mui-focused': { color: Theme.colors.primary },
+        '&.Mui-error': { color: 'error.main' }
+      }
+    }}
+    sx={{
+      '& .MuiOutlinedInput-root': {
+        '&:hover fieldset': {
+          borderColor: Theme.colors.primary,
+        },
+        '&.Mui-focused fieldset': {
+          borderColor: Theme.colors.primary,
+        },
+      }
     }}
   />
 );

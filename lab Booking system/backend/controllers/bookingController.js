@@ -1,4 +1,21 @@
 const Booking = require('../models/booking');
+
+// WebSocket reference - will be set from server.js
+let wss = null;
+
+const setWebSocketServer = (websocketServer) => {
+  wss = websocketServer;
+};
+
+const broadcastToLabTechnicians = (message) => {
+  if (!wss) return;
+  
+  wss.clients.forEach((client) => {
+    if (client.readyState === client.OPEN) {
+      client.send(JSON.stringify(message));
+    }
+  });
+};
 const createBooking = async (req, res) => {
   try {
     const { 
@@ -163,6 +180,28 @@ const updateBookingStatus = async (req, res) => {
       if (adminStatus === 'rejected' && rejectionReason) {
         booking.rejectionReason = rejectionReason;
       }
+      
+      // Send WebSocket notification when booking is approved
+      if (adminStatus === 'approved') {
+        console.log('Broadcasting booking approval notification');
+        broadcastToLabTechnicians({
+          type: 'booking_approved',
+          data: {
+            booking: {
+              _id: booking._id,
+              patientName: booking.patientName,
+              labName: booking.labName,
+              labAppointment: booking.labAppointment,
+              date: booking.date,
+              time: booking.time,
+              purpose: booking.purpose,
+              packageName: booking.packageName,
+              user: booking.user
+            },
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
     }
 
     // Handle booking status updates (for lab technicians)
@@ -233,4 +272,5 @@ module.exports = {
   getBookings,
   updateBookingStatus,
   getInProgressBookings,
+  setWebSocketServer
 };

@@ -1,22 +1,15 @@
+const HealthConcern = require('../models/healthConcern');
 const mongoose = require('mongoose');
-
-// Mock data for health concerns (in a real app, this would come from a database)
-let healthConcerns = [
-  { id: "liver", title: "Liver", iconKey: "FlaskConical", description: "Liver function tests" },
-  { id: "lungs", title: "Lungs", iconKey: "Activity", description: "Respiratory health screening" },
-  { id: "kidney", title: "Kidney", iconKey: "Droplets", description: "Kidney function tests" },
-  { id: "fever", title: "Fever", iconKey: "Droplets", description: "Fever and infection tests" },
-  { id: "thyroid", title: "Thyroid", iconKey: "FlaskConical", description: "Thyroid function tests" },
-  { id: "diabetes", title: "Diabetes", iconKey: "Droplets", description: "Blood sugar monitoring" }
-];
 
 // Get all health concerns
 const getHealthConcerns = async (req, res) => {
   try {
+    const concerns = await HealthConcern.find({}).sort({ order: 1, createdAt: 1 });
+    
     res.status(200).json({
       success: true,
-      data: healthConcerns,
-      count: healthConcerns.length
+      data: concerns,
+      count: concerns.length
     });
   } catch (error) {
     console.error('Error fetching health concerns:', error);
@@ -32,7 +25,15 @@ const getHealthConcerns = async (req, res) => {
 const getHealthConcernById = async (req, res) => {
   try {
     const { id } = req.params;
-    const concern = healthConcerns.find(c => c.id === id);
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid health concern ID'
+      });
+    }
+    
+    const concern = await HealthConcern.findById(id);
     
     if (!concern) {
       return res.status(404).json({
@@ -58,10 +59,10 @@ const getHealthConcernById = async (req, res) => {
 // Create new health concern (Admin only)
 const createHealthConcern = async (req, res) => {
   try {
-    const { id, title, iconKey, description } = req.body;
+    const { id, title, iconKey, description, isActive, order, rating } = req.body;
     
     // Check if concern with same ID already exists
-    const existingConcern = healthConcerns.find(c => c.id === id);
+    const existingConcern = await HealthConcern.findOne({ id });
     if (existingConcern) {
       return res.status(400).json({
         success: false,
@@ -69,19 +70,22 @@ const createHealthConcern = async (req, res) => {
       });
     }
     
-    const newConcern = {
+    const newConcern = new HealthConcern({
       id,
       title,
       iconKey: iconKey || 'FlaskConical',
-      description
-    };
+      description,
+      isActive: isActive !== undefined ? isActive : true,
+      order: order || 0,
+      rating: rating || 3
+    });
     
-    healthConcerns.push(newConcern);
+    const savedConcern = await newConcern.save();
     
     res.status(201).json({
       success: true,
       message: 'Health concern created successfully',
-      data: newConcern
+      data: savedConcern
     });
   } catch (error) {
     console.error('Error creating health concern:', error);
@@ -97,28 +101,32 @@ const createHealthConcern = async (req, res) => {
 const updateHealthConcern = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, iconKey, description } = req.body;
+    const { title, iconKey, description, isActive, order, rating } = req.body;
     
-    const concernIndex = healthConcerns.findIndex(c => c.id === id);
-    if (concernIndex === -1) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid health concern ID'
+      });
+    }
+    
+    const concern = await HealthConcern.findByIdAndUpdate(
+      id,
+      { title, iconKey, description, isActive, order, rating },
+      { new: true, runValidators: true }
+    );
+    
+    if (!concern) {
       return res.status(404).json({
         success: false,
         message: 'Health concern not found'
       });
     }
     
-    // Update the concern
-    healthConcerns[concernIndex] = {
-      ...healthConcerns[concernIndex],
-      title: title || healthConcerns[concernIndex].title,
-      iconKey: iconKey || healthConcerns[concernIndex].iconKey,
-      description: description || healthConcerns[concernIndex].description
-    };
-    
     res.status(200).json({
       success: true,
       message: 'Health concern updated successfully',
-      data: healthConcerns[concernIndex]
+      data: concern
     });
   } catch (error) {
     console.error('Error updating health concern:', error);
@@ -135,20 +143,26 @@ const deleteHealthConcern = async (req, res) => {
   try {
     const { id } = req.params;
     
-    const concernIndex = healthConcerns.findIndex(c => c.id === id);
-    if (concernIndex === -1) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid health concern ID'
+      });
+    }
+    
+    const concern = await HealthConcern.findByIdAndDelete(id);
+    
+    if (!concern) {
       return res.status(404).json({
         success: false,
         message: 'Health concern not found'
       });
     }
     
-    const deletedConcern = healthConcerns.splice(concernIndex, 1)[0];
-    
     res.status(200).json({
       success: true,
       message: 'Health concern deleted successfully',
-      data: deletedConcern
+      data: concern
     });
   } catch (error) {
     console.error('Error deleting health concern:', error);
