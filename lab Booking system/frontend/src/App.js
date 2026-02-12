@@ -109,6 +109,11 @@ export default function App() {
             <AdminDashboard />
           </ProtectedRoute>
         } />
+        <Route path="/lab-technician-dashboard" element={
+          <ProtectedRoute requiredRole="labtechnician">
+            <LabTechnicianDashboard />
+          </ProtectedRoute>
+        } />
         <Route path="/health-packages/full-body-checkups" element={<FullBodyCheckups />} />
         <Route path="/health-packages/liver" element={<Liver />} />
         <Route path="/health-packages/lungs" element={<Lungs />} />

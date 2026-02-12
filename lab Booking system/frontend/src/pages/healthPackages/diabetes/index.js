@@ -89,34 +89,36 @@ export default function Diabetes() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {displayTests.map((t) => (
+              {displayTests.map((t) => {
+                const formattedTest = formatTestForDisplay(t);
+                return (
                 <div
-                  key={t.id}
+                  key={formattedTest.displayId}
                   className="group bg-white rounded-2xl border border-slate-200 hover:border-primary/50 hover:shadow-lg transition-all duration-300 flex flex-col h-full overflow-hidden"
                 >
                   <div className="p-6 flex flex-col h-full">
                     <div className="h-14 mb-2">
                       <h4 className="text-lg font-bold text-slate-800 leading-tight group-hover:text-primary transition-colors line-clamp-2">
-                        {t.title}
+                        {formattedTest.displayTitle}
                       </h4>
                     </div>
 
                     <div className="mb-6">
                       <span className="inline-flex items-center bg-red-50 text-red-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-red-100 uppercase">
-                        {t.discount}% OFF
+                        {formattedTest.displayDiscount}% OFF
                       </span>
                     </div>
 
                     <div className="mt-auto">
                       <div className="flex items-baseline gap-3 mb-6">
-                        <span className="text-2xl font-black text-slate-900">₹{t.price}</span>
-                        <span className="text-slate-400 line-through text-xs font-medium">₹{t.originalPrice}</span>
+                        <span className="text-2xl font-black text-slate-900">₹{formattedTest.displayPrice}</span>
+                        <span className="text-slate-400 line-through text-xs font-medium">₹{formattedTest.displayOriginalPrice}</span>
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <CButton
                           variant="outline"
                           fullWidth={true}
-                          onClick={() => navigate(`/recommended-detail?type=test&category=diabetes&id=${t.id}`)}
+                          onClick={() => navigate(`/recommended-detail?type=test&category=diabetes&id=${formattedTest.displayId}`)}
                           className="rounded-xl h-11 font-bold uppercase tracking-widest border-2 border-slate-200 hover:border-primary hover:text-primary transition-all shadow-sm"
                         >
                           Details
@@ -124,7 +126,7 @@ export default function Diabetes() {
                         <CButton
                           variant="primary"
                           fullWidth={true}
-                          onClick={() => navigate(`/new-booking?name=${encodeURIComponent(t.title)}&price=${t.price}`)}
+                          onClick={() => navigate(`/new-booking?name=${encodeURIComponent(formattedTest.displayTitle)}&price=${formattedTest.displayPrice}`)}
                           className="rounded-xl h-11 font-bold uppercase tracking-widest"
                         >
                           Book
@@ -133,7 +135,8 @@ export default function Diabetes() {
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 

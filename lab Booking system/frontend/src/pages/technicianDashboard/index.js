@@ -41,6 +41,8 @@ const TechnicianDashboard = () => {
   const { Clock, Users, TestTube, Eye, FileText } = IconConfig;
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [testResults, setTestResults] = useState([]);
+  const [imageTestResults, setImageTestResults] = useState([]);
+  const [healthyLungResults, setHealthyLungResults] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [bookings, setBookings] = useState([]);
   const [pendingReports, setPendingReports] = useState([]);
@@ -210,17 +212,34 @@ const TechnicianDashboard = () => {
 
   const defaultTests = [
     { testName: 'Hemoglobin', result: '', unit: 'g/dL', referenceRange: '12.0 - 18.0', status: '' },
-    { testName: 'Blood Sugar (F)', result: '', unit: 'mg/dL', referenceRange: '70 - 126', status: '' },
-    { testName: 'Cholesterol', result: '', unit: 'mg/dL', referenceRange: '< 240', status: '' },
-    { testName: 'White Blood Cells', result: '', unit: 'K/uL', referenceRange: '4.0 - 12.0', status: '' },
-    { testName: 'Platelets', result: '', unit: 'K/uL', referenceRange: '100 - 500', status: '' },
-    { testName: 'Sodium', result: '', unit: 'mmol/L', referenceRange: '130 - 150', status: '' },
-    { testName: 'Potassium', result: '', unit: 'mmol/L', referenceRange: '3.0 - 5.5', status: '' },
-    { testName: 'Calcium', result: '', unit: 'mg/dL', referenceRange: '8.0 - 11.0', status: '' }
+    { testName: 'WBC Count', result: '', unit: 'K/uL', referenceRange: '4.0 - 12.0', status: '' },
+    { testName: 'Vitamin B12', result: '', unit: 'pg/mL', referenceRange: '200 - 900', status: '' },
+    { testName: 'RBC Count', result: '', unit: 'M/uL', referenceRange: '4.0 - 5.5', status: '' },
+    { testName: 'Platelet Count', result: '', unit: 'K/uL', referenceRange: '100 - 500', status: '' },
+    { testName: 'MCV', result: '', unit: 'fL', referenceRange: '80 - 100', status: '' },
+    { testName: 'MCH', result: '', unit: 'pg', referenceRange: '27 - 33', status: '' },
+    { testName: 'MCHC', result: '', unit: 'g/dL', referenceRange: '32 - 36', status: '' },
+    { testName: 'Neutrophils', result: '', unit: '%', referenceRange: '40 - 74', status: '' },
+    { testName: 'Lymphocytes', result: '', unit: '%', referenceRange: '20 - 45', status: '' },
+    { testName: 'Monocytes', result: '', unit: '%', referenceRange: '2 - 8', status: '' },
+    { testName: 'Eosinophils', result: '', unit: '%', referenceRange: '0 - 5', status: '' },
+    { testName: 'Basophils', result: '', unit: '%', referenceRange: '0 - 2', status: '' }
+  ];
+
+  const healthyLungTest = [
+    { testName: 'Healthy Lung & Body Checkup', result: '', unit: 'mg/dL', referenceRange: 'Normal Range', status: '' }
   ];
 
   const handleSelectAppointment = (booking) => {
     setSelectedAppointment(booking);
+    
+    // Initialize Image section with the 13 parameters
+    setImageTestResults(defaultTests.map(test => ({ ...test })));
+    
+    // Initialize Healthy Lung & Body Checkup section
+    setHealthyLungResults(healthyLungTest.map(test => ({ ...test })));
+    
+    // Keep existing logic for other tests
     if (booking.selectedTests && booking.selectedTests.length > 0) {
       const initialTests = booking.selectedTests.map(test => ({
         testName: test.name,
@@ -231,7 +250,7 @@ const TechnicianDashboard = () => {
       }));
       setTestResults(initialTests);
     } else {
-      setTestResults(defaultTests.map(test => ({ ...test })));
+      setTestResults([]);
     }
   };
 
@@ -242,13 +261,20 @@ const TechnicianDashboard = () => {
     }
     if (isGenerating) return;
     
-    const testsWithResults = testResults.filter(test => test.result && test.result.trim() !== '');
+    // Combine all test results
+    const allTestResults = [
+      ...imageTestResults,
+      ...healthyLungResults,
+      ...testResults
+    ];
+    
+    const testsWithResults = allTestResults.filter(test => test.result && test.result.trim() !== '');
     if (testsWithResults.length === 0) {
       alerts.validation('Please enter results for at least one test before submitting.');
       return;
     }
     
-    const invalidTests = testResults.filter(test => test.result && test.result.trim() !== '' && !test.status);
+    const invalidTests = allTestResults.filter(test => test.result && test.result.trim() !== '' && !test.status);
     if (invalidTests.length > 0) {
       alerts.validation('Please ensure all entered test results have valid status values.');
       return;
@@ -291,6 +317,8 @@ const TechnicianDashboard = () => {
           alerts.reportSuccess();
           setSelectedAppointment(null);
           setTestResults([]);
+          setImageTestResults([]);
+          setHealthyLungResults([]);
           fetchPendingReports();
           fetchBookings();
           setActiveView('overview');
@@ -310,13 +338,18 @@ const TechnicianDashboard = () => {
 
   const TEST_REFERENCE_RANGES = {
     'Hemoglobin': { low: 12.0, high: 18.0, unit: 'g/dL' },
-    'Blood Sugar (F)': { low: 70, high: 126, unit: 'mg/dL' },
-    'Cholesterol': { low: 0, high: 240, unit: 'mg/dL' },
-    'White Blood Cells': { low: 4.0, high: 12.0, unit: 'K/uL' },
-    'Platelets': { low: 100, high: 500, unit: 'K/uL' },
-    'Sodium': { low: 130, high: 150, unit: 'mmol/L' },
-    'Potassium': { low: 3.0, high: 5.5, unit: 'mmol/L' },
-    'Calcium': { low: 8.0, high: 11.0, unit: 'mg/dL' }
+    'WBC Count': { low: 4.0, high: 12.0, unit: 'K/uL' },
+    'Vitamin B12': { low: 200, high: 900, unit: 'pg/mL' },
+    'RBC Count': { low: 4.0, high: 5.5, unit: 'M/uL' },
+    'Platelet Count': { low: 100, high: 500, unit: 'K/uL' },
+    'MCV': { low: 80, high: 100, unit: 'fL' },
+    'MCH': { low: 27, high: 33, unit: 'pg' },
+    'MCHC': { low: 32, high: 36, unit: 'g/dL' },
+    'Neutrophils': { low: 40, high: 74, unit: '%' },
+    'Lymphocytes': { low: 20, high: 45, unit: '%' },
+    'Monocytes': { low: 2, high: 8, unit: '%' },
+    'Eosinophils': { low: 0, high: 5, unit: '%' },
+    'Basophils': { low: 0, high: 2, unit: '%' }
   };
 
   const determineTestStatus = (testName, result) => {
@@ -354,16 +387,38 @@ const TechnicianDashboard = () => {
     return '';
   };
 
-  const handleTestResultChange = (index, field, value) => {
-    const updatedResults = [...testResults];
-    updatedResults[index][field] = value;
-    
-    if (field === 'result' && value) {
-      const test = updatedResults[index];
-      test.status = determineTestStatus(test.testName, value);
+  const handleTestResultChange = (index, field, value, section = 'general') => {
+    if (section === 'image') {
+      const updatedResults = [...imageTestResults];
+      updatedResults[index][field] = value;
+      
+      if (field === 'result' && value) {
+        const test = updatedResults[index];
+        test.status = determineTestStatus(test.testName, value);
+      }
+      
+      setImageTestResults(updatedResults);
+    } else if (section === 'healthyLung') {
+      const updatedResults = [...healthyLungResults];
+      updatedResults[index][field] = value;
+      
+      if (field === 'result' && value) {
+        const test = updatedResults[index];
+        test.status = determineTestStatus(test.testName, value);
+      }
+      
+      setHealthyLungResults(updatedResults);
+    } else {
+      const updatedResults = [...testResults];
+      updatedResults[index][field] = value;
+      
+      if (field === 'result' && value) {
+        const test = updatedResults[index];
+        test.status = determineTestStatus(test.testName, value);
+      }
+      
+      setTestResults(updatedResults);
     }
-    
-    setTestResults(updatedResults);
   };
 
   const generatePDF = async () => {
@@ -390,6 +445,8 @@ const TechnicianDashboard = () => {
       alerts.pdfSuccess();
       setSelectedAppointment(null);
       setTestResults([]);
+      setImageTestResults([]);
+      setHealthyLungResults([]);
     } catch (error) {
       console.error('Error generating PDF:', error);
       alerts.pdfError();
@@ -448,10 +505,9 @@ const TechnicianDashboard = () => {
           <>
             {/* Stats Section */}
             <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {[
                   { icon: TestTube, label: "Test Name", value: stats.todayTests, color: "bg-blue-500" },
-                  { icon: Clock, label: "In Progress", value: stats.inProgress, color: "bg-yellow-500" },
                   { icon: Eye, label: "Completed", value: stats.completed, color: "bg-green-500" },
                   { icon: Users, label: "Pending", value: stats.pending, color: "bg-red-500" }
                 ].map((stat, index) => (
@@ -577,9 +633,9 @@ const TechnicianDashboard = () => {
                       >
                         <div className="appointment-header">
                           <h3>{booking.patientName || booking.user?.name}</h3>
-                          <span className="appointment-id">{booking._id.toString().slice(-8)}</span>
                         </div>
                         <div className="appointment-details">
+                          <p><strong>Email:</strong> {booking.user?.email || 'N/A'}</p>
                           <p><strong>Patient ID:</strong> {booking.user?._id?.toString().slice(-8) || 'N/A'}</p>
                           <p><strong>Package:</strong> {booking.packageName}</p>
                           <p><strong>Lab:</strong> {booking.labName}</p>
@@ -605,28 +661,85 @@ const TechnicianDashboard = () => {
                   <h2>Generate Report for {selectedAppointment.patientName || selectedAppointment.user?.name}</h2>
                   
                   <div className="test-inputs">
-                    <h3>Enter Test Results</h3>
-                    <div className="test-grid">
-                      {testResults.map((test, index) => (
-                        <div key={index} className="test-input-row">
-                          <label className="test-name">{test.testName}</label>
-                          <input
-                            type="text"
-                            placeholder="Result"
-                            value={test.result}
-                            onChange={(e) => handleTestResultChange(index, 'result', e.target.value)}
-                            className="result-input"
-                          />
-                          <span className="unit">{test.unit}</span>
-                          <span className="reference-range">({test.referenceRange})</span>
-                          {test.status && (
-                            <span className={`status-badge ${test.status.toLowerCase()}`}>
-                              {test.status}
-                            </span>
-                          )}
-                        </div>
-                      ))}
+                    {/* Image Section */}
+                    <div className="mb-8">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">Image</h3>
+                      <div className="test-grid">
+                        {imageTestResults.map((test, index) => (
+                          <div key={index} className="test-input-row">
+                            <label className="test-name">{test.testName}</label>
+                            <input
+                              type="text"
+                              placeholder="Result"
+                              value={test.result}
+                              onChange={(e) => handleTestResultChange(index, 'result', e.target.value, 'image')}
+                              className="result-input"
+                            />
+                            <span className="unit">{test.unit}</span>
+                            <span className="reference-range">({test.referenceRange})</span>
+                            {test.status && (
+                              <span className={`status-badge ${test.status.toLowerCase()}`}>
+                                {test.status}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
+
+                    {/* Healthy Lung & Body Checkup Section */}
+                    <div className="mb-8">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">Enter Test Results</h3>
+                      <div className="test-grid">
+                        {healthyLungResults.map((test, index) => (
+                          <div key={index} className="test-input-row">
+                            <label className="test-name">{test.testName}</label>
+                            <input
+                              type="text"
+                              placeholder="Result"
+                              value={test.result}
+                              onChange={(e) => handleTestResultChange(index, 'result', e.target.value, 'healthyLung')}
+                              className="result-input"
+                            />
+                            <span className="unit">{test.unit}</span>
+                            <span className="reference-range">({test.referenceRange})</span>
+                            {test.status && (
+                              <span className={`status-badge ${test.status.toLowerCase()}`}>
+                                {test.status}
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Additional Tests Section (if any) */}
+                    {testResults.length > 0 && (
+                      <div className="mb-8">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">Additional Tests</h3>
+                        <div className="test-grid">
+                          {testResults.map((test, index) => (
+                            <div key={index} className="test-input-row">
+                              <label className="test-name">{test.testName}</label>
+                              <input
+                                type="text"
+                                placeholder="Result"
+                                value={test.result}
+                                onChange={(e) => handleTestResultChange(index, 'result', e.target.value, 'general')}
+                                className="result-input"
+                              />
+                              <span className="unit">{test.unit}</span>
+                              <span className="reference-range">({test.referenceRange})</span>
+                              {test.status && (
+                                <span className={`status-badge ${test.status.toLowerCase()}`}>
+                                  {test.status}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="report-preview">
@@ -640,7 +753,11 @@ const TechnicianDashboard = () => {
                           patientId: selectedAppointment.user?._id?.toString().slice(-8) || 'N/A',
                           appointmentId: selectedAppointment._id.toString().slice(-8)
                         }}
-                        testResults={testResults.filter(test => test.result)}
+                        testResults={[
+                          ...imageTestResults,
+                          ...healthyLungResults,
+                          ...testResults
+                        ].filter(test => test.result)}
                         reportInfo={{
                           collectionDate: selectedAppointment.date,
                           reportDate: new Date().toLocaleDateString(),
@@ -653,13 +770,25 @@ const TechnicianDashboard = () => {
                   <div className="generate-section">
                     <button
                       onClick={handleSubmitReport}
-                      disabled={isGenerating || testResults.filter(test => test.result && test.result.trim() !== '').length === 0}
+                      disabled={isGenerating || [
+                        ...imageTestResults,
+                        ...healthyLungResults,
+                        ...testResults
+                      ].filter(test => test.result && test.result.trim() !== '').length === 0}
                       className="generate-btn"
-                      title={testResults.filter(test => test.result && test.result.trim() !== '').length === 0 ? 'Please enter at least one test result' : ''}
+                      title={[
+                        ...imageTestResults,
+                        ...healthyLungResults,
+                        ...testResults
+                      ].filter(test => test.result && test.result.trim() !== '').length === 0 ? 'Please enter at least one test result' : ''}
                     >
                       {isGenerating ? 'Submitting...' : 'Accept & Submit Report'}
                     </button>
-                    {testResults.filter(test => test.result && test.result.trim() !== '').length === 0 && (
+                    {[
+                      ...imageTestResults,
+                      ...healthyLungResults,
+                      ...testResults
+                    ].filter(test => test.result && test.result.trim() !== '').length === 0 && (
                       <p className="text-sm text-gray-500 mt-2 text-center">
                         Please enter results for at least one test to submit the report
                       </p>

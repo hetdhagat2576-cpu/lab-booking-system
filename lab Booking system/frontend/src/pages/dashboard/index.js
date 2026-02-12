@@ -66,6 +66,12 @@ export default function DashboardIndex() {
           const category = test.category?.toLowerCase() || '';
           const testName = test.name?.toLowerCase() || '';
           
+          // Debug logging for thyroid and diabetes
+          if (category.includes('thyroid') || testName.includes('thyroid') || testName.includes('tsh') || testName.includes('t3') || testName.includes('t4') ||
+              category.includes('diabetes') || testName.includes('sugar') || testName.includes('glucose') || testName.includes('hba1c')) {
+            console.log('Processing test:', test.name, 'Category:', test.category, 'TestName:', testName);
+          }
+          
           // Categorize based on category field or name patterns
           if (category.includes('liver') || testName.includes('liver') || testName.includes('sgpt') || testName.includes('sgot') || testName.includes('alt')) {
             categorized.liver.push(test);
@@ -75,14 +81,25 @@ export default function DashboardIndex() {
             categorized.kidney.push(test);
           } else if (category.includes('thyroid') || testName.includes('thyroid') || testName.includes('tsh') || testName.includes('t3') || testName.includes('t4')) {
             categorized.thyroid.push(test);
+            console.log('Added to thyroid:', test.name);
           } else if (category.includes('diabetes') || testName.includes('sugar') || testName.includes('glucose') || testName.includes('hba1c')) {
             categorized.diabetes.push(test);
+            console.log('Added to diabetes:', test.name);
           } else if (category.includes('fever') || testName.includes('fever') || testName.includes('dengue') || testName.includes('malaria') || testName.includes('typhoid')) {
             categorized.fever.push(test);
           } else {
             // Default to liver if no specific category matches
             categorized.liver.push(test);
           }
+        });
+        
+        console.log('Final categorized tests:', {
+          thyroid: categorized.thyroid.length,
+          diabetes: categorized.diabetes.length,
+          liver: categorized.liver.length,
+          lungs: categorized.lungs.length,
+          kidney: categorized.kidney.length,
+          fever: categorized.fever.length
         });
         
         setCategorizedTests(categorized);
@@ -315,15 +332,7 @@ export default function DashboardIndex() {
                 {concern.description}
               </p>
 
-              {/* Test Count Badge */}
-              {!loadingTests && (
-                <div className="relative mt-2">
-                  <span className="inline-flex items-center bg-primary/10 text-primary text-xs font-bold px-2 py-1 rounded-full border border-primary/20">
-                    {categorizedTests[concern.id]?.length || 0} Tests
-                  </span>
-                </div>
-              )}
-
+              
               {/* Decorative Elements */}
               <div className="absolute top-2 right-2 w-2 h-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300" style={{ backgroundColor: Theme.colors.primary }} />
               <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500" style={{ backgroundColor: Theme.colors.secondary }} />

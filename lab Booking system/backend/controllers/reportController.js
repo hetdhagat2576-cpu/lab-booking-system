@@ -158,29 +158,16 @@ const getReportById = async (req, res) => {
 // Get today's approved bookings for lab technicians
 const getTodayBookings = async (req, res) => {
   try {
-    const today = new Date().toISOString().split('T')[0];
-    
-    // Get approved bookings for today or all approved bookings if no date filter needed
+    // Get all approved bookings for lab technicians (not filtered by date)
     const bookings = await Booking.find({ 
       adminStatus: 'approved'
     })
     .populate('user', 'name email phone')
-    .sort({ date: 1, time: 1 });
-
-    // Filter for today's bookings if date field exists, otherwise return all approved bookings
-    const todayBookings = bookings.filter(booking => {
-      if (booking.date) {
-        return booking.date === today;
-      }
-      // If no date field, include if it was created recently (last 7 days)
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      return new Date(booking.createdAt) >= sevenDaysAgo;
-    });
+    .sort({ date: 1, time: 1, createdAt: -1 });
 
     res.json({ 
       success: true, 
-      data: todayBookings 
+      data: bookings 
     });
   } catch (error) {
     console.error('Get today bookings error:', error);
@@ -191,8 +178,6 @@ const getTodayBookings = async (req, res) => {
 // Get pending reports for lab technicians
 const getPendingReports = async (req, res) => {
   try {
-    const today = new Date().toISOString().split('T')[0];
-    
     // Get approved bookings that don't have reports yet
     const bookingsWithReports = await Report.find({
       status: 'Completed'
@@ -200,11 +185,10 @@ const getPendingReports = async (req, res) => {
 
     const pendingBookings = await Booking.find({
       _id: { $nin: bookingsWithReports },
-      date: today,
       adminStatus: 'approved'
     })
     .populate('user', 'name email phone')
-    .sort({ time: 1 });
+    .sort({ date: 1, time: 1, createdAt: -1 });
 
     res.json({ 
       success: true, 
