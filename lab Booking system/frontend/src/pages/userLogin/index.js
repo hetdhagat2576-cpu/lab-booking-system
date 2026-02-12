@@ -87,6 +87,7 @@ export default function UserLogin() {
   const showRecaptchaAlert = async (title, message, confirmButtonText = 'Continue') => {
     return new Promise((resolve, reject) => {
       let recaptchaToken = null;
+      let widgetId = null;
 
       // Ensure reCAPTCHA script is loaded
       const loadRecaptchaScript = () => {
@@ -141,7 +142,7 @@ export default function UserLogin() {
                   container.innerHTML = '';
                   
                   // Render reCAPTCHA
-                  window.grecaptcha.render(container, {
+                  widgetId = window.grecaptcha.render(container, {
                     sitekey: process.env.REACT_APP_RECAPTCHA_SITE_KEY || "6LcolFcsAAAAAHu4qJFpMgWFj_SW9jD6obXysvES",
                     callback: (token) => {
                       recaptchaToken = token;
@@ -255,7 +256,7 @@ export default function UserLogin() {
           icon: 'success',
           title: 'Login Successful!',
           text: 'Welcome back! You are now logged in.',
-          confirmButtonColor: '#3085d6',
+          confirmButtonColor: Theme.colors.primary,
           confirmButtonText: 'Continue',
           showConfirmButton: true,
           showCancelButton: false,

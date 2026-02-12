@@ -111,13 +111,16 @@ export default function LabTechnicianLogin() {
 
           const result = await Swal.fire({
             title: title,
+            icon: false,
+            showClass: {
+              popup: 'swal2-noicon'
+            },
             html: `
               <div style="text-align: left;">
                 <p style="margin-bottom: 20px; color: #666;">${message}</p>
                 <div id="recaptcha-container" style="display: flex; justify-content: center; margin: 20px 0;"></div>
               </div>
             `,
-            icon: 'info',
             showCancelButton: true,
             confirmButtonText: confirmButtonText,
             cancelButtonText: 'Cancel',

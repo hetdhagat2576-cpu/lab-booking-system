@@ -341,51 +341,7 @@ export default function DashboardIndex() {
         </section>
         )}
 
-        {/* Reports Section */}
-        {userReports.length > 0 && (
-          <section className="mb-8 max-w-6xl mx-auto">
-            <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: Theme.colors.primary }}>
-                  <FileText className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900">Your Lab Reports</h2>
-                  <p className="text-sm text-gray-600">Download your completed test reports</p>
-                </div>
-              </div>
-              
-              <div className="space-y-3">
-                {userReports.map((report) => (
-                  <div key={report._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                        <FileText className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-gray-800">{report.packageName}</p>
-                        <p className="text-sm text-gray-600">
-                          {new Date(report.createdAt).toLocaleDateString()} • {report.selectedTests?.length || 0} tests
-                        </p>
-                      </div>
-                    </div>
-                    <CButton
-                      variant="primary"
-                      size="sm"
-                      onClick={() => handleDownloadReport(report._id)}
-                      className="text-xs px-4 py-2"
-                    >
-                      Download PDF
-                    </CButton>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        
-      </main>
+        </main>
 
       <Footer />
     </div>

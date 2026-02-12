@@ -17,13 +17,48 @@ import {
 export default function UserProfileIndex() {
   const navigate = useNavigate();
   const { user, updateUser, logout } = useAuth();
-  const { User, Mail, MapPin, Activity, Award, Calendar, Phone, MessageSquare, Star, CheckCircle, Clock, AlertCircle, LogOut, FileText } = IconConfig;
-  const [form, setForm] = useState({ name: "", email: "", phone: "", address: "" });
+  const { User, Mail, MapPin, Activity, Award, Calendar, Phone, MessageSquare, Star, CheckCircle, Clock, AlertCircle, LogOut, FileText, Settings, History, ChevronLeft } = IconConfig;
+  const [form, setForm] = useState({ name: "", email: "", phone: "", address: "", age: "", gender: "" });
   const [stats, setStats] = useState({ total: 0, upcoming: 0, completed: 0 });
   const [contacts, setContacts] = useState([]);
   const [feedbacks, setFeedbacks] = useState([]);
   const [reports, setReports] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
+  const [bookings, setBookings] = useState([]);
+
+  // Sidebar navigation items
+  const sidebarItems = [
+    {
+      id: 0,
+      label: "Account Settings",
+      icon: Settings,
+      badge: null
+    },
+    {
+      id: 1,
+      label: "Feedback Requests",
+      icon: MessageSquare,
+      badge: feedbacks.length
+    },
+    {
+      id: 2,
+      label: "Contact Requests", 
+      icon: Mail,
+      badge: contacts.length
+    },
+    {
+      id: 3,
+      label: "Generate Reports",
+      icon: FileText,
+      badge: reports.length
+    },
+    {
+      id: 4,
+      label: "Activity History",
+      icon: History,
+      badge: null
+    }
+  ];
 
   useEffect(() => {
     if (!user || (user.role && user.role !== "user")) {
@@ -35,6 +70,8 @@ export default function UserProfileIndex() {
       email: user.email || "",
       phone: user.phone || "",
       address: user.address || "",
+      age: user.age || "",
+      gender: user.gender || ""
     });    
 
     (async () => {
@@ -66,6 +103,7 @@ export default function UserProfileIndex() {
         const data = await response.json();
         if (response.ok && data.success) {
           const userBookings = Array.isArray(data.data) ? data.data : [];
+          setBookings(userBookings);
           setStats({
             total: userBookings.length,
             upcoming: userBookings.filter(b => ["pending", "confirmed"].includes(b.status)).length,
@@ -337,60 +375,45 @@ export default function UserProfileIndex() {
                   >
                    Dashboard
                   </Button>
-                  <Button 
-                    variant="outlined" 
-                    onClick={() => navigate("/user-history")} 
-                    startIcon={<Calendar size={18} />}
-                    sx={{ borderRadius: '10px', textTransform: 'none', px: 2, py: 1, borderColor: Theme.colors.primary, color: Theme.colors.primary, "&:hover": { borderColor: Theme.colors.primaryHover, color: Theme.colors.primaryHover } }}
-                    size="small"
-                  >
-                    History
-                  </Button>
-                  <Button 
-                    variant="contained" 
-                    onClick={handleSave}
-                    sx={{ backgroundColor: Theme.colors.primary, borderRadius: '10px', textTransform: 'none', px: 3, py: 1, "&:hover": { backgroundColor: Theme.colors.primaryHover } }}
-                    size="small"
-                  >
-                    Save Changes
-                  </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Main Content with Tabs */}
-          <Paper elevation={0} className="rounded-3xl border border-slate-200">
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 3, pt: 2 }}>
-              <Tabs value={activeTab} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
-                <Tab 
-                  icon={<User size={18} />} 
-                  label="Account Settings" 
-                  iconPosition="start"
-                  sx={{ textTransform: 'none', minHeight: 48, fontSize: '14px' }}
-                />
-                <Tab 
-                  icon={<Badge badgeContent={feedbacks.length} color="primary"><MessageSquare size={18} /></Badge>} 
-                  label="Your Feedback Requests" 
-                  iconPosition="start"
-                  sx={{ textTransform: 'none', minHeight: 48, fontSize: '14px' }}
-                />
-                <Tab 
-                  icon={<Badge badgeContent={contacts.length} color="primary"><Mail size={18} /></Badge>} 
-                  label="Your Contact Requests" 
-                  iconPosition="start"
-                  sx={{ textTransform: 'none', minHeight: 48, fontSize: '14px' }}
-                />
-                <Tab 
-                  icon={<Badge badgeContent={reports.length} color="primary"><FileText size={18} /></Badge>} 
-                  label="Report Generate" 
-                  iconPosition="start"
-                  sx={{ textTransform: 'none', minHeight: 48, fontSize: '14px' }}
-                />
-              </Tabs>
-            </Box>
+          {/* Main Content with Sidebar */}
+          <div className="flex gap-6">
+            {/* Sidebar Navigation */}
+            <Paper elevation={0} className="w-64 rounded-2xl border border-slate-200 p-4 h-fit">
+              <nav className="space-y-2">
+                {sidebarItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveTab(item.id)}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-left ${
+                        activeTab === item.id
+                          ? 'bg-primary-50 text-primary-700 border border-primary-200'
+                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800'
+                      }`}
+                    >
+                      <Icon size={18} />
+                      <span className="font-medium">{item.label}</span>
+                      {item.badge !== null && item.badge > 0 && (
+                        <Badge 
+                          badgeContent={item.badge} 
+                          color="primary" 
+                          className="ml-auto"
+                        />
+                      )}
+                    </button>
+                  );
+                })}
+              </nav>
+            </Paper>
 
-            <Box sx={{ p: 4 }}>
+            {/* Content Area */}
+            <Paper elevation={0} className="flex-1 rounded-2xl border border-slate-200 p-6">
               {/* Account Settings Tab */}
               {activeTab === 0 && (
                 <Grid container spacing={4}>
@@ -399,6 +422,8 @@ export default function UserProfileIndex() {
                     <Box className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <StyledTextField label="Full Name" name="name" value={form.name} icon={<User size={18}/>} onChange={handleChange} />
                       <StyledTextField label="Email" name="email" value={form.email} icon={<Mail size={18}/>} onChange={handleChange} />
+                      <StyledTextField label="Age" name="age" value={form.age} icon={<Calendar size={18}/>} onChange={handleChange} />
+                      <StyledTextField label="Gender" name="gender" value={form.gender} icon={<User size={18}/>} onChange={handleChange} />
                       <StyledTextField label="Phone Number" name="phone" value={form.phone} icon={<Phone size={18}/>} onChange={handleChange} />
                       <StyledTextField label="Home Address" name="address" value={form.address} icon={<MapPin size={18}/>} onChange={handleChange} />
                     </Box>
@@ -415,14 +440,6 @@ export default function UserProfileIndex() {
                       >
                         Save Changes
                       </Button>
-                    </div>
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <Typography variant="h6" fontWeight="700" className="mb-4">Quick Stats</Typography>
-                    <div className="space-y-3">
-                      <StatCard icon={<Activity />} label="Total Visits" value={stats.total} color="blue" />
-                      <StatCard icon={<Calendar />} label="Upcoming" value={stats.upcoming} color="emerald" />
-                      <StatCard icon={<Award />} label="Completed" value={stats.completed} color="amber" />
                     </div>
                   </Grid>
                 </Grid>
@@ -442,17 +459,6 @@ export default function UserProfileIndex() {
                         variant="outlined"
                       />
                     </div>
-                    {feedbacks.length > 0 && (
-                      <Button 
-                        variant="outlined" 
-                        color="error" 
-                        onClick={handleClearFeedbacks} 
-                        size="small"
-                        sx={{ borderRadius: '8px', textTransform: 'none' }}
-                      >
-                        Clear All
-                      </Button>
-                    )}
                   </div>
                   
                   {feedbacks.length === 0 ? (
@@ -469,34 +475,40 @@ export default function UserProfileIndex() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {feedbacks.map((fb) => (
-                        <div key={fb._id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                          <div className="flex justify-between items-start mb-3">
-                            <div>
-                              <Typography variant="h6" fontWeight="600" className="text-gray-800 mb-1">
-                                Feedback from {new Date(fb.createdAt).toLocaleDateString()}
-                              </Typography>
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-medium" style={{ color: Theme.colors.primary }}>
-                                  Rating: {fb.bookingEaseRating}/5
-                                </span>
-                                <Chip 
-                                  label={fb.status || "new"}
-                                  size="small"
-                                  color={getFeedbackStatusColor(fb.status)}
-                                  variant="outlined"
-                                />
+                        <Card key={fb._id} elevation={2} className="rounded-2xl hover:shadow-lg transition-shadow">
+                          <CardContent className="p-6">
+                            <div className="flex justify-between items-start mb-4">
+                              <div>
+                                <Typography variant="h6" fontWeight="600" className="text-slate-800 mb-2">
+                                  Feedback from {new Date(fb.createdAt).toLocaleDateString()}
+                                </Typography>
+                                <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-2">
+                                    <Star className="w-5 h-5 text-amber-400" />
+                                    <span className="text-sm font-semibold text-slate-700">
+                                      {fb.bookingEaseRating}/5
+                                    </span>
+                                  </div>
+                                  <Chip 
+                                    label={fb.status || "new"}
+                                    size="small"
+                                    color={getFeedbackStatusColor(fb.status)}
+                                    variant="outlined"
+                                    className="font-medium"
+                                  />
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          
-                          {fb.comment && (
-                            <div className="bg-gray-50 rounded p-3">
-                              <Typography variant="body2" className="text-gray-700">{fb.comment}</Typography>
-                            </div>
-                          )}
-                        </div>
+                            
+                            {fb.comment && (
+                              <Box className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                                <Typography variant="body2" className="text-slate-700 leading-relaxed">{fb.comment}</Typography>
+                              </Box>
+                            )}
+                          </CardContent>
+                        </Card>
                       ))}
                     </div>
                   )}
@@ -517,17 +529,6 @@ export default function UserProfileIndex() {
                         variant="outlined"
                       />
                     </div>
-                    {contacts.length > 0 && (
-                      <Button 
-                        variant="outlined" 
-                        color="error" 
-                        onClick={handleClearContacts} 
-                        size="small"
-                        sx={{ borderRadius: '8px', textTransform: 'none' }}
-                      >
-                        Clear All
-                      </Button>
-                    )}
                   </div>
                   
                   {contacts.length === 0 ? (
@@ -544,35 +545,40 @@ export default function UserProfileIndex() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {contacts.map((c) => (
-                        <div key={c._id || c.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                          <div className="flex justify-between items-start mb-3">
-                            <div>
-                              <Typography variant="h6" fontWeight="600" className="text-gray-800 mb-1">
-                                {c.subject}
-                              </Typography>
-                              <Typography variant="caption" className="text-gray-500 mb-2">
-                                {new Date(c.createdAt).toLocaleDateString()}
-                              </Typography>
-                              <Chip 
-                                label={c.status || "new"}
-                                size="small"
-                                color={getContactStatusColor(c.status)}
-                                variant="outlined"
-                              />
+                        <Card key={c._id || c.id} elevation={2} className="rounded-2xl hover:shadow-lg transition-shadow">
+                          <CardContent className="p-6">
+                            <div className="flex justify-between items-start mb-4">
+                              <div>
+                                <Typography variant="h6" fontWeight="600" className="text-slate-800 mb-2">
+                                  {c.subject}
+                                </Typography>
+                                <div className="flex items-center gap-3 mb-3">
+                                  <Typography variant="caption" className="text-slate-500">
+                                    {new Date(c.createdAt).toLocaleDateString()}
+                                  </Typography>
+                                  <Chip 
+                                    label={c.status || "new"}
+                                    size="small"
+                                    color={getContactStatusColor(c.status)}
+                                    variant="outlined"
+                                    className="font-medium"
+                                  />
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                          
-                          <div className="bg-gray-50 rounded p-3 mb-3">
-                            <Typography variant="body2" className="text-gray-700">{c.message}</Typography>
-                          </div>
-                          
-                          <div className="flex items-center gap-2 text-sm text-gray-500">
-                            <Mail size={14} />
-                            <span>{c.email}</span>
-                          </div>
-                        </div>
+                            
+                            <Box className="bg-slate-50 rounded-xl p-4 mb-4 border border-slate-100">
+                              <Typography variant="body2" className="text-slate-700 leading-relaxed">{c.message}</Typography>
+                            </Box>
+                            
+                            <div className="flex items-center gap-3 text-sm text-slate-600">
+                              <Mail className="w-4 h-4" />
+                              <span className="font-medium">{c.email}</span>
+                            </div>
+                          </CardContent>
+                        </Card>
                       ))}
                     </div>
                   )}
@@ -627,79 +633,93 @@ export default function UserProfileIndex() {
                       </Button>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       {reports.map((report) => (
-                        <div key={report._id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                          <div className="flex justify-between items-start mb-3">
-                            <div>
-                              <Typography variant="h6" fontWeight="600" className="text-gray-800 mb-1">
-                                {report.packageName}
-                              </Typography>
-                              <Typography variant="caption" className="text-gray-500 mb-2">
-                                {new Date(report.testDate).toLocaleDateString()}
-                              </Typography>
-                              <Chip 
-                                label="Completed"
-                                size="small"
-                                color="success"
-                                variant="outlined"
-                              />
+                        <Card key={report._id} elevation={2} className="rounded-2xl hover:shadow-lg transition-shadow">
+                          <CardContent className="p-6">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <Typography variant="h6" fontWeight="600" className="text-slate-800 mb-2">
+                                  {report.packageName}
+                                </Typography>
+                                <div className="flex items-center gap-3 mb-3">
+                                  <Typography variant="body2" className="text-slate-600">
+                                    {new Date(report.testDate).toLocaleDateString()}
+                                  </Typography>
+                                  <Chip 
+                                    label="Completed"
+                                    size="small"
+                                    color="success"
+                                    variant="outlined"
+                                    className="font-medium"
+                                  />
+                                </div>
+                                <Typography variant="body2" className="text-slate-600">
+                                  {report.selectedTests?.length || 0} tests included • Technician: {report.technicianId?.name || 'Lab Technician'}
+                                </Typography>
+                              </div>
                             </div>
-                          </div>
-                          
-                          <div className="bg-gray-50 rounded p-3 mb-3">
-                            <Typography variant="body2" className="text-gray-700">
-                              {report.selectedTests?.length || 0} tests included • Technician: {report.technicianId?.name || 'Lab Technician'}
-                            </Typography>
-                          </div>
-                          
-                          <div className="flex gap-2">
-                            <Button 
-                              variant="contained" 
-                              size="small"
-                              onClick={async () => {
-                                try {
-                                  const link = document.createElement('a');
-                                  link.href = createApiUrl(`/api/reports/${report._id}/download`);
-                                  link.target = '_blank';
-                                  link.download = `Lab_Report_${report.packageName}_${report._id.toString().slice(-8)}.pdf`;
-                                  document.body.appendChild(link);
-                                  link.click();
-                                  document.body.removeChild(link);
-                                  
+                            
+                            <div className="flex gap-3 mt-4">
+                              <Button 
+                                variant="contained" 
+                                size="small"
+                                onClick={async () => {
+                                  try {
+                                    const response = await fetch(createApiUrl(`/api/reports/${report._id}/download`), {
+                                      headers: {
+                                        Authorization: `Bearer ${user?.token || ""}`
+                                      }
+                                    });
+                                    
+                                    if (!response.ok) {
+                                      throw new Error('Failed to fetch PDF');
+                                    }
+                                    
+                                    const blob = await response.blob();
+                                    const url = window.URL.createObjectURL(blob);
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.download = `Lab_Report_${report.packageName}_${report._id.toString().slice(-8)}.pdf`;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                    window.URL.revokeObjectURL(url);
+                                    
+                                    Swal.fire({
+                                      icon: 'success',
+                                      title: 'Download Started',
+                                      text: 'Your lab report is being downloaded.',
+                                      timer: 2000,
+                                      showConfirmButton: false
+                                    });
+                                  } catch (error) {
+                                    console.error('Download error:', error);
+                                    Swal.fire({
+                                      icon: 'error',
+                                      title: 'Download Failed',
+                                      text: 'Unable to download the report. Please try again.',
+                                      confirmButtonColor: Theme.colors.primary
+                                    });
+                                  }
+                                }}
+                                sx={{ 
+                                  backgroundColor: Theme.colors.primary, 
+                                  "&:hover": { backgroundColor: Theme.colors.primaryHover },
+                                  borderRadius: '8px',
+                                  textTransform: 'none'
+                                }}
+                              >
+                                Download PDF
+                              </Button>
+                              <Button 
+                                variant="outlined" 
+                                size="small"
+                                onClick={() => {
                                   Swal.fire({
-                                    icon: 'success',
-                                    title: 'Download Started',
-                                    text: 'Your lab report is being downloaded.',
-                                    timer: 2000,
-                                    showConfirmButton: false
-                                  });
-                                } catch (error) {
-                                  Swal.fire({
-                                    icon: 'error',
-                                    title: 'Download Failed',
-                                    text: 'Unable to download the report. Please try again.',
-                                    confirmButtonColor: Theme.colors.primary
-                                  });
-                                }
-                              }}
-                              sx={{ 
-                                backgroundColor: Theme.colors.primary, 
-                                "&:hover": { backgroundColor: Theme.colors.primaryHover },
-                                borderRadius: '8px',
-                                textTransform: 'none'
-                              }}
-                            >
-                              Download PDF
-                            </Button>
-                            <Button 
-                              variant="outlined" 
-                              size="small"
-                              onClick={() => {
-                                Swal.fire({
-                                  title: 'Report Details',
-                                  html: `<div style="text-align: left; white-space: pre-line; line-height: 1.5;">
-                                    <strong>Package:</strong> ${report.packageName}<br>
+                                    title: 'Report Details',
+                                    html: `<div style="text-align: left; white-space: pre-line; line-height: 1.5;">
+                                      <strong>Package:</strong> ${report.packageName}<br>
                                     <strong>Test Date:</strong> ${new Date(report.testDate).toLocaleDateString()}<br>
                                     <strong>Tests:</strong> ${report.selectedTests?.length || 0} tests included<br>
                                     <strong>Summary:</strong> ${report.summary}<br>
@@ -711,23 +731,102 @@ export default function UserProfileIndex() {
                                 });
                               }}
                               sx={{ 
-                                borderColor: Theme.colors.primary,
-                                color: Theme.colors.primary,
-                                borderRadius: '8px',
-                                textTransform: 'none'
-                              }}
-                            >
-                              View Details
-                            </Button>
-                          </div>
-                        </div>
+                                  borderColor: Theme.colors.primary,
+                                  color: Theme.colors.primary,
+                                  borderRadius: '8px',
+                                  textTransform: 'none'
+                                }}
+                              >
+                                View Details
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
                       ))}
                     </div>
                   )}
                 </div>
               )}
-            </Box>
-          </Paper>
+
+              {/* Activity History Tab */}
+              {activeTab === 4 && (
+                <div>
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <History className="w-6 h-6 text-primary-600" />
+                      <Typography variant="h6" fontWeight="700" className="text-slate-800">
+                        Your Booking History
+                      </Typography>
+                    </div>
+                    <button
+                      onClick={() => navigate("/")}
+                      className="flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium text-sm"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      Back to Dashboard
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {bookings.length > 0 ? (
+                      bookings.map((booking, index) => (
+                        <Paper key={index} elevation={0} className="p-4 rounded-xl border border-slate-200 hover:shadow-md transition-shadow">
+                          <div className="flex items-start gap-4">
+                            <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+                              <FileText className="w-5 h-5 text-slate-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-2">
+                                <Typography variant="h6" className="font-semibold text-slate-800 truncate">
+                                  {booking.testName || booking.packageName || "Lab Test"}
+                                </Typography>
+                                <Chip
+                                  label={booking.status || "pending"}
+                                  size="small"
+                                  className={`${
+                                    booking.status === "completed" ? "bg-green-100 text-green-700" :
+                                    booking.status === "confirmed" ? "bg-blue-100 text-blue-700" :
+                                    booking.status === "approved" ? "bg-emerald-100 text-emerald-700" :
+                                    "bg-amber-100 text-amber-700"
+                                  }`}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2 text-sm text-slate-600">
+                                  <MapPin className="w-4 h-4" />
+                                  <span>{booking.location || "Wellness Center Lab Appointment"}</span>
+                                </div>
+                                <div className="flex items-center gap-4 text-sm text-slate-600">
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="w-4 h-4" />
+                                    <span>{new Date(booking.date || booking.createdAt).toLocaleDateString()}</span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Clock className="w-4 h-4" />
+                                    <span>{new Date(booking.date || booking.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </Paper>
+                      ))
+                    ) : (
+                      <div className="text-center py-12">
+                        <FileText className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+                        <Typography variant="h6" className="text-slate-600 mb-2">
+                          No Bookings Found
+                        </Typography>
+                        <Typography variant="body2" className="text-slate-500">
+                          You haven't made any lab appointments yet.
+                        </Typography>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </Paper>
+          </div>
         </div>
       </main>
       <Footer />

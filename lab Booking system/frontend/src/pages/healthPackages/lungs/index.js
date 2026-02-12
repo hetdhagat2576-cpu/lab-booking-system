@@ -15,7 +15,6 @@ export default function Lungs() {
   
   // State for toggling views
   const [showAllPackages, setShowAllPackages] = useState(false);
-  const [showAllTests, setShowAllTests] = useState(false);
   const [synchronizedTests, setSynchronizedTests] = useState([]);
 
   const { ArrowLeft, CheckCircle2, ShieldCheck, Clock, Activity } = IconConfig;
@@ -31,7 +30,7 @@ export default function Lungs() {
 
   // Slicing logic
   const displayPackages = showAllPackages ? LUNG_HEALTH_PACKAGES : LUNG_HEALTH_PACKAGES.slice(0, 3);
-  const displayTests = showAllTests ? recommendedTests : recommendedTests.slice(0, 3);
+  const displayTests = recommendedTests;
 
   const handleBook = (packageId) => {
     navigate(`/new-booking?package=${packageId}`);
@@ -79,14 +78,14 @@ export default function Lungs() {
                 </p>
               </div>
 
-              {RECOMMENDED_TESTS.lungs.length > 3 && (
+              {recommendedTests.length > 0 && (
                 <CButton
                   variant="outline"
                   fullWidth={false}
-                  onClick={() => setShowAllTests(!showAllTests)}
+                  onClick={() => window.location.reload()}
                   className="border-2 border-slate-200 hover:border-primary hover:text-primary font-bold px-6 rounded-xl h-10 text-sm transition-all shadow-sm"
                 >
-                  {showAllTests ? "Show Less" : `View All (${RECOMMENDED_TESTS.lungs.length})`}
+                  Sync Tests ({recommendedTests.length})
                 </CButton>
               )}
             </div>

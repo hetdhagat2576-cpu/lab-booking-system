@@ -96,9 +96,18 @@
   animation-play-state: paused;
 }
 
-*,
-*::before,
-*::after {
+/* Disable animations and transitions for non-interactive elements only */
+body,
+main,
+section,
+article,
+div:not([role]),
+span:not([role]),
+p,
+h1, h2, h3, h4, h5, h6,
+ul, ol, li,
+img,
+svg {
   transition: none !important;
   animation: none !important;
   animation-duration: 0s !important;
@@ -111,4 +120,13 @@ html, body {
 
 .scroll-smooth {
   scroll-behavior: auto !important;
+}
+
+/* Hide SweetAlert icon container */
+.swal2-noicon .swal2-icon {
+  display: none !important;
+}
+
+.swal2-noicon .swal2-image {
+  display: none !important;
 }

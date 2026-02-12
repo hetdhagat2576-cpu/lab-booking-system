@@ -17,7 +17,6 @@ const { Home, UserCheck, FileBarChart } = IconConfig;
 export default function Diabetes() {
   const navigate = useNavigate();
   const [showAllPackages, setShowAllPackages] = useState(false);
-  const [showAllTests, setShowAllTests] = useState(false);
   const [synchronizedTests, setSynchronizedTests] = useState([]);
   
   const { ArrowLeft, CheckCircle2, Clock, ShieldCheck, Droplets } = IconConfig;
@@ -32,7 +31,7 @@ export default function Diabetes() {
   const recommendedTests = synchronizedTests.length > 0 ? synchronizedTests : RECOMMENDED_TESTS.diabetes;
 
   const displayPackages = showAllPackages ? DIABETES_PACKAGES : DIABETES_PACKAGES.slice(0, 3);
-  const displayTests = showAllTests ? recommendedTests : recommendedTests.slice(0, 3);
+  const displayTests = recommendedTests;
 
   const handleBook = (packageId) => navigate(`/new-booking?package=${packageId}`);
 
@@ -76,14 +75,14 @@ export default function Diabetes() {
                 </p>
               </div>
 
-              {RECOMMENDED_TESTS.diabetes.length > 3 && (
+              {recommendedTests.length > 0 && (
                 <CButton
                   variant="outline"
                   fullWidth={false}
-                  onClick={() => setShowAllTests(!showAllTests)}
+                  onClick={() => window.location.reload()}
                   className="border-2 border-slate-200 hover:border-primary hover:text-primary font-bold px-6 rounded-xl h-10 text-sm transition-all shadow-sm"
                 >
-                  {showAllTests ? "Show Less" : `View All (${RECOMMENDED_TESTS.diabetes.length})`}
+                  Sync Tests ({recommendedTests.length})
                 </CButton>
               )}
             </div>

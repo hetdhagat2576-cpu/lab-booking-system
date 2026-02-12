@@ -87,10 +87,9 @@ export default function RegisterIndex() {
                 <div id="recaptcha-container" style="display: flex; justify-content: center; margin: 20px 0; transform: scale(0.85); transform-origin: 0 0;"></div>
               </div>
             `,
-            showCancelButton: true,
             showConfirmButton: false,
-            cancelButtonText: 'Cancel',
-            cancelButtonColor: '#d33',
+            showCancelButton: false,
+            showCloseButton: true,
             didOpen: () => {
               // Render reCAPTCHA inside the SweetAlert
               const container = document.getElementById('recaptcha-container');

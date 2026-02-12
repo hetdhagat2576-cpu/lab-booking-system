@@ -6,11 +6,11 @@ import LogoutConfirmation from "../logoutConfirmation/index.js";
 import Theme from "../../config/theam/index.js";
 
 
-export default function Header({ hideNavItems = false }) {
+export default function Header({ hideNavItems = false, hideProfileIcon = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated, isAdmin, isLabTechnician, logout } = useAuth();
-  const { UserCircle, LogOut, ChevronDown } = IconConfig || {};
+  const { UserCircle, LogOut, ChevronDown, Settings } = IconConfig || {};
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
@@ -225,7 +225,7 @@ export default function Header({ hideNavItems = false }) {
             </>
           ) : (
             <>
-              {!isAdmin && (
+              {!hideProfileIcon && !isAdmin && (
                 <button
                   onClick={() => {
                     const route = isLabTechnician ? "/lab-technician-profile" : "/user-profile";

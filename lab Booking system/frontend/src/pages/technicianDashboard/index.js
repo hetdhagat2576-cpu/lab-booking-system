@@ -437,7 +437,7 @@ const TechnicianDashboard = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <Header {...headerNav} hideNavItems={true} />
+      <Header {...headerNav} hideNavItems={true} hideProfileIcon={true} />
       
       <main className="flex-grow">
         {/* View Toggle */}

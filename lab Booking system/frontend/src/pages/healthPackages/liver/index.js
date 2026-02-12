@@ -15,7 +15,6 @@ export default function Liver() {
   
   // State for toggling views
   const [showAllPackages, setShowAllPackages] = useState(false);
-  const [showAllTests, setShowAllTests] = useState(false);
   const [synchronizedTests, setSynchronizedTests] = useState([]);
 
   const { ArrowLeft, CheckCircle2, Clock, ShieldCheck, FlaskConical } = IconConfig;
@@ -31,7 +30,7 @@ export default function Liver() {
 
   // Slicing logic
   const displayPackages = showAllPackages ? LIVER_HEALTH_PACKAGES : LIVER_HEALTH_PACKAGES.slice(0, 3);
-  const displayTests = showAllTests ? recommendedTests : recommendedTests.slice(0, 3);
+  const displayTests = recommendedTests;
 
   return (
     <div className={Theme.layout.standardPage}>
@@ -75,14 +74,16 @@ export default function Liver() {
                 </p>
               </div>
 
-              <CButton
-                variant="outline"
-                fullWidth={false}
-                onClick={() => setShowAllTests(!showAllTests)}
-                className="border-2 border-slate-200 hover:border-primary hover:text-primary font-bold px-6 rounded-xl h-10 text-sm transition-all shadow-sm"
-              >
-                {showAllTests ? "Show Less" : `View All (${recommendedTests.length})`}
-              </CButton>
+              {recommendedTests.length > 0 && (
+                <CButton
+                  variant="outline"
+                  fullWidth={false}
+                  onClick={() => window.location.reload()}
+                  className="border-2 border-slate-200 hover:border-primary hover:text-primary font-bold px-6 rounded-xl h-10 text-sm transition-all shadow-sm"
+                >
+                  Sync Tests ({recommendedTests.length})
+                </CButton>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
