@@ -884,7 +884,7 @@ export const RECOMMENDED_TESTS = {
   diabetes: [
     { id: "ppbs", title: "Post Prandial Blood Sugar (PPBS) Test", price: 119, originalPrice: 299, discount: 60 },
     { id: "fbs", title: "Fasting Blood Sugar (FBS) Test", price: 119, originalPrice: 299, discount: 60 },
-    { id: "insulin-fasting", title: "Insulin Fasting Test", price: 459, originalPrice: 849, discount: 46 },
+    { id: "insulin-fasting", title: "Insulin Fasting Test", price: 499, originalPrice: 849, discount: 46 },
     { id: "insulin-antibodies", title: "Insulin Antibodies", price: 999, originalPrice: 1649, discount: 39 }
   ],
   fever: [

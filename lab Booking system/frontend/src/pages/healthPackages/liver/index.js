@@ -74,17 +74,7 @@ export default function Liver() {
                 </p>
               </div>
 
-              {recommendedTests.length > 0 && (
-                <CButton
-                  variant="outline"
-                  fullWidth={false}
-                  onClick={() => window.location.reload()}
-                  className="border-2 border-slate-200 hover:border-primary hover:text-primary font-bold px-6 rounded-xl h-10 text-sm transition-all shadow-sm"
-                >
-                  Sync Tests ({recommendedTests.length})
-                </CButton>
-              )}
-            </div>
+              </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {displayTests.map((t) => {

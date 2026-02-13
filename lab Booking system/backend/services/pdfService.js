@@ -1,12 +1,11 @@
-const puppeteer = require('puppeteer');
+const { generatePdf } = require('html-pdf-node');
 
 /**
- * Generates a Lab Report PDF buffer using Puppeteer
+ * Generates a Lab Report PDF buffer using html-pdf-node
  * @param {Object} report - The report data object
  */
 const generateReportPDF = async (report) => {
   try {
-    // Fallback to simple PDF generation if puppeteer is not available
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -90,13 +89,25 @@ const generateReportPDF = async (report) => {
       </html>
     `;
 
-    // Return HTML as buffer (fallback when puppeteer is not available)
-    return Buffer.from(htmlContent, 'utf8');
+    const options = {
+      format: 'A4',
+      printBackground: true,
+      margin: {
+        top: '20px',
+        right: '20px',
+        bottom: '20px',
+        left: '20px'
+      }
+    };
+
+    // Generate PDF using html-pdf-node
+    const pdfBuffer = await generatePdf({ content: htmlContent }, options);
+    return pdfBuffer;
     
   } catch (error) {
     console.error('CRITICAL: PDF Generation Failed:', error);
     // Return a fallback buffer so the server doesn't crash
-    return Buffer.from('Error generating PDF. Please contact support.');
+    throw new Error('Failed to generate PDF report. Please try again later.');
   }
 };
 

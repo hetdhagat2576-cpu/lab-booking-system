@@ -276,6 +276,8 @@ export default function AdminDashboardIndex() {
     description: '',
     price: '',
     category: '',
+    duration: '',
+    sampleType: 'Blood',
     preTestRequirements: 'No specific requirements.'
   });
   const [packageFormData, setPackageFormData] = useState({
@@ -284,6 +286,7 @@ export default function AdminDashboardIndex() {
     includedTests: [],
     price: '',
     category: '',
+    duration: '',
     requiredSample: 'blood',
     fastingRequired: false
   });
@@ -889,10 +892,13 @@ export default function AdminDashboardIndex() {
         setEditingTest(null);
         resetTestForm();
       } else {
-        console.error('Failed to save test');
+        const errorData = await response.json();
+        console.error('Failed to save test:', errorData);
+        alert(`Failed to save test: ${errorData.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error saving test:', error);
+      alert(`Error saving test: ${error.message}`);
     }
   };
 
@@ -934,10 +940,13 @@ export default function AdminDashboardIndex() {
           fastingRequired: false
         });
       } else {
-        console.error('Failed to save package');
+        const errorData = await response.json();
+        console.error('Failed to save package:', errorData);
+        alert(`Failed to save package: ${errorData.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error saving package:', error);
+      alert(`Error saving package: ${error.message}`);
     }
   };
 
@@ -1149,6 +1158,8 @@ export default function AdminDashboardIndex() {
       description: '',
       price: '',
       category: '',
+      duration: '',
+      sampleType: 'Blood',
       preTestRequirements: 'No specific requirements.'
     });
   };
@@ -2811,6 +2822,13 @@ export default function AdminDashboardIndex() {
     }
   }, [activeTab, user]);
 
+  // Fetch tests when package form is opened
+  useEffect(() => {
+    if (showPackageForm && user?.token && tests.length === 0) {
+      fetchTests();
+    }
+  }, [showPackageForm, user, tests.length]);
+
   // Fetch health concerns when user-dashboard tab is active
   useEffect(() => {
     if (activeTab === 'user-dashboard' && user?.token) {
@@ -3583,7 +3601,7 @@ export default function AdminDashboardIndex() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-blue-50/20">
       <Header hideNavItems={true} />
-      <div className="flex flex-1 container mx-auto px-4 pt-0 pb-8 gap-8 max-w-screen-2xl">
+      <div className="flex flex-1 container mx-auto px-4 pt-0 pb-4 md:pb-8 gap-4 md:gap-8 max-w-screen-2xl relative">
         {/* Mobile Menu Button */}
         <CButton 
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -3594,7 +3612,7 @@ export default function AdminDashboardIndex() {
         </CButton>
 
         {/* Sidebar */}
-        <aside className={`${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed md:relative top-0 left-0 h-full md:h-auto w-72 bg-white/90 backdrop-blur-xl border-r border-gray-200/30 z-40 transition-transform duration-300 ease-in-out pt-20 md:pt-0 rounded-2xl md:rounded-none shadow-2xl md:shadow-none`}>
+        <aside className={`${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed md:relative md:flex md:flex-col top-0 left-0 h-full md:h-auto w-64 md:w-72 bg-white/90 backdrop-blur-xl border-r border-gray-200/30 z-40 transition-transform duration-300 ease-in-out pt-20 md:pt-0 rounded-2xl md:rounded-none shadow-2xl md:shadow-none flex-shrink-0`}>
           <div className="p-6 mb-4 border-b border-gray-100/50">
             <h2 className="text-2xl font-bold capitalize tracking-tight" style={{ color: Theme.colors.primary }}>Admin Panel</h2>
             <p className="text-sm mt-1 font-medium" style={{ color: Theme.colors.primaryHover }}>Hospital Management System</p>
@@ -3632,7 +3650,7 @@ export default function AdminDashboardIndex() {
 
         {/* Main Content */}
         
-        <main className="flex-1 md:ml-0 ml-0 pt-0">
+        <main className="flex-1 md:ml-0 ml-0 pt-0 min-w-0">
           <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-100/50 overflow-hidden">
             <div className="bg-gradient-to-r p-8 border-b border-gray-100/30"
               style={{
@@ -3647,7 +3665,7 @@ export default function AdminDashboardIndex() {
               </div>
             </div>
 
-            <div className="p-4 md:p-6">
+            <div className="p-6 md:p-8 space-y-6">
               {activeTab === "registration" && (
                 <div className="space-y-6">
                   {/* User Management Table */}
@@ -4361,7 +4379,8 @@ export default function AdminDashboardIndex() {
                                           name: test.name || '',
                                           description: test.description || '',
                                           price: test.price?.toString() || '',
-                                          category: test.category || 'General',
+                                          category: test.category || '',
+                                          duration: test.duration || '',
                                           sampleType: test.sampleType || 'Blood',
                                           preTestRequirements: test.preparation || 'No specific requirements.' // Map preparation to preTestRequirements for form
                                         });
@@ -4431,6 +4450,7 @@ export default function AdminDashboardIndex() {
                           <tr>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Icon</th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px]">Name</th>
+                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">Included Tests</th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Price</th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
                           </tr>
@@ -4438,13 +4458,13 @@ export default function AdminDashboardIndex() {
                         <tbody className="bg-white divide-y divide-gray-200">
                           {packageLoading ? (
                             <tr>
-                              <td colSpan="4" className="px-4 py-8 text-center text-gray-500">
+                              <td colSpan="5" className="px-4 py-8 text-center text-gray-500">
                                 Loading packages...
                               </td>
                             </tr>
                           ) : packages.length === 0 ? (
                             <tr>
-                              <td colSpan="4" className="px-4 py-8 text-center text-gray-500">
+                              <td colSpan="5" className="px-4 py-8 text-center text-gray-500">
                                 No packages found
                               </td>
                             </tr>
@@ -4460,6 +4480,30 @@ export default function AdminDashboardIndex() {
                                   <div className="text-sm font-medium text-gray-900" title={pkg.name || pkg.title}>{pkg.name || pkg.title}</div>
                                   {pkg.description && (
                                     <div className="text-xs text-gray-500 mt-1 line-clamp-2" title={pkg.description}>{pkg.description}</div>
+                                  )}
+                                </td>
+                                <td className="px-3 py-3" data-label="Included Tests">
+                                  {pkg.includedTests && pkg.includedTests.length > 0 ? (
+                                    <div className="text-sm">
+                                      <div className="text-xs text-gray-500 mb-1">{pkg.includedTests.length} test(s)</div>
+                                      <div className="max-h-16 overflow-y-auto">
+                                        {pkg.includedTests.slice(0, 3).map((testId, index) => {
+                                          const test = tests.find(t => t._id === testId);
+                                          return test ? (
+                                            <div key={testId} className="text-xs text-gray-700 truncate">
+                                              {index + 1}. {test.name}
+                                            </div>
+                                          ) : null;
+                                        })}
+                                        {pkg.includedTests.length > 3 && (
+                                          <div className="text-xs text-gray-500 italic">
+                                            +{pkg.includedTests.length - 3} more...
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <span className="text-xs text-gray-400">No tests included</span>
                                   )}
                                 </td>
                                 <td className="px-3 py-3 text-sm text-gray-900" data-label="Price">
@@ -5873,14 +5917,53 @@ export default function AdminDashboardIndex() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category
+                    Category *
                   </label>
-                  <input
-                    type="text"
+                  <select
+                    required
                     value={testFormData.category}
                     onChange={(e) => setTestFormData({...testFormData, category: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                  >
+                    <option value="">Select a category</option>
+                    <option value="Diabetes">Diabetes</option>
+                    <option value="Liver">Liver</option>
+                    <option value="Kidney">Kidney</option>
+                    <option value="Thyroid">Thyroid</option>
+                    <option value="Fever">Fever</option>
+                    <option value="Lungs">Lungs</option>
+                    <option value="General">General</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Duration *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g., 15 mins, 24 hours"
+                    value={testFormData.duration}
+                    onChange={(e) => setTestFormData({...testFormData, duration: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Sample Type *
+                  </label>
+                  <select
+                    required
+                    value={testFormData.sampleType}
+                    onChange={(e) => setTestFormData({...testFormData, sampleType: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                  >
+                    <option value="Blood">Blood</option>
+                    <option value="Urine">Urine</option>
+                    <option value="Stool">Stool</option>
+                    <option value="Swab">Swab</option>
+                    <option value="Other">Other</option>
+                  </select>
                 </div>
               </div>
               <div className="flex gap-2 mt-6">
@@ -5970,12 +6053,74 @@ export default function AdminDashboardIndex() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category
+                    Category *
+                  </label>
+                  <select
+                    required
+                    value={packageFormData.category}
+                    onChange={(e) => setPackageFormData({...packageFormData, category: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                  >
+                    <option value="">Select a category</option>
+                    <option value="Full Body Checkup">Full Body Checkup</option>
+                    <option value="Diabetes">Diabetes</option>
+                    <option value="Liver Health">Liver Health</option>
+                    <option value="Lung Health">Lung Health</option>
+                    <option value="Kidney Health">Kidney Health</option>
+                    <option value="Thyroid">Thyroid</option>
+                    <option value="Fever">Fever</option>
+                    <option value="Heart Health">Heart Health</option>
+                    <option value="Women Health">Women Health</option>
+                    <option value="Senior Citizen">Senior Citizen</option>
+                    <option value="Other">Other</option>
+                    <option value="General">General</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Included Tests
+                  </label>
+                  <div className="border border-gray-300 rounded-md p-3 max-h-40 overflow-y-auto bg-gray-50">
+                    {tests.length === 0 ? (
+                      <p className="text-sm text-gray-500">No tests available. Please add tests first.</p>
+                    ) : (
+                      tests.map((test) => (
+                        <div key={test._id} className="flex items-center mb-2">
+                          <input
+                            type="checkbox"
+                            id={`test-${test._id}`}
+                            checked={packageFormData.includedTests?.includes(test._id) || false}
+                            onChange={(e) => {
+                              const updatedTests = e.target.checked
+                                ? [...(packageFormData.includedTests || []), test._id]
+                                : (packageFormData.includedTests || []).filter(id => id !== test._id);
+                              setPackageFormData({...packageFormData, includedTests: updatedTests});
+                            }}
+                            className="mr-2"
+                          />
+                          <label htmlFor={`test-${test._id}`} className="text-sm text-gray-700 cursor-pointer">
+                            {test.name} - ₹{test.price}
+                          </label>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  {packageFormData.includedTests && packageFormData.includedTests.length > 0 && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {packageFormData.includedTests.length} test(s) selected
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Duration *
                   </label>
                   <input
                     type="text"
-                    value={packageFormData.category}
-                    onChange={(e) => setPackageFormData({...packageFormData, category: e.target.value})}
+                    required
+                    placeholder="e.g., 24 hours, 2 days"
+                    value={packageFormData.duration}
+                    onChange={(e) => setPackageFormData({...packageFormData, duration: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   />
                 </div>
@@ -6008,7 +6153,8 @@ export default function AdminDashboardIndex() {
                       includedTests: [],
                       price: '',
                       requiredSample: 'blood',
-                      category: 'general',
+                      category: '',
+                      duration: '',
                       fastingRequired: false
                     });
                   }}
@@ -6254,6 +6400,39 @@ export default function AdminDashboardIndex() {
                           placeholder="24-48 hours"
                         />
                       </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Included Tests</label>
+                        <div className="border border-gray-300 rounded-md p-3 max-h-40 overflow-y-auto bg-gray-50">
+                          {tests.length === 0 ? (
+                            <p className="text-sm text-gray-500">No tests available. Please add tests first.</p>
+                          ) : (
+                            tests.map((test) => (
+                              <div key={test._id} className="flex items-center mb-2">
+                                <input
+                                  type="checkbox"
+                                  id={`detail-test-${test._id}`}
+                                  checked={packageDetailsFormData.includedTests?.includes(test._id) || false}
+                                  onChange={(e) => {
+                                    const updatedTests = e.target.checked
+                                      ? [...(packageDetailsFormData.includedTests || []), test._id]
+                                      : (packageDetailsFormData.includedTests || []).filter(id => id !== test._id);
+                                    setPackageDetailsFormData(prev => ({ ...prev, includedTests: updatedTests }));
+                                  }}
+                                  className="mr-2"
+                                />
+                                <label htmlFor={`detail-test-${test._id}`} className="text-sm text-gray-700 cursor-pointer">
+                                  {test.name} - ₹{test.price}
+                                </label>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                        {packageDetailsFormData.includedTests && packageDetailsFormData.includedTests.length > 0 && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            {packageDetailsFormData.includedTests.length} test(s) selected
+                          </p>
+                        )}
+                      </div>
                                             <div className="flex gap-2">
                         <CButton type="submit" variant="primary">
                           Update
@@ -6287,6 +6466,42 @@ export default function AdminDashboardIndex() {
                     <div>
                       <h4 className="font-medium text-gray-900">Reporting Time</h4>
                       <p className="text-gray-600">{details.reportingTime}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900">Included Tests</h4>
+                      {details.includedTests && details.includedTests.length > 0 ? (
+                        <div className="mt-2">
+                          <div className="text-sm text-gray-500 mb-2">{details.includedTests.length} test(s) included:</div>
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {details.includedTests.map((testId, index) => {
+                              const test = tests.find(t => t._id === testId);
+                              return test ? (
+                                <div key={testId} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
+                                  <div>
+                                    <span className="font-medium text-gray-900">{index + 1}. {test.name}</span>
+                                    <div className="text-xs text-gray-500">{test.description}</div>
+                                  </div>
+                                  <span className="text-sm font-medium text-green-600">₹{test.price}</span>
+                                </div>
+                              ) : (
+                                <div key={testId} className="text-sm text-gray-500 italic">
+                                  Test {testId} not found
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div className="mt-2 pt-2 border-t border-gray-200">
+                            <div className="text-sm font-medium text-gray-900">
+                              Total Test Value: ₹{details.includedTests.reduce((sum, testId) => {
+                                const test = tests.find(t => t._id === testId);
+                                return sum + (test ? test.price : 0);
+                              }, 0)}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 italic mt-1">No tests included in this package</p>
+                      )}
                     </div>
                                       </div>
                 )}

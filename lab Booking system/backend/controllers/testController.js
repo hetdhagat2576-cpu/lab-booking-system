@@ -96,7 +96,54 @@ const createTest = async (req, res) => {
   try {
     const testData = req.body;
     
-    const test = new Test(testData);
+    // Validate required fields
+    if (!testData.name || !testData.name.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Test name is required',
+        error: 'MISSING_NAME'
+      });
+    }
+    
+    if (!testData.category) {
+      return res.status(400).json({
+        success: false,
+        message: 'Test category is required',
+        error: 'MISSING_CATEGORY'
+      });
+    }
+    
+    if (!testData.price || testData.price < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid test price is required',
+        error: 'INVALID_PRICE'
+      });
+    }
+    
+    if (!testData.description || !testData.description.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Test description is required',
+        error: 'MISSING_DESCRIPTION'
+      });
+    }
+    
+    // Set default values for missing optional but required fields
+    const testToCreate = {
+      ...testData,
+      sampleType: testData.sampleType || 'Blood',
+      duration: testData.duration || '15 mins',
+      preparation: testData.preparation || 'No special preparation required',
+      isActive: testData.isActive !== undefined ? testData.isActive : true,
+      isPopular: testData.isPopular !== undefined ? testData.isPopular : false,
+      tags: testData.tags || [],
+      originalPrice: testData.originalPrice || testData.price,
+    };
+    
+    console.log('Creating test with data:', testToCreate);
+    
+    const test = new Test(testToCreate);
     await test.save();
     
     res.status(201).json({
@@ -106,10 +153,27 @@ const createTest = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating test:', error);
+    
+    // Handle specific error types
+    let errorMessage = 'Error creating test';
+    let errorCode = 'CREATE_ERROR';
+    
+    if (error.name === 'ValidationError') {
+      errorMessage = 'Validation failed: ' + error.message;
+      errorCode = 'VALIDATION_ERROR';
+    } else if (error.name === 'MongoServerError') {
+      errorMessage = 'Database error: ' + error.message;
+      errorCode = 'DATABASE_ERROR';
+    } else if (error.code === 11000) {
+      errorMessage = 'Database connection error';
+      errorCode = 'CONNECTION_ERROR';
+    }
+    
     res.status(500).json({
       success: false,
-      message: 'Error creating test',
-      error: error.message
+      message: errorMessage,
+      error: error.message,
+      code: errorCode
     });
   }
 };

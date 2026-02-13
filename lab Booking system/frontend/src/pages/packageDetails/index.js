@@ -6,6 +6,7 @@ import Footer from "../../components/footer";
 import Theme from "../../config/theam/index.js";
 import IconConfig from "../../components/icon/index.js";
 import CButton from "../../components/cButton";
+import TestsImageDisplay from "../../components/testsImageDisplay";
 import { safeFetch } from "../../config/api";
 
 export default function PackageDetails() {
@@ -239,39 +240,12 @@ export default function PackageDetails() {
               <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
                 <h2 className="text-xl font-bold text-slate-900 mb-6">Included Tests</h2>
                 
-                {packageDetails?.includedTests && packageDetails.includedTests.length > 0 ? (
-                  <ul className="grid grid-cols-1 gap-3">
-                    {packageDetails.includedTests.map((testName, idx) => (
-                      <li
-                        key={`${packageId}-test-${idx}`}
-                        className="flex items-center gap-3 text-slate-700 border border-slate-100 rounded-lg px-4 py-3 bg-slate-50/50"
-                      >
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-secondary/20 text-sm font-bold text-primary">
-                          {idx + 1}
-                        </span>
-                        <span className="font-medium">{testName}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : packageData?.testsIncluded && packageData.testsIncluded.length > 0 ? (
-                  <ul className="grid grid-cols-1 gap-3">
-                    {packageData.testsIncluded.map((test, idx) => (
-                      <li
-                        key={`${packageId}-test-${idx}`}
-                        className="flex items-center gap-3 text-slate-700 border border-slate-100 rounded-lg px-4 py-3 bg-slate-50/50"
-                      >
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-secondary/20 text-sm font-bold text-primary">
-                          {idx + 1}
-                        </span>
-                        <span className="font-medium">{test.name || test}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-6 text-sm text-slate-600">
-                    Detailed test composition will be available for this package soon.
-                  </div>
-                )}
+                <TestsImageDisplay 
+                  tests={packageDetails?.includedTests || packageData?.testsIncluded || []}
+                  maxTests={20}
+                  minTests={1}
+                  title="Included Tests"
+                />
               </div>
 
               {/* Card 3: Details (Report Time, Sample Type) */}

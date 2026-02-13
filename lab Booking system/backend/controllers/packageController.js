@@ -94,23 +94,63 @@ const createPackage = async (req, res) => {
   try {
     const packageData = req.body;
     
-    // Validate test IDs if provided
-    if (packageData.testsIncluded && packageData.testsIncluded.length > 0) {
-      const validTestIds = await Test.find({ _id: { $in: packageData.testsIncluded } }).distinct('_id');
-      const invalidIds = packageData.testsIncluded.filter(id => !validTestIds.includes(id));
-      
-      if (invalidIds.length > 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid test IDs provided',
-          invalidIds
-        });
-      }
+    // Validate required fields
+    if (!packageData.name || !packageData.name.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Package name is required',
+        error: 'MISSING_NAME'
+      });
     }
     
-    const package = new Package(packageData);
+    if (!packageData.category) {
+      return res.status(400).json({
+        success: false,
+        message: 'Package category is required',
+        error: 'MISSING_CATEGORY'
+      });
+    }
+    
+    if (!packageData.price || packageData.price < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid package price is required',
+        error: 'INVALID_PRICE'
+      });
+    }
+    
+    if (!packageData.description || !packageData.description.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Package description is required',
+        error: 'MISSING_DESCRIPTION'
+      });
+    }
+    
+    // Set default values for missing optional but required fields
+    const packageToCreate = {
+      ...packageData,
+      duration: packageData.duration || '30 mins',
+      preparation: packageData.preparation || 'No special preparation required',
+      isActive: packageData.isActive !== undefined ? packageData.isActive : true,
+      isPopular: packageData.isPopular !== undefined ? packageData.isPopular : false,
+      isRecommended: packageData.isRecommended !== undefined ? packageData.isRecommended : false,
+      tags: packageData.tags || [],
+      originalPrice: packageData.originalPrice || packageData.price,
+      testsIncluded: packageData.testsIncluded || [],
+      customTests: packageData.customTests || [],
+      sampleTypes: packageData.sampleTypes || ['Blood'],
+      includes: packageData.includes || [],
+      benefits: packageData.benefits || [],
+      suitableFor: packageData.suitableFor || [],
+    };
+    
+    console.log('Creating package with data:', packageToCreate);
+    
+    const package = new Package(packageToCreate);
     await package.save();
     
+    // Populate the package with test details before returning
     const populatedPackage = await Package.findById(package._id)
       .populate('testsIncluded', 'name description price');
     
@@ -121,10 +161,27 @@ const createPackage = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating package:', error);
+    
+    // Handle specific error types
+    let errorMessage = 'Error creating package';
+    let errorCode = 'CREATE_ERROR';
+    
+    if (error.name === 'ValidationError') {
+      errorMessage = 'Validation failed: ' + error.message;
+      errorCode = 'VALIDATION_ERROR';
+    } else if (error.name === 'MongoServerError') {
+      errorMessage = 'Database error: ' + error.message;
+      errorCode = 'DATABASE_ERROR';
+    } else if (error.code === 11000) {
+      errorMessage = 'Database connection error';
+      errorCode = 'CONNECTION_ERROR';
+    }
+    
     res.status(500).json({
       success: false,
-      message: 'Error creating package',
-      error: error.message
+      message: errorMessage,
+      error: error.message,
+      code: errorCode
     });
   }
 };

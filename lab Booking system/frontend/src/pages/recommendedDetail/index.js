@@ -48,6 +48,7 @@ export default function RecommendedDetail() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
+      
       try {
       let apiData = null;
       

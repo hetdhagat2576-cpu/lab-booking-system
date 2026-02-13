@@ -47,9 +47,24 @@ app.use((req, res, next) => {
   next();
 });
 
-// Request logging middleware (minimal, avoids logging request bodies)
+// Request logging middleware (enhanced for debugging)
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`);
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${req.method} ${req.path}`);
+  
+  // Log headers for debugging
+  console.log('Headers:', req.headers);
+  
+  // Log body for POST/PUT requests (avoid logging large binary data)
+  if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
+    try {
+      const bodyCopy = JSON.parse(JSON.stringify(req.body));
+      console.log('Body:', JSON.stringify(bodyCopy, null, 2));
+    } catch (e) {
+      console.log('Body parsing error:', e.message);
+    }
+  }
+  
   next();
 });
 

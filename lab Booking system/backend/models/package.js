@@ -15,7 +15,7 @@ const packageSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Package category is required'],
     trim: true,
-    enum: ['Full Body Checkup', 'Diabetes', 'Liver Health', 'Lung Health', 'Kidney Health', 'Thyroid', 'Fever', 'Heart Health', 'Women Health', 'Senior Citizen', 'Other'],
+    enum: ['Full Body Checkup', 'Diabetes', 'Liver Health', 'Lung Health', 'Kidney Health', 'Thyroid', 'Fever', 'Heart Health', 'Women Health', 'Senior Citizen', 'Other', 'General'],
   },
   price: {
     type: Number,
@@ -50,6 +50,32 @@ const packageSchema = new mongoose.Schema({
       type: String,
       trim: true,
     },
+    category: {
+      type: String,
+      trim: true,
+    },
+    clinicalSignificance: {
+      type: String,
+      trim: true,
+    },
+    normalRange: {
+      type: String,
+      trim: true,
+    },
+    parameters: [{
+      name: {
+        type: String,
+        trim: true,
+      },
+      unit: {
+        type: String,
+        trim: true,
+      },
+      normalRange: {
+        type: String,
+        trim: true,
+      },
+    }],
   }],
   preparation: {
     type: String,
@@ -58,7 +84,7 @@ const packageSchema = new mongoose.Schema({
   sampleTypes: [{
     type: String,
     trim: true,
-    enum: ['Blood', 'Urine', 'Stool', 'Swab', 'Other'],
+    enum: ['Blood', 'Urine', 'Stool', 'Swab', 'Sputum', 'Other'],
   }],
   isActive: {
     type: Boolean,

@@ -12,26 +12,93 @@ import {
 
 export default function AllTests() {
   const navigate = useNavigate();
-  const { ArrowLeft } = IconConfig;
+  const { ArrowLeft, RotateCw } = IconConfig;
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      // Clear localStorage to force fresh API fetch
+      const healthConcerns = ['diabetes', 'thyroid', 'kidney', 'liver', 'lungs', 'fever'];
+      healthConcerns.forEach(concern => {
+        localStorage.removeItem(`health_concern_${concern}_tests`);
+      });
+
+      // Fetch fresh data from API
+      const response = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests?isActive=true`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        const apiTests = data.data || [];
+        setTests(apiTests);
+        console.log('Refreshed tests from API:', apiTests.length);
+      } else {
+        console.error('Failed to refresh tests from API');
+      }
+    } catch (error) {
+      console.error('Error refreshing tests:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     const fetchTests = async () => {
       try {
-        // Fetch tests from the new API
+        // First try to get synchronized tests from localStorage (from dashboard)
+        const dashboardTests = [];
+        const healthConcerns = ['diabetes', 'thyroid', 'kidney', 'liver', 'lungs', 'fever'];
+        
+        console.log('=== Checking localStorage for synchronized tests ===');
+        healthConcerns.forEach(concern => {
+          const storageKey = `health_concern_${concern}_tests`;
+          const storedTests = localStorage.getItem(storageKey);
+          console.log(`Key: ${storageKey}, Data exists: ${!!storedTests}`);
+          
+          if (storedTests) {
+            try {
+              const tests = JSON.parse(storedTests);
+              console.log(`Found ${tests.length} tests for ${concern}:`, tests.map(t => ({ name: t.name, _id: t._id })));
+              dashboardTests.push(...tests);
+            } catch (error) {
+              console.error(`Error parsing synchronized tests for ${concern}:`, error);
+            }
+          }
+        });
+
+        // Remove duplicates based on _id
+        const uniqueTests = dashboardTests.filter((test, index, self) =>
+          index === self.findIndex((t) => t._id === test._id)
+        );
+
+        console.log(`Total unique tests from localStorage: ${uniqueTests.length}`);
+        console.log('All unique tests:', uniqueTests.map(t => ({ name: t.name, category: t.category, _id: t._id })));
+
+        if (uniqueTests.length > 0) {
+          console.log('✅ Using synchronized tests from localStorage');
+          setTests(uniqueTests);
+          setLoading(false);
+          return;
+        }
+
+        // Fallback to API fetch if no synchronized data available
+        console.log('❌ No synchronized data found, fetching from API...');
         const response = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests?isActive=true`);
         
         if (response.ok) {
           const data = await response.json();
           const apiTests = data.data || [];
+          console.log('✅ Fetched tests from API:', apiTests.length);
+          console.log('API tests:', apiTests.map(t => ({ name: t.name, category: t.category, _id: t._id })));
           setTests(apiTests);
         } else {
-          console.error('Failed to fetch tests from API');
+          console.error('❌ Failed to fetch tests from API');
           setTests([]);
         }
       } catch (error) {
-        console.error('Error fetching tests:', error);
+        console.error('❌ Error fetching tests:', error);
         setTests([]);
       } finally {
         setLoading(false);
@@ -74,6 +141,14 @@ export default function AllTests() {
               All Tests
             </h1>
             <span className="ml-auto text-xs font-bold text-primary">{tests.length} items</span>
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="p-2 hover:bg-slate-50 rounded-lg transition-all border border-gray-100 group shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Refresh tests from API"
+            >
+              <RotateCw className={`w-4 h-4 text-slate-600 group-hover:text-primary ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
           </div>
         </div>
 
@@ -81,7 +156,7 @@ export default function AllTests() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {tests.map((test) => (
               <div
-                key={test._id}
+                key={test._id || test.id || Math.random()}
                 className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all overflow-hidden"
               >
                 <div className="p-6">
@@ -113,7 +188,12 @@ export default function AllTests() {
                         fullWidth={false}
                         onClick={() => {
                           // For individual tests, go to test details
-                          navigate(`/test-details?id=${test._id}`);
+                          if (!test._id && !test.id) {
+                            console.error('Test has no ID!', test);
+                            alert('Test ID is missing. Please refresh the page.');
+                            return;
+                          }
+                          navigate(`/test-details?id=${test._id || test.id}`);
                         }}
                         className="rounded-xl h-10 font-bold uppercase tracking-widest"
                       >

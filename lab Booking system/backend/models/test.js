@@ -15,7 +15,23 @@ const testSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Test category is required'],
     trim: true,
-    enum: ['Blood Test', 'Urine Test', 'Imaging', 'Cardiology', 'Diabetes', 'Liver', 'Kidney', 'Thyroid', 'General', 'Other'],
+    enum: ['Diabetes', 'Liver', 'Kidney', 'Thyroid', 'Fever', 'Lungs', 'General', 'Heart', 'Women Health', 'Senior Citizen'],
+  },
+  subcategory: {
+    type: String,
+    trim: true,
+  },
+  clinicalSignificance: {
+    type: String,
+    trim: true,
+  },
+  normalRange: {
+    type: String,
+    trim: true,
+  },
+  abnormalIndicates: {
+    type: String,
+    trim: true,
   },
   price: {
     type: Number,
@@ -39,7 +55,7 @@ const testSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Sample type is required'],
     trim: true,
-    enum: ['Blood', 'Urine', 'Stool', 'Swab', 'Other'],
+    enum: ['Blood', 'Urine', 'Stool', 'Swab', 'Sputum', 'Other'],
   },
   isActive: {
     type: Boolean,
@@ -56,6 +72,38 @@ const testSchema = new mongoose.Schema({
   imageUrl: {
     type: String,
     trim: true,
+  },
+  parameters: [{
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    unit: {
+      type: String,
+      trim: true,
+    },
+    normalRange: {
+      type: String,
+      trim: true,
+    },
+    description: {
+      type: String,
+      trim: true,
+    },
+  }],
+  relatedConditions: [{
+    type: String,
+    trim: true,
+  }],
+  symptoms: [{
+    type: String,
+    trim: true,
+  }],
+  frequency: {
+    type: String,
+    trim: true,
+    enum: ['Once', 'Monthly', 'Quarterly', 'Half-yearly', 'Yearly', 'As needed'],
   },
 }, {
   timestamps: true,
