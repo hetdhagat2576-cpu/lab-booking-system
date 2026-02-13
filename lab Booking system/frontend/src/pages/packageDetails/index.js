@@ -6,7 +6,6 @@ import Footer from "../../components/footer";
 import Theme from "../../config/theam/index.js";
 import IconConfig from "../../components/icon/index.js";
 import CButton from "../../components/cButton";
-import TestsImageDisplay from "../../components/testsImageDisplay";
 import { safeFetch } from "../../config/api";
 
 export default function PackageDetails() {
@@ -238,14 +237,22 @@ export default function PackageDetails() {
 
               {/* Card 2: Included Tests */}
               <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
-                <h2 className="text-xl font-bold text-slate-900 mb-6">Included Tests</h2>
+                <h2 className="text-xl font-bold text-slate-900 mb-6">Test Packages Detail</h2>
                 
-                <TestsImageDisplay 
-                  tests={packageDetails?.includedTests || packageData?.testsIncluded || []}
-                  maxTests={20}
-                  minTests={1}
-                  title="Included Tests"
-                />
+                <div className="space-y-2">
+                  {(packageDetails?.includedTests || packageData?.testsIncluded || []).map((test, index) => (
+                    <div key={test?._id || index} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                      <TestTube2 className="w-4 h-4 text-primary" />
+                      <span className="text-sm text-slate-700">
+                        {typeof test === 'string' ? test : test?.name || test?.testName || 'Test'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                
+                {(packageDetails?.includedTests?.length || packageData?.testsIncluded?.length || 0) === 0 && (
+                  <p className="text-slate-500 text-sm italic">No tests included in this package</p>
+                )}
               </div>
 
               {/* Card 3: Details (Report Time, Sample Type) */}

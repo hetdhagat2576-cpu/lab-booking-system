@@ -19,6 +19,7 @@ export default function LoginSelection() {
     switch (title) {
       case "Admin":
         return <Shield className="w-12 h-12" />;
+      case "Labtech":
       case "Lab Technician":
         return <UserCog className="w-12 h-12" />;
       case "User":

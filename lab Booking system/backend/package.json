@@ -9,6 +9,8 @@
     "seed": "node seedUsers.js",
     "seed-tests": "node scripts/seedTests.js",
     "seed-packages": "node scripts/seedPackages.js",
+    "seed-packages-stats": "node scripts/seedPackages.js stats",
+    "seed-packages-clear": "node scripts/seedPackages.js clear",
     "seed-reports": "node scripts/seedReports.js",
     "seed-home-content": "node scripts/seedHomeContent.js",
     "seed-service-content": "node scripts/seedServiceContent.js",

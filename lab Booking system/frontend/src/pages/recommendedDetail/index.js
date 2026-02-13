@@ -320,6 +320,28 @@ export default function RecommendedDetail() {
                 </div>
               </div>
 
+              {/* Card 3: Test Packages Detail */}
+              {type === "package" && (
+                <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
+                  <h2 className="text-xl font-bold text-slate-900 mb-6">Test Packages Detail</h2>
+                  
+                  <div className="space-y-2">
+                    {includedTests && includedTests.length > 0 ? (
+                      includedTests.map((test, index) => (
+                        <div key={index} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                          <FlaskConical className="w-4 h-4 text-primary" />
+                          <span className="text-sm text-slate-700">
+                            {typeof test === 'string' ? test : test?.name || test?.testName || 'Test'}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-slate-500 text-sm italic">No test details available</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Card 2: Details (Samples, Time) */}
               <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
                 

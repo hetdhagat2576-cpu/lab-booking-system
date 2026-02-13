@@ -75,7 +75,7 @@ export default function AdminDashboardIndex() {
   const { 
     CheckCircle2, XCircle, LayoutDashboard, 
     ClipboardList, MessageSquare, PhoneCall, ChevronRight, Menu, X, Trash2, LogOut,
-    FileText, Settings, HelpCircle, ShieldCheck, Globe, Home, TestTube, Package, Plus, Edit2, Calendar, Zap, Cloud, Eye, Lock, Clock, TrendingUp, Mail, Phone
+    FileText, Settings, HelpCircle, ShieldCheck, Globe, Home, TestTube, Package, Plus, Edit2, Calendar, Zap, Cloud, Eye, Lock, Clock, TrendingUp, Mail, Phone, Stethoscope
   } = IconConfig;
 
   // WebSocket connection for real-time notifications
@@ -904,11 +904,52 @@ export default function AdminDashboardIndex() {
 
   const handlePackageSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!packageFormData.name || !packageFormData.name.trim()) {
+      alert('Package name is required');
+      return;
+    }
+    
+    if (!packageFormData.description || !packageFormData.description.trim()) {
+      alert('Package description is required');
+      return;
+    }
+    
+    if (!packageFormData.price || packageFormData.price <= 0) {
+      alert('Valid package price is required');
+      return;
+    }
+    
+    if (!packageFormData.category) {
+      alert('Package category is required');
+      return;
+    }
+    
+    if (!packageFormData.duration || !packageFormData.duration.trim()) {
+      alert('Package duration is required');
+      return;
+    }
+    
     try {
       const packageData = {
         ...packageFormData,
-        price: parseFloat(packageFormData.price)
+        price: parseFloat(packageFormData.price),
+        testsIncluded: packageFormData.includedTests,
+        sampleTypes: [packageFormData.requiredSample.charAt(0).toUpperCase() + packageFormData.requiredSample.slice(1)],
+        duration: packageFormData.duration || '30 mins'
       };
+
+      // Filter out invalid test IDs before sending
+      const validTestIds = tests.map(test => test._id);
+      const filteredTestIds = packageFormData.includedTests.filter(id => validTestIds.includes(id));
+      packageData.testsIncluded = filteredTestIds;
+
+      // Debug: Log the test IDs being sent
+      console.log('Sending package data:', packageData);
+      console.log('Test IDs being sent:', packageFormData.includedTests);
+      console.log('Available tests in frontend:', tests.map(t => ({ id: t._id, name: t.name })));
+      console.log('Filtered test IDs:', filteredTestIds);
 
       const url = editingPackage 
         ? `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages/${editingPackage._id}`
@@ -936,6 +977,7 @@ export default function AdminDashboardIndex() {
           includedTests: [],
           price: '',
           category: '',
+          duration: '',
           requiredSample: 'blood',
           fastingRequired: false
         });
@@ -962,8 +1004,20 @@ export default function AdminDashboardIndex() {
       
       if (response.ok) {
         const result = await response.json();
-        setHealthConcerns(result.data || []);
-        console.log('Health concerns fetched:', result.data);
+        const healthConcernsData = result.data || [];
+        
+        // Process health concerns to ensure recommendedTests is always an array of strings
+        const processedHealthConcerns = healthConcernsData.map(concern => ({
+          ...concern,
+          recommendedTests: Array.isArray(concern.recommendedTests) 
+            ? concern.recommendedTests.map(test => 
+                typeof test === 'string' ? test : (test.name || 'Test')
+              )
+            : []
+        }));
+        
+        setHealthConcerns(processedHealthConcerns);
+        console.log('Health concerns fetched:', processedHealthConcerns);
       } else {
         console.error('Failed to fetch health concerns - Status:', response.status);
         // Fallback to static data if API doesn't exist
@@ -982,7 +1036,7 @@ export default function AdminDashboardIndex() {
     try {
       const method = editingHealthConcern ? 'PUT' : 'POST';
       const url = editingHealthConcern 
-        ? `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns/${editingHealthConcern.id}`
+        ? `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns/${editingHealthConcern._id}`
         : `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns`;
       
       const response = await fetch(url, {
@@ -1059,15 +1113,20 @@ export default function AdminDashboardIndex() {
     try {
       setHealthConcernDetailsLoading(true);
       // For now, we'll use the existing health concern data since there's no separate details API
-      const concern = healthConcerns.find(c => c.id === concernId);
+      const concern = healthConcerns.find(c => c._id === concernId);
       if (concern) {
+        // Ensure recommendedTests is always an array of strings
+        const recommendedTests = tests.slice(0, 3).map(test => 
+          typeof test === 'string' ? test : (test.name || 'Test')
+        );
+        
         setHealthConcernDetails({
           [concernId]: {
             ...concern,
             // Add some mock detailed data for demonstration
             detailedDescription: `${concern.description} This category includes comprehensive health screenings and diagnostic tests specifically designed for ${concern.title.toLowerCase()} health assessment.`,
-            recommendedTests: tests.slice(0, 3).map(test => test.name),
-            averagePrice: tests.slice(0, 3).reduce((sum, test) => sum + test.price, 0) / 3,
+            recommendedTests: recommendedTests,
+            averagePrice: tests.slice(0, 3).reduce((sum, test) => sum + (test.price || 0), 0) / 3,
             preparationRequired: 'Fasting for 8-12 hours may be required. Please bring previous medical reports.',
             sampleCollection: 'Blood and urine samples will be collected at our facility.',
             reportDelivery: 'Reports will be available within 24-48 hours.'
@@ -2843,6 +2902,13 @@ export default function AdminDashboardIndex() {
     }
   }, [activeTab, user]);
 
+  // Fetch health concerns when health-concerns tab is active
+  useEffect(() => {
+    if (activeTab === 'health-concerns' && user?.token) {
+      fetchHealthConcerns();
+    }
+  }, [activeTab, user, fetchHealthConcerns]);
+
   // Fetch bookings when bookings tab is active
   useEffect(() => {
     if (activeTab === 'bookings' && user?.token) {
@@ -3627,7 +3693,7 @@ export default function AdminDashboardIndex() {
             
             <SidebarItem id="tests" label="Test Management" icon={TestTube} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
             <SidebarItem id="packages" label="Package Management" icon={Package} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
-            <SidebarItem id="user-dashboard" label="User Dashboard" icon={LayoutDashboard} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
+            <SidebarItem id="health-concerns" label="Health Concerns" icon={Stethoscope} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
             
             <div className="border-t border-gray-200 my-2"></div>
             
@@ -4526,17 +4592,21 @@ export default function AdminDashboardIndex() {
                                       className="p-1"
                                       onClick={() => {
                                         setEditingPackage(pkg);
-                                        setPackageFormData({
-                                          name: pkg.name || pkg.title || '',
-                                          description: pkg.description || '',
-                                          icon: pkg.icon || '',
-                                          includedTests: pkg.includedTests || [],
-                                          price: pkg.price?.toString() || '',
-                                          requiredSample: pkg.requiredSample || 'blood',
-                                          category: pkg.category || 'general',
-                                          fastingRequired: pkg.fastingRequired || false
+                                        // Refresh tests data to ensure we have latest valid test IDs
+                                        fetchTests().then(() => {
+                                          setPackageFormData({
+                                            name: pkg.name || pkg.title || '',
+                                            description: pkg.description || '',
+                                            icon: pkg.icon || '',
+                                            includedTests: pkg.testsIncluded || pkg.includedTests || [],
+                                            price: pkg.price?.toString() || '',
+                                            requiredSample: pkg.requiredSample || (pkg.sampleTypes && pkg.sampleTypes[0]) || 'blood',
+                                            category: pkg.category || 'general',
+                                            duration: pkg.duration || '',
+                                            fastingRequired: pkg.fastingRequired || false
+                                          });
+                                          setShowPackageForm(true);
                                         });
-                                        setShowPackageForm(true);
                                       }}
                                       variant="outline"
                                       title="Edit Package"
@@ -4558,6 +4628,219 @@ export default function AdminDashboardIndex() {
                           )}
                         </tbody>
                       </table>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Health Concerns Management */}
+              {activeTab === "health-concerns" && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold">Health Concerns Management</h3>
+                      <p className="text-sm text-gray-600 mt-1">Manage health concerns and their configurations</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <CButton 
+                        variant="primary"
+                        fullWidth={false}
+                        className="px-4 py-3 text-sm rounded-md"
+                        size="lg"
+                        onClick={() => {
+                          setEditingHealthConcern(null);
+                          resetHealthConcernForm();
+                          setShowHealthConcernForm(true);
+                        }}
+                      >
+                        <Plus size={16} className="mr-2" />
+                        Add Health Concern
+                      </CButton>
+                    </div>
+                  </div>
+
+                  {/* Health Concern Form */}
+                  {showHealthConcernForm && (
+                    <div className="border rounded-lg p-6 bg-white shadow-sm">
+                      <h5 className="font-semibold mb-4">
+                        {editingHealthConcern ? 'Edit Health Concern' : 'Add New Health Concern'}
+                      </h5>
+                      <form onSubmit={(e) => {
+                        e.preventDefault();
+                        saveHealthConcern(healthConcernFormData);
+                      }} className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Title *
+                            </label>
+                            <input
+                              type="text"
+                              value={healthConcernFormData.title}
+                              onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, title: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="e.g., Liver"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Icon Key *
+                            </label>
+                            <select
+                              value={healthConcernFormData.iconKey}
+                              onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, iconKey: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="FlaskConical">Flask</option>
+                              <option value="Activity">Activity</option>
+                              <option value="Droplets">Droplets</option>
+                              <option value="Heart">Heart</option>
+                              <option value="Brain">Brain</option>
+                              <option value="Stethoscope">Stethoscope</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Order *
+                            </label>
+                            <input
+                              type="number"
+                              value={healthConcernFormData.order}
+                              onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, order: parseInt(e.target.value) || 0 }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Display order"
+                              min="0"
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Description *
+                          </label>
+                          <textarea
+                            value={healthConcernFormData.description}
+                            onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, description: e.target.value }))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Health concern description"
+                            rows={3}
+                            required
+                          />
+                        </div>
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id="isActive"
+                            checked={healthConcernFormData.isActive}
+                            onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+                            className="mr-2"
+                          />
+                          <label htmlFor="isActive" className="text-sm font-medium text-gray-700">
+                            Active
+                          </label>
+                        </div>
+                        <div className="flex gap-2 pt-4">
+                          <CButton
+                            type="submit"
+                            variant="primary"
+                            className="px-4 py-2"
+                          >
+                            {editingHealthConcern ? 'Update' : 'Save'}
+                          </CButton>
+                          <CButton
+                            type="button"
+                            variant="outline"
+                            className="px-4 py-2"
+                            onClick={() => {
+                              setShowHealthConcernForm(false);
+                              setEditingHealthConcern(null);
+                              resetHealthConcernForm();
+                            }}
+                          >
+                            Cancel
+                          </CButton>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+
+                  {/* Health Concerns Table */}
+                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+                    <div className="overflow-x-auto max-w-full">
+                      <div className="min-w-[700px] lg:min-w-full">
+                        <table className="w-full table-responsive-stack">
+                          <thead className="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Icon</th>
+                              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">Title</th>
+                              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">Description</th>
+                              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Order</th>
+                              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Status</th>
+                              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {healthConcerns.length === 0 ? (
+                              <tr>
+                                <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                                  No health concerns found
+                                </td>
+                              </tr>
+                            ) : (
+                              healthConcerns.map((concern) => (
+                                <tr key={concern._id} className="hover:bg-gray-50 transition-colors">
+                                  <td className="px-3 py-3 whitespace-nowrap" data-label="Icon">
+                                    <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                                      {renderHealthConcernIcon(concern.iconKey)}
+                                    </div>
+                                  </td>
+                                  <td className="px-3 py-3 font-medium text-gray-900" data-label="Title">
+                                    {concern.title}
+                                  </td>
+                                  <td className="px-3 py-3 text-sm text-gray-600" data-label="Description">
+                                    <div className="max-w-xs truncate" title={concern.description}>
+                                      {concern.description}
+                                    </div>
+                                  </td>
+                                  <td className="px-3 py-3 text-sm text-gray-600" data-label="Order">
+                                    {concern.order}
+                                  </td>
+                                  <td className="px-3 py-3" data-label="Status">
+                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                      concern.isActive 
+                                        ? 'bg-green-100 text-green-800' 
+                                        : 'bg-red-100 text-red-800'
+                                    }`}>
+                                      {concern.isActive ? 'Active' : 'Inactive'}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-3 text-sm font-medium" data-label="Actions">
+                                    <div className="flex flex-col sm:flex-row gap-2">
+                                      <CButton 
+                                        className="p-1"
+                                        onClick={() => handleEditHealthConcern(concern)}
+                                        variant="outline"
+                                        title="Edit Health Concern"
+                                      >
+                                        <Edit2 size={16} />
+                                      </CButton>
+                                      <CButton 
+                                        className="text-red-600 hover:text-red-900 p-1" 
+                                        onClick={() => deleteHealthConcern(concern._id)}
+                                        variant="outline"
+                                        title="Delete Health Concern"
+                                      >
+                                        <Trash2 size={16} />
+                                      </CButton>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   </div>
@@ -6287,7 +6570,7 @@ export default function AdminDashboardIndex() {
                       <div className="flex flex-wrap gap-2 mt-1">
                         {details.requiredSamples.map((sample, index) => (
                           <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                            {sample}
+                            {typeof sample === 'string' ? sample : String(sample)}
                           </span>
                         ))}
                       </div>
@@ -6458,7 +6741,7 @@ export default function AdminDashboardIndex() {
                       <div className="flex flex-wrap gap-2 mt-1">
                         {details.requiredSamples.map((sample, index) => (
                           <span key={index} className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                            {sample}
+                            {typeof sample === 'string' ? sample : String(sample)}
                           </span>
                         ))}
                       </div>
@@ -6503,7 +6786,7 @@ export default function AdminDashboardIndex() {
                         <p className="text-gray-500 italic mt-1">No tests included in this package</p>
                       )}
                     </div>
-                                      </div>
+                </div>
                 )}
               </div>
             ))}
@@ -6659,15 +6942,21 @@ export default function AdminDashboardIndex() {
                       <h4 className="font-medium text-gray-900 mb-2">Display Order</h4>
                       <p className="text-gray-600">{details.order || 0}</p>
                     </div>
-                    {details.recommendedTests && details.recommendedTests.length > 0 && (
+                    {details.recommendedTests && Array.isArray(details.recommendedTests) && details.recommendedTests.length > 0 && (
                       <div>
                         <h4 className="font-medium text-gray-900 mb-2">Recommended Tests</h4>
                         <div className="flex flex-wrap gap-2">
-                          {details.recommendedTests.map((test, index) => (
-                            <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                              {test}
-                            </span>
-                          ))}
+                          {details.recommendedTests.map((test, index) => {
+                            // Debug logging to identify the issue
+                            if (typeof test !== 'string') {
+                              console.log('Non-string test found:', test);
+                            }
+                            return (
+                              <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+                                {typeof test === 'string' ? test : test.name || JSON.stringify(test)}
+                              </span>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -6699,196 +6988,6 @@ export default function AdminDashboardIndex() {
                 )}
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* User Dashboard Management */}
-      {activeTab === "user-dashboard" && (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-semibold">User Dashboard Management</h3>
-              <p className="text-sm text-gray-600 mt-1">Manage health categories and test categorization</p>
-            </div>
-            <div className="flex justify-end">
-              <CButton
-                onClick={() => {
-                  resetHealthConcernForm();
-                  setEditingHealthConcern(null);
-                  setShowHealthConcernForm(true);
-                }}
-                variant="primary"
-              >
-                Add Health Category
-              </CButton>
-            </div>
-          </div>
-
-          {/* Health Concern Form */}
-          {showHealthConcernForm && (
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h4 className="text-md font-medium mb-4">
-                {editingHealthConcern ? 'Edit Health Category' : 'Add New Health Category'}
-              </h4>
-              <form onSubmit={(e) => {
-                e.preventDefault();
-                saveHealthConcern(healthConcernFormData);
-              }}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Category ID</label>
-                    <input
-                      type="text"
-                      value={healthConcernFormData.id}
-                      onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, id: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
-                      placeholder="e.g., liver, lungs, kidney"
-                      disabled={!!editingHealthConcern}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Display Title</label>
-                    <input
-                      type="text"
-                      value={healthConcernFormData.title}
-                      onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, title: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
-                      placeholder="e.g., Liver, Lungs, Kidney"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Icon</label>
-                    <select
-                      value={healthConcernFormData.iconKey}
-                      onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, iconKey: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
-                    >
-                      <option value="FlaskConical">Flask</option>
-                      <option value="Activity">Activity</option>
-                      <option value="Droplets">Droplets</option>
-                      <option value="Heart">Heart</option>
-                      <option value="Brain">Brain</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                    <input
-                      type="text"
-                      value={healthConcernFormData.description}
-                      onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, description: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
-                      placeholder="Brief description of the category"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Order</label>
-                    <input
-                      type="number"
-                      value={healthConcernFormData.order}
-                      onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, order: parseInt(e.target.value) || 0 }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
-                      placeholder="Display order (0 = first)"
-                      min="0"
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={healthConcernFormData.isActive}
-                        onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                        className="mr-2"
-                      />
-                      <span className="text-sm font-medium text-gray-700">Active (visible to users)</span>
-                    </label>
-                  </div>
-                </div>
-                <div className="flex gap-2 mt-4">
-                  <CButton type="submit" variant="primary">
-                    {editingHealthConcern ? 'Update' : 'Add'}
-                  </CButton>
-                  <CButton 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => {
-                      setShowHealthConcernForm(false);
-                      setEditingHealthConcern(null);
-                      resetHealthConcernForm();
-                    }}
-                  >
-                    Cancel
-                  </CButton>
-                </div>
-              </form>
-            </div>
-          )}
-
-          {/* Health Categories List */}
-          <div className="bg-white rounded-lg border border-gray-200">
-            <div className="p-6">
-              <h4 className="text-md font-medium mb-4">Health Categories</h4>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category ID</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Icon</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {healthConcerns.map((concern) => (
-                      <tr key={concern.id}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {concern.id}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {concern.title}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          <div className="flex items-center justify-center">
-                            {renderHealthConcernIcon(concern.iconKey)}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">
-                          {concern.description}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {concern.order || 0}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button
-                            onClick={() => fetchHealthConcernDetails(concern.id)}
-                            className="text-green-600 hover:text-green-900 mr-3"
-                            title="View Details"
-                          >
-                            <FileText size={16} />
-                          </button>
-                          <button
-                            onClick={() => handleEditHealthConcern(concern)}
-                            className="text-indigo-600 hover:text-indigo-900 mr-3"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => deleteHealthConcern(concern.id)}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
           </div>
         </div>
       )}

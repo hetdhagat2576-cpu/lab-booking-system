@@ -87,6 +87,7 @@ app.use('/api/session', require('./routes/sessionRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
 app.use('/api/tests', require('./routes/testRoutes'));
 app.use('/api/packages', require('./routes/packageRoutes'));
+// app.use('/api/packages/management', require('./routes/packageManagementRoutes')); // Commented out - file missing
 app.use('/api/test-details', require('./routes/testDetailRoutes'));
 app.use('/api/package-details', require('./routes/packageDetailRoutes'));
 app.use('/api/faq', require('./routes/faqRoutes'));

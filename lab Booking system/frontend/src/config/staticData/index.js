@@ -43,7 +43,7 @@ export const roleOptions = [
     },
     {
         id: 2,
-        title: "Lab Technician",
+        title: "Labtech",
         description: "Laboratory Technician Portal",
         route: "/lab-technician-login",
         primaryColor: "primary",
