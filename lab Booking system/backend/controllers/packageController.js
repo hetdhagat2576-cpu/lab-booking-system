@@ -127,6 +127,30 @@ const createPackage = async (req, res) => {
       });
     }
     
+    // Validate test IDs if provided
+    if (packageData.testsIncluded && packageData.testsIncluded.length > 0) {
+      // Clean up test IDs - remove any null/undefined/empty values
+      const cleanTestIds = packageData.testsIncluded.filter(id => id && typeof id === 'string' && id.trim() !== '');
+      
+      if (cleanTestIds.length === 0 && packageData.testsIncluded.length > 0) {
+        // All test IDs were invalid, just set to empty array
+        packageData.testsIncluded = [];
+        console.warn('All provided test IDs were invalid, setting testsIncluded to empty array');
+      } else {
+        // Check validity of remaining test IDs
+        const validTestIds = await Test.find({ _id: { $in: cleanTestIds } }).distinct('_id');
+        const invalidIds = cleanTestIds.filter(id => !validTestIds.includes(id));
+        
+        if (invalidIds.length > 0) {
+          console.warn(`Invalid test IDs found and will be excluded: ${invalidIds.join(', ')}`);
+          // Instead of failing, just remove the invalid IDs
+          packageData.testsIncluded = validTestIds;
+        } else {
+          packageData.testsIncluded = cleanTestIds;
+        }
+      }
+    }
+    
     // Set default values for missing optional but required fields
     const packageToCreate = {
       ...packageData,
@@ -201,15 +225,25 @@ const updatePackage = async (req, res) => {
     
     // Validate test IDs if provided
     if (updateData.testsIncluded && updateData.testsIncluded.length > 0) {
-      const validTestIds = await Test.find({ _id: { $in: updateData.testsIncluded } }).distinct('_id');
-      const invalidIds = updateData.testsIncluded.filter(id => !validTestIds.includes(id));
+      // Clean up test IDs - remove any null/undefined/empty values
+      const cleanTestIds = updateData.testsIncluded.filter(id => id && typeof id === 'string' && id.trim() !== '');
       
-      if (invalidIds.length > 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid test IDs provided',
-          invalidIds
-        });
+      if (cleanTestIds.length === 0 && updateData.testsIncluded.length > 0) {
+        // All test IDs were invalid, just set to empty array
+        updateData.testsIncluded = [];
+        console.warn('All provided test IDs were invalid, setting testsIncluded to empty array');
+      } else {
+        // Check validity of remaining test IDs
+        const validTestIds = await Test.find({ _id: { $in: cleanTestIds } }).distinct('_id');
+        const invalidIds = cleanTestIds.filter(id => !validTestIds.includes(id));
+        
+        if (invalidIds.length > 0) {
+          console.warn(`Invalid test IDs found and will be excluded: ${invalidIds.join(', ')}`);
+          // Instead of failing, just remove the invalid IDs
+          updateData.testsIncluded = validTestIds;
+        } else {
+          updateData.testsIncluded = cleanTestIds;
+        }
       }
     }
     

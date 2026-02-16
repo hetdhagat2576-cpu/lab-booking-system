@@ -237,17 +237,61 @@ export default function PackageDetails() {
 
               {/* Card 2: Included Tests */}
               <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
-                <h2 className="text-xl font-bold text-slate-900 mb-6">Test Packages Detail</h2>
+                <h2 className="text-xl font-bold text-slate-900 mb-6">Tests Included</h2>
                 
                 <div className="space-y-2">
-                  {(packageDetails?.includedTests || packageData?.testsIncluded || []).map((test, index) => (
-                    <div key={test?._id || index} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                      <TestTube2 className="w-4 h-4 text-primary" />
-                      <span className="text-sm text-slate-700">
-                        {typeof test === 'string' ? test : test?.name || test?.testName || 'Test'}
-                      </span>
-                    </div>
-                  ))}
+                  {/* Temporarily simplified to isolate the error */}
+                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                    <TestTube2 className="w-4 h-4 text-primary" />
+                    <span className="text-sm text-slate-700">Test 1</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                    <TestTube2 className="w-4 h-4 text-primary" />
+                    <span className="text-sm text-slate-700">Test 2</span>
+                  </div>
+                  {/*
+                  {(packageDetails?.includedTests || packageData?.testsIncluded || []).map((test, index) => {
+                    console.log('Test object:', test, typeof test);
+                    // Ensure we always get a string, never an object
+                    let testName = 'Test';
+                    if (typeof test === 'string') {
+                      testName = test;
+                    } else if (test && typeof test === 'object') {
+                      if (typeof test?.name === 'string') {
+                        testName = test.name;
+                      } else if (typeof test?.testName === 'string') {
+                        testName = test.testName;
+                      } else {
+                        // Check if name exists but is not a string (could be object)
+                        if (test?.name) {
+                          console.log('test.name is not string:', test.name, typeof test.name);
+                          testName = JSON.stringify(test.name);
+                        } else if (test?.testName) {
+                          console.log('test.testName is not string:', test.testName, typeof test.testName);
+                          testName = JSON.stringify(test.testName);
+                        } else {
+                          testName = JSON.stringify(test);
+                        }
+                      }
+                    }
+                    console.log('Final test name:', testName, typeof testName);
+                    
+                    // Double-check we're not rendering an object
+                    if (typeof testName !== 'string') {
+                      console.error('testName is not a string!', testName, typeof testName);
+                      testName = JSON.stringify(testName);
+                    }
+                    
+                    return (
+                      <div key={test?._id || `test-${index}`} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                        <TestTube2 className="w-4 h-4 text-primary" />
+                        <span className="text-sm text-slate-700">
+                          {testName}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  */}
                 </div>
                 
                 {(packageDetails?.includedTests?.length || packageData?.testsIncluded?.length || 0) === 0 && (
@@ -255,6 +299,7 @@ export default function PackageDetails() {
                 )}
               </div>
 
+              
               {/* Card 3: Details (Report Time, Sample Type) */}
               <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
                 
@@ -278,9 +323,7 @@ export default function PackageDetails() {
                     <div className="text-slate-400 font-medium mb-1">Sample Type</div>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-slate-900 text-lg">
-                        {packageDetails?.requiredSamples && packageDetails.requiredSamples.length > 0 
-                          ? packageDetails.requiredSamples.join(' & ') 
-                          : packageData?.sampleTypes?.join(' & ') || 'Blood'}
+                        Blood
                       </span>
                       <Droplets className="w-4 h-4 text-red-500" />
                     </div>
@@ -288,6 +331,43 @@ export default function PackageDetails() {
 
                 </div>
 
+              </div>
+
+              {/* Card 4: Benefits and Suitable For - Side by Side */}
+              <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
+                <div className="flex flex-col md:flex-row gap-8">
+                  {/* Benefits Section */}
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold text-slate-900 mb-6">Benefits</h2>
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                        <span className="text-slate-700">Benefit 1</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                        <span className="text-slate-700">Benefit 2</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Suitable For Section */}
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold text-slate-900 mb-6">Suitable For</h2>
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                        <span className="text-slate-700">Group 1</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                        <span className="text-slate-700">Group 2</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
             </div>

@@ -178,7 +178,9 @@ export default function AdminDashboardIndex() {
     packageName: '',
     requiredSamples: [],
     reportingTime: '',
-    includedTests: []
+    includedTests: [],
+    benefits: [],
+    suitableFor: []
   });
   
   const [homeContent, setHomeContent] = useState({ 
@@ -283,12 +285,13 @@ export default function AdminDashboardIndex() {
   const [packageFormData, setPackageFormData] = useState({
     name: '',
     description: '',
-    includedTests: [],
     price: '',
     category: '',
     duration: '',
-    requiredSample: 'blood',
-    fastingRequired: false
+    requiredSamples: [],
+    fastingRequired: false,
+    benefits: [],
+    suitableFor: []
   });
 
   const fetchDashboardData = useCallback(async () => {
@@ -906,56 +909,139 @@ export default function AdminDashboardIndex() {
     e.preventDefault();
     
     // Validate required fields
-    if (!packageFormData.name || !packageFormData.name.trim()) {
-      alert('Package name is required');
+    console.log('=== PACKAGE SUBMIT DEBUG START ===');
+    console.log('Package form data before validation:', JSON.stringify(packageFormData, null, 2));
+    console.log('Editing package state:', editingPackage ? JSON.stringify(editingPackage, null, 2) : 'null');
+    console.log('Current tests in state:', tests.length, 'tests');
+    console.log('Current test IDs:', tests.map(t => t._id));
+    console.log('=== PACKAGE SUBMIT DEBUG END ===');
+    
+    // Validate required samples
+    if (!packageFormData.requiredSamples || packageFormData.requiredSamples.length === 0) {
+      alert('Please select at least one required sample type');
       return;
     }
     
-    if (!packageFormData.description || !packageFormData.description.trim()) {
-      alert('Package description is required');
-      return;
-    }
-    
-    if (!packageFormData.price || packageFormData.price <= 0) {
-      alert('Valid package price is required');
-      return;
-    }
-    
-    if (!packageFormData.category) {
-      alert('Package category is required');
-      return;
-    }
-    
-    if (!packageFormData.duration || !packageFormData.duration.trim()) {
-      alert('Package duration is required');
+    // Check if user is authenticated
+    if (!user?.token) {
+      alert('You must be logged in to create packages');
       return;
     }
     
     try {
+      // Create minimal package data for testing
       const packageData = {
-        ...packageFormData,
+        name: packageFormData.name,
+        description: packageFormData.description,
+        category: packageFormData.category,
         price: parseFloat(packageFormData.price),
-        testsIncluded: packageFormData.includedTests,
-        sampleTypes: [packageFormData.requiredSample.charAt(0).toUpperCase() + packageFormData.requiredSample.slice(1)],
-        duration: packageFormData.duration || '30 mins'
+        duration: packageFormData.duration || '30 mins',
+        testsIncluded: packageFormData.includedTests || [],
+        sampleTypes: packageFormData.requiredSamples && packageFormData.requiredSamples.length > 0 
+          ? packageFormData.requiredSamples 
+          : ['Blood'],
+        benefits: packageFormData.benefits || [],
+        suitableFor: packageFormData.suitableFor || []
       };
 
+      // Add optional fields only if they have values
+      if (packageFormData.originalPrice) {
+        packageData.originalPrice = parseFloat(packageFormData.originalPrice);
+      }
+      if (packageFormData.discount) {
+        packageData.discount = parseFloat(packageFormData.discount);
+      }
+      if (packageFormData.icon) {
+        packageData.imageUrl = packageFormData.icon;
+      }
+
+      console.log('Minimal package data:', JSON.stringify(packageData, null, 2));
+
+      // Always fetch fresh test data before submitting to ensure we have latest valid IDs
+      console.log('Fetching fresh test data before package submission...');
+      await fetchTests();
+      
+      // Wait a moment for state to update
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       // Filter out invalid test IDs before sending
       const validTestIds = tests.map(test => test._id);
-      const filteredTestIds = packageFormData.includedTests.filter(id => validTestIds.includes(id));
-      packageData.testsIncluded = filteredTestIds;
+      console.log('Valid test IDs from backend:', validTestIds);
+      console.log('Included test IDs from form:', packageFormData.includedTests);
+      
+      // Always filter test IDs, even for editing packages
+      let finalTestIds = [];
+      if (packageFormData.includedTests && packageFormData.includedTests.length > 0) {
+        const filteredTestIds = packageFormData.includedTests.filter(id => {
+          const isValid = validTestIds.includes(id);
+          if (!isValid) {
+            console.warn(`Invalid test ID filtered out: ${id}`);
+          }
+          return isValid;
+        });
+        console.log('Filtered test IDs (valid ones):', filteredTestIds);
+        finalTestIds = filteredTestIds;
+      }
+      
+      // Always use the filtered test IDs
+      packageData.testsIncluded = finalTestIds;
+      console.log('Final test IDs being sent:', finalTestIds);
+      
+      // Additional validation: if we had tests but all were filtered out, warn the user
+      if (packageFormData.includedTests && packageFormData.includedTests.length > 0 && finalTestIds.length === 0) {
+        alert('Warning: All selected tests were invalid. Please select tests from the current list.');
+        return;
+      }
+      
+      // Validate that all required fields are present and not empty
+      if (!packageData.name || !packageData.name.trim()) {
+        alert('Package name is required');
+        return;
+      }
+      if (!packageData.description || !packageData.description.trim()) {
+        alert('Package description is required');
+        return;
+      }
+      if (!packageData.category) {
+        alert('Package category is required');
+        return;
+      }
+      if (!packageData.price || packageData.price <= 0) {
+        alert('Valid package price is required');
+        return;
+      }
+      if (!packageData.duration || !packageData.duration.trim()) {
+        alert('Package duration is required');
+        return;
+      }
 
-      // Debug: Log the test IDs being sent
-      console.log('Sending package data:', packageData);
-      console.log('Test IDs being sent:', packageFormData.includedTests);
-      console.log('Available tests in frontend:', tests.map(t => ({ id: t._id, name: t.name })));
-      console.log('Filtered test IDs:', filteredTestIds);
+      console.log('Final package data being sent:', JSON.stringify(packageData, null, 2));
+      console.log('User token:', user.token ? 'Present' : 'Missing');
+      console.log('Editing package ID:', editingPackage?._id || 'Creating new package');
+      console.log('Raw packageFormData.includedTests:', JSON.stringify(packageFormData.includedTests, null, 2));
+      console.log('Current tests array length:', tests.length);
+      console.log('Current tests IDs:', tests.map(t => t._id));
 
       const url = editingPackage 
         ? `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages/${editingPackage._id}`
         : `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages`;
       
       const method = editingPackage ? 'PUT' : 'POST';
+      
+      console.log('Request URL:', url);
+      console.log('Request method:', method);
+      
+      // Final validation - ensure no invalid test IDs are being sent
+      if (packageData.testsIncluded && packageData.testsIncluded.length > 0) {
+        const finalValidIds = tests.map(test => test._id);
+        const finalInvalidIds = packageData.testsIncluded.filter(id => !finalValidIds.includes(id));
+        if (finalInvalidIds.length > 0) {
+          console.error('CRITICAL: Found invalid test IDs right before sending:', finalInvalidIds);
+          // Force remove invalid IDs
+          packageData.testsIncluded = packageData.testsIncluded.filter(id => finalValidIds.includes(id));
+          console.log('Fixed test IDs:', packageData.testsIncluded);
+        }
+      }
 
       const response = await fetch(url, {
         method,
@@ -965,6 +1051,9 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(packageData)
       });
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
 
       if (response.ok) {
         fetchPackages();
@@ -976,15 +1065,38 @@ export default function AdminDashboardIndex() {
           icon: '',
           includedTests: [],
           price: '',
+          requiredSamples: [],
           category: '',
           duration: '',
-          requiredSample: 'blood',
-          fastingRequired: false
+          fastingRequired: false,
+          benefits: [],
+          suitableFor: []
         });
       } else {
         const errorData = await response.json();
         console.error('Failed to save package:', errorData);
-        alert(`Failed to save package: ${errorData.message || 'Unknown error'}`);
+        console.error('Error details:', JSON.stringify(errorData, null, 2));
+        
+        // Show specific error based on backend response
+        let errorMessage = 'Failed to save package';
+        if (errorData.error === 'MISSING_NAME') {
+          errorMessage = 'Package name is required';
+        } else if (errorData.error === 'MISSING_CATEGORY') {
+          errorMessage = 'Package category is required';
+        } else if (errorData.error === 'INVALID_PRICE') {
+          errorMessage = 'Valid package price is required';
+        } else if (errorData.error === 'MISSING_DESCRIPTION') {
+          errorMessage = 'Package description is required';
+        } else if (errorData.message === 'Invalid test IDs provided') {
+          errorMessage = 'Invalid test IDs provided. Please select tests from the available list.';
+          if (errorData.invalidIds && errorData.invalidIds.length > 0) {
+            errorMessage += `\n\nInvalid IDs: ${errorData.invalidIds.join(', ')}`;
+          }
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+        
+        alert(`${errorMessage}\n\nError Code: ${errorData.error || 'UNKNOWN'}\n\nFull Error: ${JSON.stringify(errorData, null, 2)}`);
       }
     } catch (error) {
       console.error('Error saving package:', error);
@@ -4590,23 +4702,52 @@ export default function AdminDashboardIndex() {
                                     </CButton>
                                     <CButton 
                                       className="p-1"
-                                      onClick={() => {
+                                      onClick={async () => {
+                                        console.log('Editing package clicked:', JSON.stringify(pkg, null, 2));
+                                        console.log('Current tests before fetch:', tests.map(t => t._id));
                                         setEditingPackage(pkg);
+                                        
                                         // Refresh tests data to ensure we have latest valid test IDs
-                                        fetchTests().then(() => {
+                                        await fetchTests();
+                                        // Wait a moment for state to update
+                                        await new Promise(resolve => setTimeout(resolve, 100));
+                                        
+                                        console.log('Tests after fetch:', tests.map(t => t._id));
+                                        // Filter test IDs to only include valid ones
+                                        const validTestIds = tests.map(test => test._id);
+                                        const originalTestIds = pkg.testsIncluded || pkg.includedTests || [];
+                                        console.log('Original test IDs from package:', originalTestIds);
+                                        
+                                        const filteredTestIds = originalTestIds.filter(id => {
+                                          const isValid = validTestIds.includes(id);
+                                          if (!isValid) {
+                                            console.warn(`Invalid test ID filtered out during edit: ${id}`);
+                                          }
+                                          return isValid;
+                                        });
+                                        console.log('Filtered test IDs:', filteredTestIds);
+                                        
+                                        // Warn if some tests were filtered out
+                                        if (originalTestIds.length > 0 && filteredTestIds.length === 0) {
+                                          console.warn('All tests in this package are no longer valid');
+                                        } else if (filteredTestIds.length < originalTestIds.length) {
+                                          console.warn(`Filtered out ${originalTestIds.length - filteredTestIds.length} invalid test IDs`);
+                                        }
+                                          
                                           setPackageFormData({
                                             name: pkg.name || pkg.title || '',
                                             description: pkg.description || '',
                                             icon: pkg.icon || '',
-                                            includedTests: pkg.testsIncluded || pkg.includedTests || [],
+                                            includedTests: filteredTestIds,
                                             price: pkg.price?.toString() || '',
-                                            requiredSample: pkg.requiredSample || (pkg.sampleTypes && pkg.sampleTypes[0]) || 'blood',
+                                            requiredSamples: pkg.sampleTypes || ['Blood'],
                                             category: pkg.category || 'general',
                                             duration: pkg.duration || '',
-                                            fastingRequired: pkg.fastingRequired || false
+                                            fastingRequired: pkg.fastingRequired || false,
+                                            benefits: pkg.benefits || [],
+                                            suitableFor: pkg.suitableFor || []
                                           });
                                           setShowPackageForm(true);
-                                        });
                                       }}
                                       variant="outline"
                                       title="Edit Package"
@@ -6286,7 +6427,7 @@ export default function AdminDashboardIndex() {
                   <input
                     type="text"
                     required
-                    value={packageFormData.name}
+                    value={packageFormData.name || ''}
                     onChange={(e) => setPackageFormData({...packageFormData, name: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   />
@@ -6296,7 +6437,7 @@ export default function AdminDashboardIndex() {
                     Description
                   </label>
                   <textarea
-                    value={packageFormData.description}
+                    value={packageFormData.description || ''}
                     onChange={(e) => setPackageFormData({...packageFormData, description: e.target.value})}
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
@@ -6310,29 +6451,38 @@ export default function AdminDashboardIndex() {
                     type="number"
                     required
                     step="0.01"
-                    value={packageFormData.price}
+                    value={packageFormData.price || ''}
                     onChange={(e) => setPackageFormData({...packageFormData, price: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Required Sample *
+                    Required Samples *
                   </label>
-                  <select
-                    required
-                    value={packageFormData.requiredSample}
-                    onChange={(e) => setPackageFormData({...packageFormData, requiredSample: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
-                  >
-                    <option value="blood">Blood</option>
-                    <option value="urine">Urine</option>
-                    <option value="swab">Swab</option>
-                    <option value="saliva">Saliva</option>
-                    <option value="stool">Stool</option>
-                    <option value="mixed">Mixed</option>
-                    <option value="other">Other</option>
-                  </select>
+                  <div className="space-y-2">
+                    {['Blood', 'Urine', 'Swab', 'Saliva', 'Stool', 'Sputum', 'Other'].map((sample) => (
+                      <label key={sample} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={packageFormData.requiredSamples?.includes(sample) || false}
+                          onChange={(e) => {
+                            const currentSamples = packageFormData.requiredSamples || [];
+                            if (e.target.checked) {
+                              setPackageFormData({...packageFormData, requiredSamples: [...currentSamples, sample]});
+                            } else {
+                              setPackageFormData({...packageFormData, requiredSamples: currentSamples.filter(s => s !== sample)});
+                            }
+                          }}
+                          className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <span className="text-sm text-gray-700">{sample}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {(!packageFormData.requiredSamples || packageFormData.requiredSamples.length === 0) && (
+                    <p className="text-red-500 text-xs mt-1">Please select at least one sample type</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -6340,7 +6490,7 @@ export default function AdminDashboardIndex() {
                   </label>
                   <select
                     required
-                    value={packageFormData.category}
+                    value={packageFormData.category || ''}
                     onChange={(e) => setPackageFormData({...packageFormData, category: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   >
@@ -6402,7 +6552,7 @@ export default function AdminDashboardIndex() {
                     type="text"
                     required
                     placeholder="e.g., 24 hours, 2 days"
-                    value={packageFormData.duration}
+                    value={packageFormData.duration || ''}
                     onChange={(e) => setPackageFormData({...packageFormData, duration: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   />
@@ -6417,6 +6567,30 @@ export default function AdminDashboardIndex() {
                   <label className="text-sm font-medium text-gray-700">
                     Fasting Required
                   </label>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Benefits (comma-separated)
+                  </label>
+                  <textarea
+                    value={packageFormData.benefits?.join(', ') || ''}
+                    onChange={(e) => setPackageFormData({...packageFormData, benefits: e.target.value.split(',').map(b => b.trim()).filter(b => b)})}
+                    rows={3}
+                    placeholder="e.g., Early detection of health issues, Complete health assessment"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Suitable For (comma-separated)
+                  </label>
+                  <textarea
+                    value={packageFormData.suitableFor?.join(', ') || ''}
+                    onChange={(e) => setPackageFormData({...packageFormData, suitableFor: e.target.value.split(',').map(s => s.trim()).filter(s => s)})}
+                    rows={3}
+                    placeholder="e.g., Adults above 30 years, Annual health checkup"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                  />
                 </div>
               </div>
               <div className="flex gap-2 mt-6">
@@ -6435,7 +6609,7 @@ export default function AdminDashboardIndex() {
                       icon: '',
                       includedTests: [],
                       price: '',
-                      requiredSample: 'blood',
+                      requiredSamples: [],
                       category: '',
                       duration: '',
                       fastingRequired: false
@@ -6604,7 +6778,9 @@ export default function AdminDashboardIndex() {
                           packageName: details.packageName || '',
                           requiredSamples: details.requiredSamples || [],
                           reportingTime: details.reportingTime || '',
-                          includedTests: details.includedTests || []
+                          includedTests: details.includedTests || [],
+                          benefits: details.benefits || [],
+                          suitableFor: details.suitableFor || []
                         });
                         setEditingPackageDetails(true);
                       }}
@@ -6645,7 +6821,11 @@ export default function AdminDashboardIndex() {
                 {editingPackageDetails ? (
                   <form onSubmit={async (e) => {
                     e.preventDefault();
-                    const success = await updatePackageDetails(packageId, packageDetailsFormData);
+                    const success = await updatePackageDetails(packageId, {
+                        ...packageDetailsFormData,
+                        benefits: packageDetailsFormData.benefits || [],
+                        suitableFor: packageDetailsFormData.suitableFor || []
+                      });
                     if (success) {
                       setEditingPackageDetails(false);
                     }
@@ -6715,6 +6895,32 @@ export default function AdminDashboardIndex() {
                             {packageDetailsFormData.includedTests.length} test(s) selected
                           </p>
                         )}
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Benefits (comma-separated)</label>
+                        <textarea
+                          value={packageDetailsFormData.benefits?.join(', ') || ''}
+                          onChange={(e) => setPackageDetailsFormData(prev => ({ 
+                            ...prev, 
+                            benefits: e.target.value.split(',').map(b => b.trim()).filter(b => b) 
+                          }))}
+                          rows={3}
+                          placeholder="e.g., Early detection of health issues, Complete health assessment"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Suitable For (comma-separated)</label>
+                        <textarea
+                          value={packageDetailsFormData.suitableFor?.join(', ') || ''}
+                          onChange={(e) => setPackageDetailsFormData(prev => ({ 
+                            ...prev, 
+                            suitableFor: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
+                          }))}
+                          rows={3}
+                          placeholder="e.g., Adults above 30 years, Annual health checkup"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                        />
                       </div>
                                             <div className="flex gap-2">
                         <CButton type="submit" variant="primary">
@@ -6786,6 +6992,34 @@ export default function AdminDashboardIndex() {
                         <p className="text-gray-500 italic mt-1">No tests included in this package</p>
                       )}
                     </div>
+                    {/* Benefits Section */}
+                    {details.benefits && details.benefits.length > 0 && (
+                      <div>
+                        <h4 className="font-medium text-gray-900">Benefits</h4>
+                        <div className="mt-2 space-y-2">
+                          {details.benefits.map((benefit, index) => (
+                            <div key={index} className="flex items-center gap-2 text-sm">
+                              <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                              <span className="text-gray-700">{benefit}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* Suitable For Section */}
+                    {details.suitableFor && details.suitableFor.length > 0 && (
+                      <div>
+                        <h4 className="font-medium text-gray-900">Suitable For</h4>
+                        <div className="mt-2 space-y-2">
+                          {details.suitableFor.map((item, index) => (
+                            <div key={index} className="flex items-center gap-2 text-sm">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                              <span className="text-gray-700">{item}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                 </div>
                 )}
               </div>

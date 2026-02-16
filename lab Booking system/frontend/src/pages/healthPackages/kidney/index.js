@@ -13,7 +13,7 @@ const { Home, UserCheck, FileBarChart } = IconConfig;
 export default function Kidney() {
   const navigate = useNavigate();
   
-  // Separate states for the two sections
+  // Separate states for two sections
   const [showAllPackages, setShowAllPackages] = useState(false);
   const [synchronizedTests, setSynchronizedTests] = useState([]);
 
@@ -21,6 +21,8 @@ export default function Kidney() {
 
   // Load synchronized tests from localStorage on component mount
   useEffect(() => {
+    // Clear localStorage to ensure we use static data with enhanced details
+    localStorage.removeItem('health_concern_kidney_tests');
     const tests = getSynchronizedTests('kidney');
     setSynchronizedTests(tests);
   }, []);
@@ -78,7 +80,7 @@ export default function Kidney() {
                 </p>
               </div>
 
-              </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {displayTests.map((t) => {
@@ -93,6 +95,16 @@ export default function Kidney() {
                       <h4 className="text-lg font-bold text-slate-800 leading-tight group-hover:text-primary transition-colors line-clamp-2">
                         {formattedTest.displayTitle}
                       </h4>
+                    </div>
+
+                    {formattedTest.description && (
+                      <p className="text-slate-600 text-sm mb-4 line-clamp-2">{formattedTest.description}</p>
+                    )}
+
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="inline-flex items-center bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-100 uppercase">
+                        {formattedTest.sampleType || 'Blood'}
+                      </span>
                     </div>
 
                     {formattedTest.displayDiscount && (
@@ -141,17 +153,14 @@ export default function Kidney() {
             <div className="w-20 h-20 bg-secondary/10 rounded-2xl flex items-center justify-center shrink-0">
               <ShieldCheck className="w-10 h-10 text-primary" strokeWidth={1.5} />
             </div>
-            <div className="text-center md:text-left">
+            <div className="text-center md:text-left flex-grow">
               <h4 className="font-bold text-slate-900 text-xl mb-4">Health Expert Tip</h4>
               
-              
-
               <p className="text-slate-600 leading-relaxed text-sm md:text-base max-w-3xl">
                 Healthy kidneys filter about 150 quarts of blood daily. Early kidney disease often has no symptoms; regular testing of <span className="text-primary font-bold underline underline-offset-4 decoration-2">Creatinine and BUN levels</span> is the best way to monitor your renal health, especially if you have hypertension or diabetes.
               </p>
             </div>
           </div>
-          
         </div>
       </main>
 

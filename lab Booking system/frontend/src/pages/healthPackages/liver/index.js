@@ -21,6 +21,8 @@ export default function Liver() {
 
   // Load synchronized tests from localStorage on component mount
   useEffect(() => {
+    // Clear localStorage to ensure we use static data with enhanced details
+    localStorage.removeItem('health_concern_liver_tests');
     const tests = getSynchronizedTests('liver');
     setSynchronizedTests(tests);
   }, []);
@@ -89,6 +91,16 @@ export default function Liver() {
                       <h4 className="text-lg font-bold text-slate-800 leading-tight group-hover:text-primary transition-colors line-clamp-2">
                         {formattedTest.displayTitle}
                       </h4>
+                    </div>
+
+                    {formattedTest.description && (
+                      <p className="text-slate-600 text-sm mb-4 line-clamp-2">{formattedTest.description}</p>
+                    )}
+
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="inline-flex items-center bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-100 uppercase">
+                        {formattedTest.sampleType || 'Blood'}
+                      </span>
                     </div>
 
                     {formattedTest.displayDiscount && (

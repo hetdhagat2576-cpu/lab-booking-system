@@ -12,8 +12,6 @@ import { getSynchronizedTests, formatTestForDisplay } from "../../../services/te
 
 const { Home, UserCheck, FileBarChart } = IconConfig;
 
-
-
 export default function Diabetes() {
   const navigate = useNavigate();
   const [showAllPackages, setShowAllPackages] = useState(false);
@@ -23,6 +21,8 @@ export default function Diabetes() {
 
   // Load synchronized tests from localStorage on component mount
   useEffect(() => {
+    // Clear localStorage to ensure we use static data with enhanced details
+    localStorage.removeItem('health_concern_diabetes_tests');
     const tests = getSynchronizedTests('diabetes');
     setSynchronizedTests(tests);
   }, []);
@@ -91,16 +91,30 @@ export default function Diabetes() {
                       </h4>
                     </div>
 
-                    <div className="mb-6">
-                      <span className="inline-flex items-center bg-red-50 text-red-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-red-100 uppercase">
-                        {formattedTest.displayDiscount}% OFF
+                    {formattedTest.description && (
+                      <p className="text-slate-600 text-sm mb-4 line-clamp-2">{formattedTest.description}</p>
+                    )}
+
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="inline-flex items-center bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-100 uppercase">
+                        {formattedTest.sampleType || 'Blood'}
                       </span>
                     </div>
+
+                    {formattedTest.displayDiscount && (
+                      <div className="mb-6">
+                        <span className="inline-flex items-center bg-red-50 text-red-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-red-100 uppercase">
+                          {formattedTest.displayDiscount}% OFF
+                        </span>
+                      </div>
+                    )}
 
                     <div className="mt-auto">
                       <div className="flex items-baseline gap-3 mb-6">
                         <span className="text-2xl font-black text-slate-900">₹{formattedTest.displayPrice}</span>
-                        <span className="text-slate-400 line-through text-xs font-medium">₹{formattedTest.displayOriginalPrice}</span>
+                        {formattedTest.displayOriginalPrice && (
+                          <span className="text-slate-400 line-through text-xs font-medium">₹{formattedTest.displayOriginalPrice}</span>
+                        )}
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <CButton
@@ -137,7 +151,7 @@ export default function Diabetes() {
                 Health Expert Tip
               </h4>
               <p className="text-slate-600 leading-relaxed text-sm md:text-base max-w-3xl">
-                For the most accurate results, <span className="text-primary font-bold">Fasting for 8-12 hours</span> is recommended for Blood Sugar (Fasting) tests. You may drink plain water but avoid coffee, tea, or juice before your sample collection. Regular monitoring of <span className="text-primary font-bold">HbA1c</span> is also key for long-term glucose control.
+                For most accurate results, <span className="text-primary font-bold">Fasting for 8-12 hours</span> is recommended for Blood Sugar (Fasting) tests. You may drink plain water but avoid coffee, tea, or juice before your sample collection. Regular monitoring of <span className="text-primary font-bold">HbA1c</span> is also key for long-term glucose control.
               </p>
             </div>
           </div>

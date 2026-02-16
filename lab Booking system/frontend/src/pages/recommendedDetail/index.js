@@ -143,7 +143,10 @@ export default function RecommendedDetail() {
                      (item.fastingRequired === true || item.isFasting === true) ? "8-10 Hrs" : 
                      (item.preTestRequirements || "No Fasting Required")),
            reportTime: item.reportTime || "24-48 Hrs",
-           testsList: item.testsList || []
+           testsList: item.testsList || [],
+           // Enhanced fields from our updated static data
+           sampleType: item.sampleType || 'Blood',
+           discount: item.discount || 0
         };
         
         // Calculate discount if missing
@@ -257,7 +260,7 @@ export default function RecommendedDetail() {
   
   const sampleType = getSampleType(); 
   const sampleIcon = <Droplets className="w-4 h-4 text-red-500" />;
-  const reportTime = item.reportTime || "24 Hrs";
+  const reportTime = item.reportTime || "24-48 Hrs";
   const fasting = item.fasting || ((item.fastingRequired || item.isFasting) ? "8-10 Hrs" : "Not Required");
   
   const discount = item.discount || Math.round(((item.originalPrice - item.price) / item.originalPrice) * 100) || 0;
@@ -323,7 +326,7 @@ export default function RecommendedDetail() {
               {/* Card 3: Test Packages Detail */}
               {type === "package" && (
                 <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
-                  <h2 className="text-xl font-bold text-slate-900 mb-6">Test Packages Detail</h2>
+                  <h2 className="text-xl font-bold text-slate-900 mb-6">Tests Included</h2>
                   
                   <div className="space-y-2">
                     {includedTests && includedTests.length > 0 ? (
@@ -367,7 +370,7 @@ export default function RecommendedDetail() {
                     </div>
                   </div>
 
-                  {(item.fastingRequired || item.isFasting) && (
+                  {(item.fastingRequired || item.isFasting || (item.fasting && item.fasting.includes("Hrs"))) && (
                     <div className="md:pl-6">
                       <div className="text-slate-400 font-medium mb-1">Preparation</div>
                       <div className="space-y-2">

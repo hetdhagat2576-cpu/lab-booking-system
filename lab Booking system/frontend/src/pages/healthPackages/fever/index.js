@@ -19,6 +19,8 @@ export default function Fever() {
 
   // Load synchronized tests from localStorage on component mount
   useEffect(() => {
+    // Clear localStorage to ensure we use static data with enhanced details
+    localStorage.removeItem('health_concern_fever_tests');
     const tests = getSynchronizedTests('fever');
     setSynchronizedTests(tests);
   }, []);
@@ -62,7 +64,7 @@ export default function Fever() {
 
         <div className="container mx-auto px-4 py-8">
           
-          {/* Section 2: Individual Tests */}
+          {/* SECTION 2: Individual Tests */}
           <div className="mt-12">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
               <div className="space-y-1">
@@ -85,10 +87,20 @@ export default function Fever() {
                   className="group bg-white rounded-2xl border border-slate-200 hover:border-primary/50 hover:shadow-lg transition-all duration-300 flex flex-col h-full overflow-hidden"
                 >
                   <div className="p-6 flex flex-col h-full">
-                    <div className="h-14 mb-2 cursor-pointer" onClick={() => navigate(`/test-details?id=${formattedTest.displayId}`)}>
+                    <div className="h-14 mb-2">
                       <h4 className="text-lg font-bold text-slate-800 leading-tight group-hover:text-primary transition-colors line-clamp-2">
                         {formattedTest.displayTitle}
                       </h4>
+                    </div>
+
+                    {formattedTest.description && (
+                      <p className="text-slate-600 text-sm mb-4 line-clamp-2">{formattedTest.description}</p>
+                    )}
+
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="inline-flex items-center bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-100 uppercase">
+                        {formattedTest.sampleType || 'Blood'}
+                      </span>
                     </div>
 
                     {formattedTest.displayDiscount && (
@@ -141,9 +153,6 @@ export default function Fever() {
               <h4 className="font-bold text-slate-900 text-xl mb-4">
                 Clinical Awareness
               </h4>
-              
-              
-              
               <p className="text-slate-600 leading-relaxed text-sm md:text-base max-w-3xl mt-4">
                 High fever can be a symptom of various infections. Early testing for <span className="text-red-500 font-bold">Malaria, Dengue, and Typhoid</span> helps in getting the right treatment quickly. Most acute fever tests do not require fasting.
               </p>

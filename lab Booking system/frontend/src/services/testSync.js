@@ -49,6 +49,10 @@ export const formatTestForDisplay = (test) => {
     displayId: getTestId(test),
     displayPrice: getTestPrice(test),
     displayOriginalPrice: getTestOriginalPrice(test),
-    displayDiscount: getTestDiscount(test)
+    displayDiscount: getTestDiscount(test),
+    description: test.description || '',
+    sampleType: test.sampleType || 'Blood',
+    reportTime: test.reportTime || '24 Hrs',
+    fastingRequired: test.fastingRequired || false
   };
 };

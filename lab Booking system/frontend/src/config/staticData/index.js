@@ -882,33 +882,33 @@ export const PACKAGE_TESTS = {
 
 export const RECOMMENDED_TESTS = {
   diabetes: [
-    { id: "ppbs", title: "Post Prandial Blood Sugar (PPBS) Test", price: 119, originalPrice: 299, discount: 60 },
-    { id: "fbs", title: "Fasting Blood Sugar (FBS) Test", price: 119, originalPrice: 299, discount: 60 },
-    { id: "insulin-fasting", title: "Insulin Fasting Test", price: 499, originalPrice: 849, discount: 46 },
-    { id: "insulin-antibodies", title: "Insulin Antibodies", price: 999, originalPrice: 1649, discount: 39 }
+    { id: "ppbs", title: "Post Prandial Blood Sugar (PPBS) Test", price: 119, originalPrice: 299, discount: 60, description: "Measures blood glucose levels 2 hours after meal", sampleType: "Blood", reportTime: "4 Hrs", fastingRequired: false },
+    { id: "fbs", title: "Fasting Blood Sugar (FBS) Test", price: 119, originalPrice: 299, discount: 60, description: "Measures blood glucose levels after overnight fasting", sampleType: "Blood", reportTime: "4 Hrs", fastingRequired: true },
+    { id: "insulin-fasting", title: "Insulin Fasting Test", price: 499, originalPrice: 849, discount: 46, description: "Measures insulin levels in fasting state", sampleType: "Blood", reportTime: "6 Hrs", fastingRequired: true },
+    { id: "insulin-antibodies", title: "Insulin Antibodies", price: 999, originalPrice: 1649, discount: 39, description: "Detects antibodies against insulin", sampleType: "Blood", reportTime: "8 Hrs", fastingRequired: false }
   ],
   fever: [
-    { id: "esr", title: "Erythrocyte Sedimentation Rate (ESR) Test", price: 199, originalPrice: 349, discount: 43 },
-    { id: "typhi-igm", title: "Typhi Test - IgM", price: 399, originalPrice: 549, discount: 27 },
-    { id: "malarial-parasite", title: "Malarial Parasite Test", price: 399, originalPrice: 549, discount: 27 },
-    { id: "dengue-ns1-rapid", title: "Dengue Ns1 Antigen Rapid Test", price: 499, originalPrice: 649, discount: 23 }
+    { id: "esr", title: "Erythrocyte Sedimentation Rate (ESR) Test", price: 199, originalPrice: 349, discount: 43, description: "Measures inflammation in the body", sampleType: "Blood", reportTime: "2 Hrs", fastingRequired: false },
+    { id: "typhi-igm", title: "Typhi Test - IgM", price: 399, originalPrice: 549, discount: 27, description: "Detects current typhoid infection", sampleType: "Blood", reportTime: "6 Hrs", fastingRequired: false },
+    { id: "malarial-parasite", title: "Malarial Parasite Test", price: 399, originalPrice: 549, discount: 27, description: "Detects malaria parasites in blood", sampleType: "Blood", reportTime: "4 Hrs", fastingRequired: false },
+    { id: "dengue-ns1-rapid", title: "Dengue Ns1 Antigen Rapid Test", price: 499, originalPrice: 649, discount: 23, description: "Detects dengue virus antigen", sampleType: "Blood", reportTime: "2 Hrs", fastingRequired: false }
   ],
   kidney: [
-    { id: "acr-microalbumin", title: "Albumin Creatinine Ratio (ACR) / Urine For Microalbuminuria Test", price: 669, originalPrice: 1299, discount: 48 },
-    { id: "bun-urea", title: "Blood Urea Nitrogen (BUN)/Serum Urea Test", price: 125, originalPrice: 249, discount: 50 },
-    { id: "protein-creatinine-ratio", title: "Protein Creatinine Ratio (Urine) Test", price: 299, originalPrice: 599, discount: 50 }
+    { id: "acr-microalbumin", title: "Albumin Creatinine Ratio (ACR) / Urine For Microalbuminuria Test", price: 669, originalPrice: 1299, discount: 48, description: "Detects early kidney damage through urine protein", sampleType: "Urine", reportTime: "6 Hrs", fastingRequired: false },
+    { id: "bun-urea", title: "Blood Urea Nitrogen (BUN)/Serum Urea Test", price: 125, originalPrice: 249, discount: 50, description: "Measures kidney function through urea levels", sampleType: "Blood", reportTime: "4 Hrs", fastingRequired: false },
+    { id: "protein-creatinine-ratio", title: "Protein Creatinine Ratio (Urine) Test", price: 299, originalPrice: 599, discount: 50, description: "Measures protein leakage in urine", sampleType: "Urine", reportTime: "6 Hrs", fastingRequired: false }
   ],
   liver: [
-    { id: "sgpt-alt", title: "SGPT / ALT (Alanine Transaminase) Test", price: 175, originalPrice: 349, discount: 50 },
-    { id: "sgot-ast", title: "Aspartate Aminotransferase (AST / SGOT) Test", price: 175, originalPrice: 399, discount: 56 },
-    { id: "liver-acr-microalbumin", title: "Albumin Creatinine Ratio (ACR) / Urine For Microalbuminuria Test", price: 669, originalPrice: 1299, discount: 48 }
+    { id: "sgpt-alt", title: "SGPT / ALT (Alanine Transaminase) Test", price: 175, originalPrice: 349, discount: 50, description: "Liver enzyme test for liver damage detection", sampleType: "Blood", reportTime: "4 Hrs", fastingRequired: false },
+    { id: "sgot-ast", title: "Aspartate Aminotransferase (AST / SGOT) Test", price: 175, originalPrice: 399, discount: 56, description: "Liver enzyme test for liver function assessment", sampleType: "Blood", reportTime: "4 Hrs", fastingRequired: false },
+    { id: "liver-acr-microalbumin", title: "Albumin Creatinine Ratio (ACR) / Urine For Microalbuminuria Test", price: 669, originalPrice: 1299, discount: 48, description: "Detects kidney complications related to liver disease", sampleType: "Urine", reportTime: "6 Hrs", fastingRequired: false }
   ],
   lungs: [
-    { id: "healthy-lung-body", title: "Healthy Lung & Body Checkup", price: 1249, originalPrice: 3200, discount: 62 }
+    { id: "healthy-lung-body", title: "Healthy Lung & Body Checkup", price: 1249, originalPrice: 3200, discount: 62, description: "Comprehensive lung function and health assessment", sampleType: "Blood", reportTime: "24 Hrs", fastingRequired: true }
   ],
   thyroid: [
-    { id: "anti-tpo", title: "Anti Thyroperoxidase Antibody (Anti-TPO) Test", price: 1099, originalPrice: 1399, discount: 21 },
-    { id: "t4", title: "Thyroxine (T4) Test", price: 175, originalPrice: 299, discount: 41 },
-    { id: "t3", title: "Triiodothyronine (T3) Test", price: 175, originalPrice: 349, discount: 50 }
+    { id: "anti-tpo", title: "Anti Thyroperoxidase Antibody (Anti-TPO) Test", price: 1099, originalPrice: 1399, discount: 21, description: "Detects autoimmune thyroid disease", sampleType: "Blood", reportTime: "8 Hrs", fastingRequired: false },
+    { id: "t4", title: "Thyroxine (T4) Test", price: 175, originalPrice: 299, discount: 41, description: "Measures thyroid hormone T4 levels", sampleType: "Blood", reportTime: "4 Hrs", fastingRequired: false },
+    { id: "t3", title: "Triiodothyronine (T3) Test", price: 175, originalPrice: 349, discount: 50, description: "Measures thyroid hormone T3 levels", sampleType: "Blood", reportTime: "4 Hrs", fastingRequired: false }
   ]
 };

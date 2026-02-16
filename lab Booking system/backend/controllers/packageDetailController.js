@@ -67,7 +67,9 @@ const getPackageDetails = async (req, res) => {
       requiredSamples: Array.from(allSampleTypes),
       reportingTime: maxDuration,
       includedTests: package.testsIncluded, // Keep full test objects
-      includedTestNames: package.testsIncluded.map(test => test.name) // Add names separately for backward compatibility
+      includedTestNames: package.testsIncluded.map(test => test.name), // Add names separately for backward compatibility
+      benefits: package.benefits || [],
+      suitableFor: package.suitableFor || []
     };
     
     res.status(200).json({

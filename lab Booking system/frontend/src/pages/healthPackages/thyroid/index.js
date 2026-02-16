@@ -19,6 +19,8 @@ export default function Thyroid() {
 
   // Load synchronized tests from localStorage on component mount
   useEffect(() => {
+    // Clear localStorage to ensure we use static data with enhanced details
+    localStorage.removeItem('health_concern_thyroid_tests');
     const tests = getSynchronizedTests('thyroid');
     setSynchronizedTests(tests);
   }, []);
@@ -59,7 +61,6 @@ export default function Thyroid() {
 
         <div className="container mx-auto px-4 py-8">
           
-          {/* Section 2: Individual Tests */}
           <div className="mt-12">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
               <div className="space-y-1">
@@ -71,7 +72,7 @@ export default function Thyroid() {
                 </p>
               </div>
 
-              </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {displayTests.map((t) => {
@@ -88,16 +89,30 @@ export default function Thyroid() {
                       </h4>
                     </div>
 
-                    <div className="mb-6">
-                      <span className="inline-flex items-center bg-red-50 text-red-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-red-100 uppercase">
-                        {formattedTest.displayDiscount}% OFF
+                    {formattedTest.description && (
+                      <p className="text-slate-600 text-sm mb-4 line-clamp-2">{formattedTest.description}</p>
+                    )}
+
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="inline-flex items-center bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-100 uppercase">
+                        {formattedTest.sampleType || 'Blood'}
                       </span>
                     </div>
+
+                    {formattedTest.displayDiscount && (
+                      <div className="mb-6">
+                        <span className="inline-flex items-center bg-red-50 text-red-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-red-100 uppercase">
+                          {formattedTest.displayDiscount}% OFF
+                        </span>
+                      </div>
+                    )}
 
                     <div className="mt-auto">
                       <div className="flex items-baseline gap-3 mb-6">
                         <span className="text-2xl font-black text-slate-900">₹{formattedTest.displayPrice}</span>
-                        <span className="text-slate-400 line-through text-xs font-medium">₹{formattedTest.displayOriginalPrice}</span>
+                        {formattedTest.displayOriginalPrice && (
+                          <span className="text-slate-400 line-through text-xs font-medium">₹{formattedTest.displayOriginalPrice}</span>
+                        )}
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <CButton
@@ -125,7 +140,6 @@ export default function Thyroid() {
             </div>
           </div>
 
-          {/* Expert Tip Section */}
           <div className="mt-16 bg-white p-6 md:p-10 rounded-[2rem] shadow-sm border border-slate-100 flex flex-col md:flex-row items-center gap-6 md:gap-10">
             <div className="w-20 h-20 bg-secondary/10 rounded-2xl flex items-center justify-center shrink-0">
               <ShieldCheck className="w-10 h-10 text-primary" strokeWidth={1.5} />
@@ -137,8 +151,8 @@ export default function Thyroid() {
                  
               </div>
 
-              <p className="text-slate-600 leading-relaxed text-sm md:text-base max-w-3xl">
-                The thyroid gland regulates your body's temperature, metabolism, and energy levels. Common symptoms of imbalance include unexplained weight changes and fatigue. A <span className="text-primary font-bold underline underline-offset-4 decoration-2">TSH test</span> is the gold standard for initial screening to detect hormonal imbalances early.
+              <p className="text-slate-600 leading-relaxed text-sm md:text-base max-w-3xl mt-4">
+                The thyroid gland regulates your body's temperature, metabolism, and energy levels. Common symptoms of imbalance include unexplained weight changes and fatigue. A <span className="text-primary font-bold underline underline-offset-4 decoration-2">TSH test</span> is gold standard for initial screening to detect hormonal imbalances early.
               </p>
             </div>
           </div>

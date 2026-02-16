@@ -21,6 +21,8 @@ export default function Lungs() {
 
   // Load synchronized tests from localStorage on component mount
   useEffect(() => {
+    // Clear localStorage to ensure we use static data with enhanced details
+    localStorage.removeItem('health_concern_lungs_tests');
     const tests = getSynchronizedTests('lungs');
     setSynchronizedTests(tests);
   }, []);
@@ -78,37 +80,53 @@ export default function Lungs() {
                 </p>
               </div>
 
-              </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {displayTests.map((t) => (
+              {displayTests.map((t) => {
+                const formattedTest = formatTestForDisplay(t);
+                return (
                 <div
-                  key={t.id}
+                  key={formattedTest.displayId}
                   className="group bg-white rounded-2xl border border-slate-200 hover:border-primary/50 hover:shadow-lg transition-all duration-300 flex flex-col h-full overflow-hidden"
                 >
                   <div className="p-6 flex flex-col h-full">
                     <div className="h-14 mb-2">
                       <h4 className="text-lg font-bold text-slate-800 leading-tight group-hover:text-primary transition-colors line-clamp-2">
-                        {t.title}
+                        {formattedTest.displayTitle}
                       </h4>
                     </div>
 
-                    <div className="mb-6">
-                      <span className="inline-flex items-center bg-red-50 text-red-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-red-100 uppercase">
-                        {t.discount}% OFF
+                    {formattedTest.description && (
+                      <p className="text-slate-600 text-sm mb-4 line-clamp-2">{formattedTest.description}</p>
+                    )}
+
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="inline-flex items-center bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-100 uppercase">
+                        {formattedTest.sampleType || 'Blood'}
                       </span>
                     </div>
 
+                    {formattedTest.displayDiscount && (
+                      <div className="mb-6">
+                        <span className="inline-flex items-center bg-red-50 text-red-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-red-100 uppercase">
+                          {formattedTest.displayDiscount}% OFF
+                        </span>
+                      </div>
+                    )}
+
                     <div className="mt-auto">
                       <div className="flex items-baseline gap-3 mb-6">
-                        <span className="text-2xl font-black text-slate-900">₹{t.price}</span>
-                        <span className="text-slate-400 line-through text-xs font-medium">₹{t.originalPrice}</span>
+                        <span className="text-2xl font-black text-slate-900">₹{formattedTest.displayPrice}</span>
+                        {formattedTest.displayOriginalPrice && (
+                          <span className="text-slate-400 line-through text-xs font-medium">₹{formattedTest.displayOriginalPrice}</span>
+                        )}
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <CButton
                           variant="outline"
                           fullWidth={true}
-                          onClick={() => navigate(`/recommended-detail?type=test&category=lungs&id=${t.id}`)}
+                          onClick={() => navigate(`/recommended-detail?type=test&category=lungs&id=${formattedTest.displayId}`)}
                           className="rounded-xl h-11 font-bold uppercase tracking-widest border-2 border-slate-200 hover:border-primary hover:text-primary transition-all shadow-sm"
                         >
                           Details
@@ -116,7 +134,7 @@ export default function Lungs() {
                         <CButton
                           variant="primary"
                           fullWidth={true}
-                          onClick={() => navigate(`/new-booking?name=${encodeURIComponent(t.title)}&price=${t.price}`)}
+                          onClick={() => navigate(`/new-booking?name=${encodeURIComponent(formattedTest.displayTitle)}&price=${formattedTest.displayPrice}`)}
                           className="rounded-xl h-11 font-bold uppercase tracking-widest"
                         >
                           Book
@@ -125,7 +143,8 @@ export default function Lungs() {
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -136,13 +155,7 @@ export default function Lungs() {
             </div>
             <div className="text-center md:text-left flex-grow">
               <h4 className="font-bold text-slate-900 text-xl mb-4">Health Expert Tip</h4>
-              
-              
-
-[Image of the human respiratory system showing lungs and bronchioles]
-
-
-              <p className="text-slate-600 leading-relaxed text-sm md:text-base max-w-3xl mt-6">
+              <p className="text-slate-600 leading-relaxed text-sm md:text-base max-w-3xl">
                 Lung health screening is crucial for individuals exposed to high pollution or those with a history of smoking. Early markers in blood work, such as <span className="text-primary font-bold">Absolute Eosinophil Count (AEC)</span>, can indicate inflammatory responses affecting respiratory efficiency.
               </p>
             </div>
