@@ -99,7 +99,7 @@ export default function Fever() {
 
                     <div className="flex items-center justify-between mb-4">
                       <span className="inline-flex items-center bg-emerald-50 text-emerald-600 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-100 uppercase">
-                        {formattedTest.sampleType || 'Blood'}
+                        {typeof formattedTest.sampleType === 'string' ? formattedTest.sampleType : formattedTest.sampleType?.name || formattedTest.sampleType?.title || 'Blood'}
                       </span>
                     </div>
 

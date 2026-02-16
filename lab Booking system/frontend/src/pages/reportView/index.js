@@ -144,7 +144,7 @@ const ReportView = () => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Lab_Report_${report.patientId?.name || 'Patient'}_${reportId.slice(-8)}.pdf`;
+      a.download = `Lab_Report_${typeof report.patientId?.name === 'string' ? report.patientId.name : report.patientId?.name?.name || 'Patient'}_${reportId.slice(-8)}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -234,7 +234,7 @@ const ReportView = () => {
                   Back
                 </button>
                 <h1 className="text-xl font-semibold text-gray-800">
-                  Lab Report - {report.patientId?.name}
+                  Lab Report - {typeof report.patientId?.name === 'string' ? report.patientId.name : report.patientId?.name?.name || 'Patient'}
                 </h1>
               </div>
               <div className="flex space-x-3">
@@ -269,7 +269,7 @@ const ReportView = () => {
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <p><span className="font-medium text-gray-600">Name:</span> {report.patientId?.name}</p>
+                  <p><span className="font-medium text-gray-600">Name:</span> {typeof report.patientId?.name === 'string' ? report.patientId.name : report.patientId?.name?.name || 'N/A'}</p>
                   <p><span className="font-medium text-gray-600">Email:</span> {report.patientId?.email}</p>
                   <p><span className="font-medium text-gray-600">Phone:</span> {report.patientId?.phone || 'N/A'}</p>
                 </div>
@@ -308,7 +308,9 @@ const ReportView = () => {
                     <tbody>
                       {report.selectedTests.map((test, index) => (
                         <tr key={index} className={test.status === 'High' || test.status === 'Low' ? 'bg-red-50' : ''}>
-                          <td className="border border-gray-200 px-4 py-3 font-medium">{test.name}</td>
+                          <td className="border border-gray-200 px-4 py-3 font-medium">
+                            {typeof test.name === 'string' ? test.name : test.name?.name || test.name?.title || JSON.stringify(test.name)}
+                          </td>
                           <td className={`border border-gray-200 px-4 py-3 font-medium ${
                             test.status === 'High' || test.status === 'Low' ? 'text-red-600' : 'text-gray-800'
                           }`}>

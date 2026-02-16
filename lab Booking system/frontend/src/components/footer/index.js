@@ -51,43 +51,43 @@ export default function Footer() {
 
   return (
     <footer className="bg-primary text-white">
-      <div className="container mx-auto px-6 pt-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+      <div className="container mx-auto px-4 sm:px-6 pt-8 sm:pt-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 md:gap-10">
           
           {/* LEFT: Logo / About */}
-          <div>
+          <div className="sm:col-span-2 md:col-span-1">
             <h2
               onClick={() => navigate("/")}
-              className="text-2xl font-bold mb-4 text-white cursor-pointer hover:opacity-80 transition flex items-center gap-2">
+              className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-white cursor-pointer hover:opacity-80 transition flex items-center gap-2">
               <span className="w-2 h-2 bg-white rounded-full"></span>
               BookMyLab
             </h2>
-            <p className="text-white/70 text-sm leading-relaxed max-w-xs">
+            <p className="text-white/70 text-xs sm:text-sm leading-relaxed max-w-xs">
               A smart and efficient laboratory booking system to manage
               schedules, availability, and research resources with ease.
             </p>
-            <div className="flex items-center gap-3 mt-4">
-              <a href="#" aria-label="Facebook" className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
-                <FaFacebook className="text-white" size={18} />
+            <div className="flex items-center gap-2 sm:gap-3 mt-3 sm:mt-4">
+              <a href="#" aria-label="Facebook" className="p-1.5 sm:p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
+                <FaFacebook className="text-white" size={16} />
               </a>
-              <a href="#" aria-label="Twitter" className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
-                <FaTwitter className="text-white" size={18} />
+              <a href="#" aria-label="Twitter" className="p-1.5 sm:p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
+                <FaTwitter className="text-white" size={16} />
               </a>
-              <a href="#" aria-label="Instagram" className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
-                <FaInstagram className="text-white" size={18} />
+              <a href="#" aria-label="Instagram" className="p-1.5 sm:p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
+                <FaInstagram className="text-white" size={16} />
               </a>
-              <a href="#" aria-label="LinkedIn" className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
-                <FaLinkedin className="text-white" size={18} />
+              <a href="#" aria-label="LinkedIn" className="p-1.5 sm:p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
+                <FaLinkedin className="text-white" size={16} />
               </a>
             </div>
           </div>
 
-          {/* MIDDLE: Quick Links - Reduced space-y-3 to space-y-1 */}
+          {/* MIDDLE: Quick Links */}
           <div>
-            <h3 className="text-lg font-bold mb-4 text-white uppercase tracking-widest text-sm">
+            <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 text-white uppercase tracking-widest text-sm">
               Quick Links
             </h3>
-            <ul className="space-y-1">
+            <ul className="space-y-1 sm:space-y-2">
               {quickLinks.map((link) => (
                 <li
                   key={link.path}
@@ -100,33 +100,33 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* RIGHT: Contact - Reduced space-y-5 to space-y-2 */}
+          {/* RIGHT: Contact */}
           <div>
-            <h3 className="text-lg font-bold mb-4 text-white uppercase tracking-widest text-sm">
+            <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 text-white uppercase tracking-widest text-sm">
               Contact Us
             </h3>
-            <div className="space-y-2 text-white/80">
-              <div className="flex items-start gap-3 group cursor-pointer py-1">
-                <MapPin className="w-5 h-5 mt-0.5 flex-shrink-0 text-white/60 group-hover:text-white transition-colors" />
-                <p className="text-sm">India</p>
+            <div className="space-y-1 sm:space-y-2 text-white/80">
+              <div className="flex items-start gap-2 sm:gap-3 group cursor-pointer py-1">
+                <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mt-0.5 flex-shrink-0 text-white/60 group-hover:text-white transition-colors" />
+                <p className="text-xs sm:text-sm">India</p>
               </div>
 
-              <div className="flex items-center gap-3 group cursor-pointer py-1">
-                <Phone className="w-5 h-5 flex-shrink-0 text-white/60 group-hover:text-white transition-colors" />
-                <p className="text-sm">+91 7300028434</p>
+              <div className="flex items-center gap-2 sm:gap-3 group cursor-pointer py-1">
+                <Phone className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 text-white/60 group-hover:text-white transition-colors" />
+                <p className="text-xs sm:text-sm">+91 7300028434</p>
               </div>
 
-              <div className="flex items-center gap-3 group cursor-pointer py-1">
-                <Mail className="w-5 h-5 flex-shrink-0 text-white/60 group-hover:text-white transition-colors" />
-                <p className="text-sm">support@labbooking.com</p>
+              <div className="flex items-center gap-2 sm:gap-3 group cursor-pointer py-1">
+                <Mail className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 text-white/60 group-hover:text-white transition-colors" />
+                <p className="text-xs sm:text-sm">support@labbooking.com</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-12 border-t border-white/10">
-          <div className="flex items-center justify-center py-8">
+        <div className="mt-8 sm:mt-12 border-t border-white/10">
+          <div className="flex items-center justify-center py-4 sm:py-8">
             <p className="text-xs text-white/50 m-0 tracking-widest uppercase">
               © {new Date().getFullYear()} BookMyLab System. All rights reserved.
             </p>

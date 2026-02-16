@@ -4531,7 +4531,9 @@ export default function AdminDashboardIndex() {
                                   </div>
                                 </td>
                                 <td className="px-3 py-3" data-label="Name">
-                                  <div className="text-sm font-medium text-gray-900" title={test.name}>{test.name}</div>
+                                  <div className="text-sm font-medium text-gray-900" title={typeof test.name === 'string' ? test.name : test.name?.name || test.name?.title || 'Test'}>
+                                    {typeof test.name === 'string' ? test.name : test.name?.name || test.name?.title || JSON.stringify(test.name)}
+                                  </div>
                                   {test.description && (
                                     <div className="text-xs text-gray-500 mt-1 line-clamp-2" title={test.description}>{test.description}</div>
                                   )}
@@ -7181,13 +7183,19 @@ export default function AdminDashboardIndex() {
                         <h4 className="font-medium text-gray-900 mb-2">Recommended Tests</h4>
                         <div className="flex flex-wrap gap-2">
                           {details.recommendedTests.map((test, index) => {
-                            // Debug logging to identify the issue
-                            if (typeof test !== 'string') {
-                              console.log('Non-string test found:', test);
+                            // Ensure we always render a string, never an object
+                            let displayName = '';
+                            if (typeof test === 'string') {
+                              displayName = test;
+                            } else if (test && typeof test === 'object') {
+                              displayName = test.name || test.testName || test._id ? `Test ${test._id}` : 'Unknown Test';
+                            } else {
+                              displayName = 'Unknown Test';
                             }
+                            
                             return (
                               <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                                {typeof test === 'string' ? test : test.name || JSON.stringify(test)}
+                                {displayName}
                               </span>
                             );
                           })}

@@ -19,7 +19,6 @@ const getPackageDetails = async (req, res) => {
         });
     }
     
-    // If not found by ObjectId, return 404
     if (!package) {
       return res.status(404).json({
         success: false,
@@ -27,24 +26,20 @@ const getPackageDetails = async (req, res) => {
       });
     }
     
-    // Extract unique sample types from both testsIncluded and package sampleTypes
     const allSampleTypes = new Set();
     
-    // Add sample types from included tests
     package.testsIncluded.forEach(test => {
       if (test.sampleType) {
         allSampleTypes.add(test.sampleType);
       }
     });
     
-    // Add package level sample types
     if (package.sampleTypes && package.sampleTypes.length > 0) {
       package.sampleTypes.forEach(sampleType => {
         allSampleTypes.add(sampleType);
       });
     }
     
-    // Calculate report delivery time (max duration from all tests + package duration)
     let maxDuration = package.duration || '24 hours';
     
     // If tests have durations, find the maximum
@@ -54,9 +49,8 @@ const getPackageDetails = async (req, res) => {
     
     if (testDurations.length > 0) {
       // Simple logic: take the longest duration
-      // In a real implementation, you might want to parse and add durations properly
       maxDuration = testDurations.reduce((longest, current) => {
-        // Simple comparison by length (this is basic, you might want to parse hours/days)
+        // Simple comparison by length
         return current.length > longest.length ? current : longest;
       }, maxDuration);
     }
@@ -66,8 +60,8 @@ const getPackageDetails = async (req, res) => {
       packageName: package.name,
       requiredSamples: Array.from(allSampleTypes),
       reportingTime: maxDuration,
-      includedTests: package.testsIncluded, // Keep full test objects
-      includedTestNames: package.testsIncluded.map(test => test.name), // Add names separately for backward compatibility
+      includedTests: package.testsIncluded, 
+      includedTestNames: package.testsIncluded.map(test => test.name),
       benefits: package.benefits || [],
       suitableFor: package.suitableFor || []
     };

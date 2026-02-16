@@ -161,7 +161,9 @@ export default function AllTests() {
               >
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
-                    <h4 className="text-lg font-bold text-slate-800 flex-1">{test.name}</h4>
+                    <h4 className="text-lg font-bold text-slate-800 flex-1">
+                      {typeof test.name === 'string' ? test.name : test.name?.name || test.name?.title || JSON.stringify(test.name)}
+                    </h4>
                   </div>
                   {test.description && (
                     <p className="text-slate-600 text-sm mb-4">{test.description}</p>
@@ -204,7 +206,7 @@ export default function AllTests() {
                         fullWidth={false}
                         onClick={() => {
                           // For individual tests, go to booking
-                          navigate(`/new-booking?name=${encodeURIComponent(test.name)}&price=${test.price}`);
+                          navigate(`/new-booking?name=${encodeURIComponent(typeof test.name === 'string' ? test.name : test.name?.name || test.name?.title || 'Test')}&price=${test.price}`);
                         }}
                         className="rounded-xl h-10 font-bold uppercase tracking-widest"
                       >

@@ -10,24 +10,28 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated, isAdmin, isLabTechnician, logout } = useAuth();
-  const { UserCircle, LogOut, ChevronDown, Settings } = IconConfig || {};
+  const { UserCircle, LogOut, ChevronDown, Settings, Menu, X } = IconConfig || {};
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (!event.target.closest('.dropdown-container')) {
         setIsDropdownOpen(false);
       }
+      if (!event.target.closest('.mobile-menu-container')) {
+        setIsMobileMenuOpen(false);
+      }
     };
 
-    if (isDropdownOpen) {
+    if (isDropdownOpen || isMobileMenuOpen) {
       document.addEventListener('click', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
-  }, [isDropdownOpen]);
+  }, [isDropdownOpen, isMobileMenuOpen]);
 
   const handleLogout = (reason) => {
     logout();
@@ -140,75 +144,86 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
         
         {/* CENTER NAV */}
         {!hideNavItems && (
-          <nav className="hidden md:flex items-center gap-10">
-            {navLinks.map((link) => (
+          <>
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center gap-10">
+              {navLinks.map((link) => (
+                <button 
+                  key={link.name} 
+                  onClick={() => navigate(link.path)} 
+                  className={location.pathname === link.path ? activeBeamUnderline : beamUnderline}
+                >
+                  {link.name}
+                </button>
+              ))}
               <button 
-                key={link.name} 
-                onClick={() => navigate(link.path)} 
-                className={location.pathname === link.path ? activeBeamUnderline : beamUnderline}
+                onClick={() => navigate("/contact")} 
+                className={location.pathname === "/contact" ? activeBeamUnderline : beamUnderline}
               >
-                {link.name}
+                Contact Us
               </button>
-            ))}
-            <button 
-              onClick={() => navigate("/contact")} 
-              className={location.pathname === "/contact" ? activeBeamUnderline : beamUnderline}
+              <div className="relative dropdown-container">
+                <button
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                  className={`${(location.pathname === "/tests" || location.pathname === "/health-packages/all") ? activeBeamUnderline : beamUnderline} flex items-center gap-1`}
+                >
+                  Booking
+                  {ChevronDown && <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />}
+                </button>
+                {isDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden z-50">
+                    <button
+                      onClick={() => {
+                        navigate("/tests");
+                        setIsDropdownOpen(false);
+                      }}
+                      className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                        location.pathname === "/tests" 
+                          ? "text-primary bg-gray-50" 
+                          : "text-gray-700 hover:bg-gray-50 hover:text-primary"
+                      }`}
+                    >
+                      Tests
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate("/health-packages/all");
+                        setIsDropdownOpen(false);
+                      }}
+                      className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                        location.pathname === "/health-packages/all" 
+                          ? "text-primary bg-gray-50" 
+                          : "text-gray-700 hover:bg-gray-50 hover:text-primary"
+                      }`}
+                    >
+                      Packages
+                    </button>
+                  </div>
+                )}
+              </div>
+            </nav>
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
             >
-              Contact Us
+              {isMobileMenuOpen ? (X && <X className="w-6 h-6" />) : (Menu && <Menu className="w-6 h-6" />)}
             </button>
-            <div className="relative dropdown-container">
-              <button
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className={`${(location.pathname === "/tests" || location.pathname === "/health-packages/all") ? activeBeamUnderline : beamUnderline} flex items-center gap-1`}
-              >
-                Booking
-                {ChevronDown && <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />}
-              </button>
-              {isDropdownOpen && (
-                <div className="absolute top-full left-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden z-50">
-                  <button
-                    onClick={() => {
-                      navigate("/tests");
-                      setIsDropdownOpen(false);
-                    }}
-                    className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-                      location.pathname === "/tests" 
-                        ? "text-primary bg-gray-50" 
-                        : "text-gray-700 hover:bg-gray-50 hover:text-primary"
-                    }`}
-                  >
-                    Tests
-                  </button>
-                  <button
-                    onClick={() => {
-                      navigate("/health-packages/all");
-                      setIsDropdownOpen(false);
-                    }}
-                    className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-                      location.pathname === "/health-packages/all" 
-                        ? "text-primary bg-gray-50" 
-                        : "text-gray-700 hover:bg-gray-50 hover:text-primary"
-                    }`}
-                  >
-                    Packages
-                  </button>
-                </div>
-              )}
-            </div>
-          </nav>
+          </>
         )}
 
         {/* RIGHT SIDE */}
-        <div className="flex-1 flex justify-end items-center gap-8">
+        <div className="flex-1 flex justify-end items-center gap-4 md:gap-8">
           {!isAuthenticated ? (
             <>
-              <button onClick={() => navigate("/login-selection")} className={beamUnderline}>
+              <button onClick={() => navigate("/login-selection")} className={`${beamUnderline} hidden md:block`}>
                 Login
               </button>
               
               <button 
                 onClick={() => navigate("/register")} 
-                className="px-7 py-2.5 text-white rounded-full text-sm font-black transition-all active:scale-95 flex items-center gap-2"
+                className="px-4 md:px-7 py-2.5 text-white rounded-full text-sm font-black transition-all active:scale-95 flex items-center gap-2"
                 style={{ 
                   backgroundColor: Theme.colors.primary,
                   border: `1px solid ${Theme.colors.primary}20`
@@ -220,7 +235,8 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                   e.currentTarget.style.backgroundColor = Theme.colors.primary;
                 }}
               >
-                REGISTER
+                <span className="hidden md:inline">REGISTER</span>
+                <span className="md:hidden">SIGN UP</span>
               </button>
             </>
           ) : (
@@ -231,7 +247,7 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                     const route = isLabTechnician ? "/lab-technician-profile" : "/user-profile";
                     navigate(route);
                   }}
-                  className="flex items-center gap-2 text-white/90 hover:text-white font-bold transition-all"
+                  className="hidden md:flex items-center gap-2 text-white/90 hover:text-white font-bold transition-all"
                   title={user?.name || user?.email || "Profile"}
                 >
                   {UserCircle && <UserCircle className="w-5 h-5" />}
@@ -240,7 +256,7 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
               )}
               <button
                 onClick={handleLogoutClick}
-                className="px-6 py-2 text-white rounded-full text-sm font-black transition-all active:scale-95 flex items-center gap-2"
+                className="px-4 md:px-6 py-2 text-white rounded-full text-sm font-black transition-all active:scale-95 flex items-center gap-2"
                 style={{ 
                   backgroundColor: Theme.colors.primary,
                   border: `1px solid ${Theme.colors.primary}20`
@@ -252,14 +268,105 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                   e.currentTarget.style.backgroundColor = Theme.colors.primary;
                 }}
               >
-                {LogOut && <LogOut className="w-5 h-5" />}
-                Logout
+                {LogOut && <LogOut className="w-4 h-4 md:w-5 md:h-5" />}
+                <span className="hidden md:inline">Logout</span>
               </button>
             </>
           )}
         </div>
 
       </div>
+
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
+        <div className="mobile-menu-container md:hidden bg-primary/95 backdrop-blur-md border-t border-white/10">
+          <div className="container mx-auto px-4 py-4">
+            <nav className="flex flex-col space-y-3">
+              {navLinks.map((link) => (
+                <button 
+                  key={link.name} 
+                  onClick={() => {
+                    navigate(link.path);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`text-left px-4 py-3 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-all ${
+                    location.pathname === link.path ? 'bg-white/10 text-white' : ''
+                  }`}
+                >
+                  {link.name}
+                </button>
+              ))}
+              <button 
+                onClick={() => {
+                  navigate("/contact");
+                  setIsMobileMenuOpen(false);
+                }}
+                className={`text-left px-4 py-3 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-all ${
+                  location.pathname === "/contact" ? 'bg-white/10 text-white' : ''
+                }`}
+              >
+                Contact Us
+              </button>
+              
+              {/* Booking Dropdown for Mobile */}
+              <div className="px-4 py-2">
+                <p className="text-white/60 text-sm font-semibold mb-2">Booking</p>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => {
+                      navigate("/tests");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`block w-full text-left px-3 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-all ${
+                      location.pathname === "/tests" ? 'bg-white/10 text-white' : ''
+                    }`}
+                  >
+                    Tests
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigate("/health-packages/all");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`block w-full text-left px-3 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-all ${
+                      location.pathname === "/health-packages/all" ? 'bg-white/10 text-white' : ''
+                    }`}
+                  >
+                    Packages
+                  </button>
+                </div>
+              </div>
+
+              {/* Mobile Auth Buttons */}
+              {!isAuthenticated && (
+                <button 
+                  onClick={() => {
+                    navigate("/login-selection");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="text-left px-4 py-3 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-all"
+                >
+                  Login
+                </button>
+              )}
+
+              {/* Mobile Profile Button */}
+              {isAuthenticated && !hideProfileIcon && !isAdmin && (
+                <button
+                  onClick={() => {
+                    const route = isLabTechnician ? "/lab-technician-profile" : "/user-profile";
+                    navigate(route);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="text-left px-4 py-3 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-all"
+                >
+                  Profile
+                </button>
+              )}
+            </nav>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

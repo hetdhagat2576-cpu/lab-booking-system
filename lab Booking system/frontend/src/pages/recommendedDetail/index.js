@@ -334,7 +334,30 @@ export default function RecommendedDetail() {
                         <div key={index} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
                           <FlaskConical className="w-4 h-4 text-primary" />
                           <span className="text-sm text-slate-700">
-                            {typeof test === 'string' ? test : test?.name || test?.testName || 'Test'}
+                            {(() => {
+                              let testName = 'Test';
+                              if (typeof test === 'string') {
+                                testName = test;
+                              } else if (test && typeof test === 'object') {
+                                // Check if name exists and is a string
+                                if (test?.name && typeof test.name === 'string') {
+                                  testName = test.name;
+                                } else if (test?.testName && typeof test.testName === 'string') {
+                                  testName = test.testName;
+                                } else {
+                                  // Handle nested objects
+                                  if (test?.name && typeof test.name === 'object' && test.name !== null) {
+                                    testName = test.name.name || test.name.title || JSON.stringify(test.name);
+                                  } else if (test?.testName && typeof test.testName === 'object' && test.testName !== null) {
+                                    testName = test.testName.name || test.testName.title || JSON.stringify(test.testName);
+                                  } else {
+                                    testName = test._id ? `Test ${test._id}` : 'Unknown Test';
+                                  }
+                                }
+                              }
+                              // Ensure we always return a string
+                              return typeof testName === 'string' ? testName : String(testName);
+                            })()}
                           </span>
                         </div>
                       ))

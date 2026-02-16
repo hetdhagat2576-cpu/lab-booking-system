@@ -17,7 +17,7 @@
   overflow: hidden;
 }
 
-/* Custom responsive table styles */
+/* Enhanced responsive table styles */
 @media (max-width: 640px) {
   .table-responsive-stack {
     display: block;
@@ -56,6 +56,60 @@
     width: 35%;
     font-weight: 600;
     color: #374151;
+  }
+}
+
+/* Mobile-first responsive improvements */
+@media (max-width: 480px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  h1 {
+    font-size: 1.5rem;
+    line-height: 1.2;
+  }
+  
+  h2 {
+    font-size: 1.25rem;
+    line-height: 1.2;
+  }
+  
+  h3 {
+    font-size: 1.125rem;
+    line-height: 1.2;
+  }
+  
+  .text-sm {
+    font-size: 0.875rem;
+  }
+  
+  .text-xs {
+    font-size: 0.75rem;
+  }
+}
+
+/* Tablet responsive improvements */
+@media (min-width: 481px) and (max-width: 768px) {
+  .container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+  
+  h1 {
+    font-size: 2rem;
+    line-height: 1.2;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+    line-height: 1.2;
+  }
+  
+  h3 {
+    font-size: 1.25rem;
+    line-height: 1.2;
   }
 }
 
@@ -129,4 +183,56 @@ html, body {
 
 .swal2-noicon .swal2-image {
   display: none !important;
+}
+
+/* Responsive form improvements */
+@media (max-width: 640px) {
+  .form-responsive input,
+  .form-responsive select,
+  .form-responsive textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  .form-responsive .button {
+    width: 100%;
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* Responsive image improvements */
+@media (max-width: 640px) {
+  .img-responsive {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+  }
+}
+
+/* Responsive card improvements */
+@media (max-width: 640px) {
+  .card-responsive {
+    margin: 0.5rem;
+    padding: 1rem;
+  }
+}
+
+/* Responsive navigation improvements */
+@media (max-width: 768px) {
+  .nav-responsive {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .nav-responsive .nav-item {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Touch-friendly tap targets */
+@media (max-width: 768px) {
+  .tap-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }

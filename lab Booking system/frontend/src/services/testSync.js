@@ -18,7 +18,14 @@ export const getSynchronizedTests = (healthConcern) => {
 
 // Get test title (handle both API data structure and static data structure)
 export const getTestTitle = (test) => {
-  return test.name || test.title || 'Unknown Test';
+  if (typeof test === 'string') return test;
+  if (test && typeof test === 'object') {
+    if (typeof test.name === 'string') return test.name;
+    if (typeof test.title === 'string') return test.title;
+    if (test.name && typeof test.name === 'object') return test.name.name || test.name.title || JSON.stringify(test.name);
+    if (test.title && typeof test.title === 'object') return test.title.name || test.title.title || JSON.stringify(test.title);
+  }
+  return 'Unknown Test';
 };
 
 // Get test ID (handle both API data structure and static data structure)
@@ -50,8 +57,10 @@ export const formatTestForDisplay = (test) => {
     displayPrice: getTestPrice(test),
     displayOriginalPrice: getTestOriginalPrice(test),
     displayDiscount: getTestDiscount(test),
-    description: test.description || '',
-    sampleType: test.sampleType || 'Blood',
+    description: typeof test.description === 'string' ? test.description : 
+                (test.description?.name || test.description?.title || JSON.stringify(test.description) || ''),
+    sampleType: typeof test.sampleType === 'string' ? test.sampleType : 
+                (test.sampleType?.name || test.sampleType?.title || 'Blood'),
     reportTime: test.reportTime || '24 Hrs',
     fastingRequired: test.fastingRequired || false
   };

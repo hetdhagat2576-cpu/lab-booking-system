@@ -18,7 +18,14 @@ export default function UserProfileIndex() {
   const navigate = useNavigate();
   const { user, updateUser, logout } = useAuth();
   const { User, Mail, MapPin, Activity, Award, Calendar, Phone, MessageSquare, Star, CheckCircle, Clock, AlertCircle, LogOut, FileText, Settings, History, ChevronLeft } = IconConfig;
-  const [form, setForm] = useState({ name: "", email: "", phone: "", address: "", age: "", gender: "" });
+  const [form, setForm] = useState({ 
+    name: "", 
+    email: "", 
+    phone: "", 
+    address: "", 
+    age: "",
+    gender: ""
+  });
   const [stats, setStats] = useState({ total: 0, upcoming: 0, completed: 0 });
   const [contacts, setContacts] = useState([]);
   const [feedbacks, setFeedbacks] = useState([]);
@@ -65,14 +72,18 @@ export default function UserProfileIndex() {
       navigate("/user-login");
       return;
     }
-    setForm({
-      name: user.name || "",
-      email: user.email || "",
-      phone: user.phone || "",
-      address: user.address || "",
-      age: user.age || "",
-      gender: user.gender || ""
-    });    
+    
+    const initialForm = {
+      name: user?.name || "",
+      email: user?.email || "",
+      phone: user?.phone || "",
+      address: user?.address || "",
+      age: user?.age || "",
+      gender: user?.gender || ""
+    };
+    
+    console.log('Setting initial form:', initialForm);
+    setForm(initialForm);    
 
     (async () => {
       try {
@@ -84,10 +95,12 @@ export default function UserProfileIndex() {
           const merged = { ...user, ...data.data, token: user?.token };
           updateUser(merged);
           setForm({
-            name: merged.name || "",
-            email: merged.email || "",
-            phone: merged.phone || "",
-            address: merged.address || "",
+            name: merged?.name || "",
+            email: merged?.email || "",
+            phone: merged?.phone || "",
+            address: merged?.address || "",
+            age: merged?.age || "",
+            gender: merged?.gender || ""
           });
         }
       } catch {}
@@ -154,7 +167,11 @@ export default function UserProfileIndex() {
     })();
   }, [user]);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    console.log('Input changed:', { name, value }); // Debug log
+    setForm(prev => ({ ...prev, [name]: value }));
+  };
 
   const handleSave = async () => {
     if (!user || !user.token) {
@@ -186,10 +203,12 @@ export default function UserProfileIndex() {
       if (res.ok && data.success && data.data) {
         updateUser(data.data);
         setForm({
-          name: data.data.name || "",
-          email: data.data.email || "",
-          phone: data.data.phone || "",
-          address: data.data.address || "",
+          name: data.data?.name || "",
+          email: data.data?.email || "",
+          phone: data.data?.phone || "",
+          address: data.data?.address || "",
+          age: data.data?.age || "",
+          gender: data.data?.gender || ""
         });
         
         Swal.fire({
@@ -325,9 +344,9 @@ export default function UserProfileIndex() {
           <Card elevation={0} className="rounded-3xl overflow-hidden border border-slate-200 mb-8">
             <div className="h-32 bg-gradient-to-r from-primary to-secondary" style={{ background: `linear-gradient(to right, ${Theme.colors.primary}, ${Theme.colors.secondary})` }} />
             <CardContent className="relative pt-0 px-8 pb-8">
-              <div className="flex flex-col md:flex-row items-center md:items-end gap-6 -mt-16">
+              <div className="flex flex-col md:flex-row items-center md:items-end gap-4 lg:gap-6 -mt-16">
                 <Avatar 
-                  sx={{ width: 120, height: 120, border: "4px solid white", bgcolor: Theme.colors.primary, fontSize: "2.5rem", fontWeight: 'bold' }}
+                  sx={{ width: 100, height: 100, border: "4px solid white", bgcolor: Theme.colors.primary, fontSize: "2rem", fontWeight: 'bold' }}
                   className="shadow-xl"
                 >
                   {form.name?.charAt(0)?.toUpperCase() || "U"}
@@ -365,13 +384,14 @@ export default function UserProfileIndex() {
                   </div>
                 </div>
 
-                <div className="flex gap-2 mb-2">
+                <div className="flex gap-2 mb-2 flex-wrap justify-center md:justify-start">
                   <Button 
                     variant="outlined" 
                     onClick={() => navigate("/dashboard")} 
                     startIcon={<Activity size={18} />}
                     sx={{ borderRadius: '10px', textTransform: 'none', px: 2, py: 1, borderColor: Theme.colors.primary, color: Theme.colors.primary, "&:hover": { borderColor: Theme.colors.primaryHover, color: Theme.colors.primaryHover } }}
                     size="small"
+                    className="text-sm"
                   >
                    Dashboard
                   </Button>
@@ -381,9 +401,9 @@ export default function UserProfileIndex() {
           </Card>
 
           {/* Main Content with Sidebar */}
-          <div className="flex gap-6">
+          <div className="flex flex-col lg:flex-row gap-6">
             {/* Sidebar Navigation */}
-            <Paper elevation={0} className="w-64 rounded-2xl border border-slate-200 p-4 h-fit">
+            <Paper elevation={0} className="w-full lg:w-64 rounded-2xl border border-slate-200 p-4 h-fit">
               <nav className="space-y-2">
                 {sidebarItems.map((item) => {
                   const Icon = item.icon;
@@ -398,7 +418,7 @@ export default function UserProfileIndex() {
                       }`}
                     >
                       <Icon size={18} />
-                      <span className="font-medium">{item.label}</span>
+                      <span className="font-medium text-sm lg:text-base">{item.label}</span>
                       {item.badge !== null && item.badge > 0 && (
                         <Badge 
                           badgeContent={item.badge} 
@@ -420,12 +440,60 @@ export default function UserProfileIndex() {
                   <Grid item xs={12} md={8}>
                     <Typography variant="h6" fontWeight="700" className="mb-6">Personal Information</Typography>
                     <Box className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <StyledTextField label="Full Name" name="name" value={form.name} icon={<User size={18}/>} onChange={handleChange} />
-                      <StyledTextField label="Email" name="email" value={form.email} icon={<Mail size={18}/>} onChange={handleChange} />
-                      <StyledTextField label="Age" name="age" value={form.age} icon={<Calendar size={18}/>} onChange={handleChange} />
-                      <StyledTextField label="Gender" name="gender" value={form.gender} icon={<User size={18}/>} onChange={handleChange} />
-                      <StyledTextField label="Phone Number" name="phone" value={form.phone} icon={<Phone size={18}/>} onChange={handleChange} />
-                      <StyledTextField label="Home Address" name="address" value={form.address} icon={<MapPin size={18}/>} onChange={handleChange} />
+                      <TextField
+                        fullWidth
+                        label="Full Name"
+                        name="name"
+                        value={form.name || ''}
+                        onChange={handleChange}
+                        variant="outlined"
+                        sx={{ mb: 2 }}
+                      />
+                      <TextField
+                        fullWidth
+                        label="Email"
+                        name="email"
+                        value={form.email || ''}
+                        onChange={handleChange}
+                        variant="outlined"
+                        sx={{ mb: 2 }}
+                      />
+                      <TextField
+                        fullWidth
+                        label="Age"
+                        name="age"
+                        value={form.age || ''}
+                        onChange={handleChange}
+                        variant="outlined"
+                        sx={{ mb: 2 }}
+                      />
+                      <TextField
+                        fullWidth
+                        label="Gender"
+                        name="gender"
+                        value={form.gender || ''}
+                        onChange={handleChange}
+                        variant="outlined"
+                        sx={{ mb: 2 }}
+                      />
+                      <TextField
+                        fullWidth
+                        label="Phone Number"
+                        name="phone"
+                        value={form.phone || ''}
+                        onChange={handleChange}
+                        variant="outlined"
+                        sx={{ mb: 2 }}
+                      />
+                      <TextField
+                        fullWidth
+                        label="Home Address"
+                        name="address"
+                        value={form.address || ''}
+                        onChange={handleChange}
+                        variant="outlined"
+                        sx={{ mb: 2 }}
+                      />
                     </Box>
                     <Divider className="my-8" />
                     <div className="flex justify-between items-center">
@@ -848,31 +916,42 @@ const StatCard = ({ icon, label, value, color }) => (
 );
 
 // Helper Component for Inputs
-const StyledTextField = ({ label, icon, ...props }) => (
-  <TextField
-    {...props}
-    fullWidth
-    label={label}
-    variant="outlined"
-    InputProps={{
-      startAdornment: <InputAdornment position="start" className="text-slate-400">{icon}</InputAdornment>,
-      sx: { borderRadius: '12px', bgcolor: Theme.colors.slate50 }
-    }}
-    InputLabelProps={{
-      sx: { 
-        '&.Mui-focused': { color: Theme.colors.primary },
-        '&.Mui-error': { color: 'error.main' }
-      }
-    }}
-    sx={{
-      '& .MuiOutlinedInput-root': {
-        '&:hover fieldset': {
-          borderColor: Theme.colors.primary,
-        },
-        '&.Mui-focused fieldset': {
-          borderColor: Theme.colors.primary,
-        },
-      }
-    }}
-  />
-);
+const StyledTextField = ({ label, icon, value, onChange, ...props }) => {
+  const handleChange = (e) => {
+    console.log('StyledTextField handleChange:', e.target.name, e.target.value);
+    if (onChange) {
+      onChange(e);
+    }
+  };
+
+  return (
+    <TextField
+      {...props}
+      value={value ?? ''}
+      onChange={handleChange}
+      fullWidth
+      label={label}
+      variant="outlined"
+      InputProps={{
+        startAdornment: <InputAdornment position="start" className="text-slate-400">{icon}</InputAdornment>,
+        sx: { borderRadius: '12px', bgcolor: Theme.colors.slate50 }
+      }}
+      InputLabelProps={{
+        sx: { 
+          '&.Mui-focused': { color: Theme.colors.primary },
+          '&.Mui-error': { color: 'error.main' }
+        }
+      }}
+      sx={{
+        '& .MuiOutlinedInput-root': {
+          '&:hover fieldset': {
+            borderColor: Theme.colors.primary,
+          },
+          '&.Mui-focused fieldset': {
+            borderColor: Theme.colors.primary,
+          },
+        }
+      }}
+    />
+  );
+};

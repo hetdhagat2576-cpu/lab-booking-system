@@ -240,58 +240,14 @@ export default function PackageDetails() {
                 <h2 className="text-xl font-bold text-slate-900 mb-6">Tests Included</h2>
                 
                 <div className="space-y-2">
-                  {/* Temporarily simplified to isolate the error */}
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                    <TestTube2 className="w-4 h-4 text-primary" />
-                    <span className="text-sm text-slate-700">Test 1</span>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                    <TestTube2 className="w-4 h-4 text-primary" />
-                    <span className="text-sm text-slate-700">Test 2</span>
-                  </div>
-                  {/*
-                  {(packageDetails?.includedTests || packageData?.testsIncluded || []).map((test, index) => {
-                    console.log('Test object:', test, typeof test);
-                    // Ensure we always get a string, never an object
-                    let testName = 'Test';
-                    if (typeof test === 'string') {
-                      testName = test;
-                    } else if (test && typeof test === 'object') {
-                      if (typeof test?.name === 'string') {
-                        testName = test.name;
-                      } else if (typeof test?.testName === 'string') {
-                        testName = test.testName;
-                      } else {
-                        // Check if name exists but is not a string (could be object)
-                        if (test?.name) {
-                          console.log('test.name is not string:', test.name, typeof test.name);
-                          testName = JSON.stringify(test.name);
-                        } else if (test?.testName) {
-                          console.log('test.testName is not string:', test.testName, typeof test.testName);
-                          testName = JSON.stringify(test.testName);
-                        } else {
-                          testName = JSON.stringify(test);
-                        }
-                      }
-                    }
-                    console.log('Final test name:', testName, typeof testName);
-                    
-                    // Double-check we're not rendering an object
-                    if (typeof testName !== 'string') {
-                      console.error('testName is not a string!', testName, typeof testName);
-                      testName = JSON.stringify(testName);
-                    }
-                    
-                    return (
-                      <div key={test?._id || `test-${index}`} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                        <TestTube2 className="w-4 h-4 text-primary" />
-                        <span className="text-sm text-slate-700">
-                          {testName}
-                        </span>
-                      </div>
-                    );
-                  })}
-                  */}
+                  {(packageDetails?.includedTests || packageData?.testsIncluded || []).map((test, index) => (
+                    <div key={test?._id || `test-${index}`} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                      <TestTube2 className="w-4 h-4 text-primary" />
+                      <span className="text-sm text-slate-700">
+                        {test?.name || 'Test'}
+                      </span>
+                    </div>
+                  ))}
                 </div>
                 
                 {(packageDetails?.includedTests?.length || packageData?.testsIncluded?.length || 0) === 0 && (
@@ -323,7 +279,7 @@ export default function PackageDetails() {
                     <div className="text-slate-400 font-medium mb-1">Sample Type</div>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-slate-900 text-lg">
-                        Blood
+                        {packageDetails?.includedTests?.[0]?.sampleType || packageData?.testsIncluded?.[0]?.sampleType || 'Blood'}
                       </span>
                       <Droplets className="w-4 h-4 text-red-500" />
                     </div>
