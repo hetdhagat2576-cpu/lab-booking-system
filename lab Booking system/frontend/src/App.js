@@ -9,6 +9,8 @@ import AdminLogin from "./pages/adminLogin";
 import LabTechnicianLogin from "./pages/labTechnicianLogin";
 import UserLogin from "./pages/userLogin";
 import Register from "./pages/register";
+import ForgotPassword from "./pages/forgotPassword";
+import ResetPassword from "./pages/resetPassword";
 import Dashboard from "./pages/dashboard";
 import AdminDashboard from "./pages/adminDashboard";
 import LabTechnicianDashboard from "./pages/technicianDashboard";
@@ -98,6 +100,8 @@ export default function App() {
         {/* Redirect old /login route to login selection for backward compatibility */}
         <Route path="/login" element={<Navigate to="/login-selection" replace />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/otp-verification" element={<OtpVerification />} />
         <Route path="/dashboard" element={
           <ProtectedRoute requiredRole="user">

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const AuthContext = createContext();
 
@@ -35,22 +35,22 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const login = (userData) => {
+  const login = useCallback((userData) => {
     console.log('AuthContext - Login called with userData:', userData);
     console.log('Token present in userData:', !!userData?.token);
     localStorage.setItem('lab_user', JSON.stringify(userData));
     setUser(userData);
-  };
+  }, []);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem('lab_user');
     setUser(null);
-  };
+  }, []);
 
-  const updateUser = (userData) => {
+  const updateUser = useCallback((userData) => {
     localStorage.setItem('lab_user', JSON.stringify(userData));
     setUser(userData);
-  };
+  }, []);
 
   const value = {
     user,

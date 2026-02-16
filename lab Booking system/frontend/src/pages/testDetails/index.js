@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import Header from "../../components/header";
 import Footer from "../../components/footer";
 import Theme from "../../config/theam/index.js";
 import IconConfig from "../../components/icon/index.js";
 import CButton from "../../components/cButton";
-import { safeFetch } from "../../config/api";
+import { safeFetch, createApiUrl } from "../../config/api";
+import { safeTestName, safeSampleType, safeMap } from "../../services/testSync";
 import {
   RECOMMENDED_TESTS,
   getTestCount,
@@ -170,10 +171,14 @@ export default function TestDetails() {
     return 'Blood'; // Default fallback
   };
   
-  const sampleType = getSampleType(); 
+  const sampleType = safeSampleType(test); 
   const sampleIcon = <Droplets className="w-4 h-4 text-red-500" />;
   const reportTime = test.reportTime || "24-48 Hrs";
-  const includedTests = test.testsList || [test.title];
+  
+  // Safely handle includedTests to prevent object rendering errors
+  const includedTests = Array.isArray(test.testsList) 
+    ? test.testsList 
+    : (test.testsList ? [test.testsList] : [safeTestName(test)]);
 
   return (
     <div className={Theme.layout.standardPage}>

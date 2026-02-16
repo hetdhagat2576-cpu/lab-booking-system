@@ -33,6 +33,15 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  age: {
+    type: String,
+    trim: true,
+  },
+  gender: {
+    type: String,
+    enum: ['male', 'female', 'other'],
+    trim: true,
+  },
   registrationDate: {
     type: Date,
     default: Date.now,

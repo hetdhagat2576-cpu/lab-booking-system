@@ -6,6 +6,7 @@ import Theme from "../../config/theam/index.js";
 import IconConfig from "../../components/icon/index.js";
 import CButton from "../../components/cButton";
 import { safeFetch } from "../../config/api";
+import { safeTestName, safeMap } from "../../services/testSync";
 import {
   RECOMMENDED_TESTS,
 } from "../../config/staticData";
@@ -162,7 +163,7 @@ export default function AllTests() {
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <h4 className="text-lg font-bold text-slate-800 flex-1">
-                      {typeof test.name === 'string' ? test.name : test.name?.name || test.name?.title || JSON.stringify(test.name)}
+                      {safeTestName(test)}
                     </h4>
                   </div>
                   {test.description && (
@@ -206,7 +207,7 @@ export default function AllTests() {
                         fullWidth={false}
                         onClick={() => {
                           // For individual tests, go to booking
-                          navigate(`/new-booking?name=${encodeURIComponent(typeof test.name === 'string' ? test.name : test.name?.name || test.name?.title || 'Test')}&price=${test.price}`);
+                          navigate(`/new-booking?name=${encodeURIComponent(safeTestName(test))}&price=${test.price}`);
                         }}
                         className="rounded-xl h-10 font-bold uppercase tracking-widest"
                       >

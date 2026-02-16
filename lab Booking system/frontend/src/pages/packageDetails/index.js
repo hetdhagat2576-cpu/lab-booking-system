@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import Swal from "sweetalert2";
+import { useNavigate, useParams } from "react-router-dom";
 import Header from "../../components/header";
 import Footer from "../../components/footer";
 import Theme from "../../config/theam/index.js";
 import IconConfig from "../../components/icon/index.js";
 import CButton from "../../components/cButton";
-import { safeFetch } from "../../config/api";
+import { safeFetch, createApiUrl } from "../../config/api";
+import { safeTestName, safeSampleType, safeMap, safeLength } from "../../services/testSync";
+import Swal from "sweetalert2";
 
 export default function PackageDetails() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const params = new URLSearchParams(location.search);
-  const packageId = params.get("id");
+  const { id: packageId } = useParams();
   
   const [packageData, setPackageData] = useState(null);
   const [packageDetails, setPackageDetails] = useState(null);
@@ -240,17 +239,17 @@ export default function PackageDetails() {
                 <h2 className="text-xl font-bold text-slate-900 mb-6">Tests Included</h2>
                 
                 <div className="space-y-2">
-                  {(packageDetails?.includedTests || packageData?.testsIncluded || []).map((test, index) => (
+                  {safeMap(packageDetails?.includedTests || packageData?.testsIncluded || [], (test, index) => (
                     <div key={test?._id || `test-${index}`} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
                       <TestTube2 className="w-4 h-4 text-primary" />
                       <span className="text-sm text-slate-700">
-                        {test?.name || 'Test'}
+                        {safeTestName(test)}
                       </span>
                     </div>
                   ))}
                 </div>
                 
-                {(packageDetails?.includedTests?.length || packageData?.testsIncluded?.length || 0) === 0 && (
+                {safeLength(packageDetails?.includedTests || packageData?.testsIncluded || []) === 0 && (
                   <p className="text-slate-500 text-sm italic">No tests included in this package</p>
                 )}
               </div>
@@ -279,7 +278,7 @@ export default function PackageDetails() {
                     <div className="text-slate-400 font-medium mb-1">Sample Type</div>
                     <div className="flex items-center gap-2">
                       <span className="font-bold text-slate-900 text-lg">
-                        {packageDetails?.includedTests?.[0]?.sampleType || packageData?.testsIncluded?.[0]?.sampleType || 'Blood'}
+                        {safeSampleType((packageDetails?.includedTests?.[0] || packageData?.testsIncluded?.[0]))}
                       </span>
                       <Droplets className="w-4 h-4 text-red-500" />
                     </div>

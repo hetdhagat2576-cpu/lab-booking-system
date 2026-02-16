@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser, getProfile, updateProfile, registerUserGet, verifyOtp, resendOtp } = require('../controllers/authController');
+const { registerUser, loginUser, getProfile, updateProfile, registerUserGet, verifyOtp, resendOtp, forgotPassword, resetPassword } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 const { verifyRecaptcha } = require('../middleware/recaptchaMiddleware');
 
@@ -12,6 +12,10 @@ router.post('/resend-otp', resendOtp);
 
 // Login route - verifies email/password from "users" collection
 router.post('/login', verifyRecaptcha, loginUser);
+
+// Password reset routes
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 
 // Profile routes
 router.get('/profile', protect, getProfile);

@@ -1,8 +1,10 @@
 const User = require('../models/user');
 const OtpCode = require('../models/otpCode');
+const PasswordResetToken = require('../models/passwordResetToken');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const mongoose = require('mongoose');
+const crypto = require('crypto');
 const { setSessionUser } = require('../utils/sessionUtils');
 
 const generateToken = (id) => {
@@ -13,6 +15,75 @@ const generateToken = (id) => {
   return jwt.sign({ id }, jwtSecret, {
     expiresIn: '30d',
   });
+};
+
+const sendPasswordResetEmail = async (email, resetToken, name = 'User') => {
+  const host = process.env.EMAIL_HOST;
+  const port = parseInt(process.env.EMAIL_PORT || '0', 10);
+  const user = process.env.EMAIL_USER;
+  const pass = process.env.EMAIL_PASSWORD;
+  const from = process.env.EMAIL_FROM || 'no-reply@labbooking.local';
+  
+  if (!host || !port || !user || !pass) {
+    // Development fallback: log reset link to console
+    const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
+    console.log('=================================');
+    console.log('DEV MODE - PASSWORD RESET LINK:', resetLink);
+    console.log('Email:', email);
+    console.log('Name:', name);
+    console.log('=================================');
+    return { sent: false, message: 'Email transport not configured - Reset link logged to console' };
+  }
+  
+  const transporter = nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: { user, pass },
+  });
+  try {
+    await transporter.verify();
+  } catch (err) {
+    console.error('SMTP transporter verify failed:', err);
+    return { sent: false, message: `SMTP verify failed: ${err.message}` };
+  }
+
+  const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
+  
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; border-radius: 12px;">
+      <div style="background: white; padding: 30px; border-radius: 8px; text-align: center;">
+        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 7H19C20.1046 7 21 7.89543 21 9V19C21 20.1046 20.1046 21 19 21H9C7.89543 21 7 20.1046 7 19V15M3 13L9 7M3 13H7.5C8.32843 13 9 12.3284 9 11.5V7M3 13L7.5 8.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h1 style="color: #333; margin-bottom: 10px; font-size: 28px;">Password Reset</h1>
+        <p style="color: #666; margin-bottom: 30px; font-size: 16px;">Hi ${name},</p>
+        <p style="color: #666; margin-bottom: 20px; font-size: 16px;">We received a request to reset your password. Click the button below to reset it:</p>
+        <a href="${resetLink}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 18px; font-weight: bold; padding: 15px 30px; border-radius: 8px; text-decoration: none; margin: 20px 0; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">Reset Password</a>
+        <p style="color: #999; font-size: 14px; margin-top: 30px;">This link expires in 1 hour.</p>
+        <p style="color: #999; font-size: 14px;">If you didn't request this reset, please ignore this email.</p>
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+          <p style="color: #999; font-size: 12px;">If the button doesn't work, copy and paste this link: ${resetLink}</p>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  try {
+    await transporter.sendMail({
+      from,
+      to: email,
+      subject: 'Reset Your Lab Booking Password',
+      text: `Reset your password by clicking this link: ${resetLink}. This link expires in 1 hour.`,
+      html,
+    });
+    return { sent: true };
+  } catch (err) {
+    console.error('Error sending password reset email:', err);
+    return { sent: false, message: `SendMail failed: ${err.message}` };
+  }
 };
 
 const sendOtpEmail = async (email, code, name = 'User') => {
@@ -256,6 +327,10 @@ const loginUser = async (req, res) => {
       email: user.email,
       role: user.role || 'user',
       emailVerified: user.emailVerified,
+      phone: user.phone,
+      address: user.address,
+      age: user.age,
+      gender: user.gender,
       createdAt: user.createdAt,
       lastLogin: user.lastLogin,
       token: generateToken(user._id),
@@ -289,7 +364,7 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const allowed = ['name', 'phone', 'address'];
+    const allowed = ['name', 'phone', 'address', 'age', 'gender'];
     const updates = {};
     allowed.forEach((k) => {
       if (typeof req.body[k] !== 'undefined') updates[k] = req.body[k];
@@ -326,6 +401,8 @@ const updateProfile = async (req, res) => {
         email: user.email,
         phone: user.phone,
         address: user.address,
+        age: user.age,
+        gender: user.gender,
         role: user.role,
         token
       }
@@ -361,7 +438,168 @@ module.exports = {
   resendOtp,
   getAllUsersForAdmin,
   deleteUserByAdmin,
+  forgotPassword,
+  resetPassword,
 };
+
+async function forgotPassword(req, res) {
+  try {
+    console.log('=== DEBUG: Forgot Password Request ===');
+    console.log('Request body:', req.body);
+    console.log('========================================');
+    
+    const { email } = req.body || {};
+    
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email is required' 
+      });
+    }
+    
+    // Find user by email
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      // Don't reveal that user doesn't exist for security
+      return res.status(200).json({ 
+        success: true, 
+        message: 'If an account with this email exists, a password reset link has been sent.' 
+      });
+    }
+    
+    // Generate secure reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+    
+    // Delete any existing unused reset tokens for this user
+    await PasswordResetToken.deleteMany({ 
+      userId: user._id, 
+      used: false 
+    });
+    
+    // Create new reset token
+    await PasswordResetToken.create({
+      userId: user._id,
+      email: email.toLowerCase(),
+      token: resetToken,
+      expiresAt,
+    });
+    
+    // Send password reset email
+    let emailSent = false;
+    let emailMessage = '';
+    
+    try {
+      const result = await sendPasswordResetEmail(user.email, resetToken, user.name);
+      emailSent = !!result.sent;
+      if (!result.sent) {
+        emailMessage = result.message;
+      }
+    } catch (error) {
+      console.error('Email sending error:', error);
+      emailMessage = 'Failed to send password reset email';
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: 'If an account with this email exists, a password reset link has been sent.',
+      data: {
+        email: user.email,
+        emailSent,
+        emailMessage,
+        expiresIn: 3600, // 1 hour in seconds
+      },
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error processing password reset request',
+      error: error.message,
+    });
+  }
+}
+
+async function resetPassword(req, res) {
+  try {
+    console.log('=== DEBUG: Reset Password Request ===');
+    console.log('Request body:', req.body);
+    console.log('========================================');
+    
+    const { token, newPassword } = req.body || {};
+    
+    if (!token || !newPassword) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Reset token and new password are required' 
+      });
+    }
+    
+    if (newPassword.length < 6) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Password must be at least 6 characters long' 
+      });
+    }
+    
+    // Find valid reset token
+    const resetToken = await PasswordResetToken.findOne({ 
+      token: token, 
+      used: false 
+    });
+    
+    if (!resetToken) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid or expired reset token' 
+      });
+    }
+    
+    // Check if token has expired
+    if (resetToken.expiresAt && resetToken.expiresAt.getTime() < Date.now()) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Reset token has expired' 
+      });
+    }
+    
+    // Find user
+    const user = await User.findById(resetToken.userId);
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'User not found' 
+      });
+    }
+    
+    // Update user password
+    user.password = newPassword;
+    await user.save();
+    
+    // Mark token as used
+    resetToken.used = true;
+    await resetToken.save();
+    
+    // Delete any other unused tokens for this user
+    await PasswordResetToken.deleteMany({ 
+      userId: user._id, 
+      used: false,
+      _id: { $ne: resetToken._id }
+    });
+    
+    res.status(200).json({
+      success: true,
+      message: 'Password has been reset successfully. You can now login with your new password.',
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error resetting password',
+      error: error.message,
+    });
+  }
+}
 
 async function verifyOtp(req, res) {
   try {
@@ -404,7 +642,11 @@ async function verifyOtp(req, res) {
           name: user.name,
           email: user.email,
           role: user.role,
-          emailVerified: user.emailVerified
+          emailVerified: user.emailVerified,
+          phone: user.phone,
+          address: user.address,
+          age: user.age,
+          gender: user.gender
         }
       }
     });

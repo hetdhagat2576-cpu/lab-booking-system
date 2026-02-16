@@ -4630,7 +4630,6 @@ export default function AdminDashboardIndex() {
                           <tr>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Icon</th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px]">Name</th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">Included Tests</th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Price</th>
                             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
                           </tr>
@@ -4638,13 +4637,13 @@ export default function AdminDashboardIndex() {
                         <tbody className="bg-white divide-y divide-gray-200">
                           {packageLoading ? (
                             <tr>
-                              <td colSpan="5" className="px-4 py-8 text-center text-gray-500">
+                              <td colSpan="4" className="px-4 py-8 text-center text-gray-500">
                                 Loading packages...
                               </td>
                             </tr>
                           ) : packages.length === 0 ? (
                             <tr>
-                              <td colSpan="5" className="px-4 py-8 text-center text-gray-500">
+                              <td colSpan="4" className="px-4 py-8 text-center text-gray-500">
                                 No packages found
                               </td>
                             </tr>
@@ -4660,30 +4659,6 @@ export default function AdminDashboardIndex() {
                                   <div className="text-sm font-medium text-gray-900" title={pkg.name || pkg.title}>{pkg.name || pkg.title}</div>
                                   {pkg.description && (
                                     <div className="text-xs text-gray-500 mt-1 line-clamp-2" title={pkg.description}>{pkg.description}</div>
-                                  )}
-                                </td>
-                                <td className="px-3 py-3" data-label="Included Tests">
-                                  {pkg.includedTests && pkg.includedTests.length > 0 ? (
-                                    <div className="text-sm">
-                                      <div className="text-xs text-gray-500 mb-1">{pkg.includedTests.length} test(s)</div>
-                                      <div className="max-h-16 overflow-y-auto">
-                                        {pkg.includedTests.slice(0, 3).map((testId, index) => {
-                                          const test = tests.find(t => t._id === testId);
-                                          return test ? (
-                                            <div key={testId} className="text-xs text-gray-700 truncate">
-                                              {index + 1}. {test.name}
-                                            </div>
-                                          ) : null;
-                                        })}
-                                        {pkg.includedTests.length > 3 && (
-                                          <div className="text-xs text-gray-500 italic">
-                                            +{pkg.includedTests.length - 3} more...
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <span className="text-xs text-gray-400">No tests included</span>
                                   )}
                                 </td>
                                 <td className="px-3 py-3 text-sm text-gray-900" data-label="Price">
@@ -6291,10 +6266,8 @@ export default function AdminDashboardIndex() {
 
             </div>
           </div>
-        </main>
-      </div>
 
-      {/* Modals */}
+          {/* Modals */}
       <>
       {/* Test Form Modal */}
       {showTestForm && (
@@ -6352,67 +6325,26 @@ export default function AdminDashboardIndex() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   >
                     <option value="">Select a category</option>
+                    <option value="Full Body Checkup">Full Body Checkup</option>
                     <option value="Diabetes">Diabetes</option>
-                    <option value="Liver">Liver</option>
-                    <option value="Kidney">Kidney</option>
+                    <option value="Liver Health">Liver Health</option>
+                    <option value="Lung Health">Lung Health</option>
+                    <option value="Kidney Health">Kidney Health</option>
                     <option value="Thyroid">Thyroid</option>
                     <option value="Fever">Fever</option>
-                    <option value="Lungs">Lungs</option>
-                    <option value="General">General</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Duration *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g., 15 mins, 24 hours"
-                    value={testFormData.duration}
-                    onChange={(e) => setTestFormData({...testFormData, duration: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Sample Type *
-                  </label>
-                  <select
-                    required
-                    value={testFormData.sampleType}
-                    onChange={(e) => setTestFormData({...testFormData, sampleType: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
-                  >
-                    <option value="Blood">Blood</option>
-                    <option value="Urine">Urine</option>
-                    <option value="Stool">Stool</option>
-                    <option value="Swab">Swab</option>
+                    <option value="Heart Health">Heart Health</option>
+                    <option value="Women Health">Women Health</option>
+                    <option value="Senior Citizen">Senior Citizen</option>
                     <option value="Other">Other</option>
                   </select>
                 </div>
-              </div>
-              <div className="flex gap-2 mt-6">
-                <CButton type="submit" variant="primary">
-                  {editingTest ? 'Update' : 'Create'} Test
-                </CButton>
-                <CButton 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => {
-                    setShowTestForm(false);
-                    setEditingTest(null);
-                    resetTestForm();
-                  }}
-                >
-                  Cancel
-                </CButton>
               </div>
             </form>
           </div>
         </div>
       )}
-
+      
+      
       {/* Package Form Modal */}
       {showPackageForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -6508,7 +6440,6 @@ export default function AdminDashboardIndex() {
                     <option value="Women Health">Women Health</option>
                     <option value="Senior Citizen">Senior Citizen</option>
                     <option value="Other">Other</option>
-                    <option value="General">General</option>
                   </select>
                 </div>
                 <div>
@@ -6958,42 +6889,6 @@ export default function AdminDashboardIndex() {
                       <h4 className="font-medium text-gray-900">Reporting Time</h4>
                       <p className="text-gray-600">{details.reportingTime}</p>
                     </div>
-                    <div>
-                      <h4 className="font-medium text-gray-900">Included Tests</h4>
-                      {details.includedTests && details.includedTests.length > 0 ? (
-                        <div className="mt-2">
-                          <div className="text-sm text-gray-500 mb-2">{details.includedTests.length} test(s) included:</div>
-                          <div className="space-y-2 max-h-40 overflow-y-auto">
-                            {details.includedTests.map((testId, index) => {
-                              const test = tests.find(t => t._id === testId);
-                              return test ? (
-                                <div key={testId} className="flex items-center justify-between p-2 bg-gray-50 rounded text-sm">
-                                  <div>
-                                    <span className="font-medium text-gray-900">{index + 1}. {test.name}</span>
-                                    <div className="text-xs text-gray-500">{test.description}</div>
-                                  </div>
-                                  <span className="text-sm font-medium text-green-600">₹{test.price}</span>
-                                </div>
-                              ) : (
-                                <div key={testId} className="text-sm text-gray-500 italic">
-                                  Test {testId} not found
-                                </div>
-                              );
-                            })}
-                          </div>
-                          <div className="mt-2 pt-2 border-t border-gray-200">
-                            <div className="text-sm font-medium text-gray-900">
-                              Total Test Value: ₹{details.includedTests.reduce((sum, testId) => {
-                                const test = tests.find(t => t._id === testId);
-                                return sum + (test ? test.price : 0);
-                              }, 0)}
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-gray-500 italic mt-1">No tests included in this package</p>
-                      )}
-                    </div>
                     {/* Benefits Section */}
                     {details.benefits && details.benefits.length > 0 && (
                       <div>
@@ -7234,6 +7129,8 @@ export default function AdminDashboardIndex() {
         </div>
       )}
       </>
+        </main>
+      </div>
     </div>
   );
 }

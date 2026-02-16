@@ -439,7 +439,7 @@ export default function UserLogin() {
             <div className="flex justify-end">
               <button
                 type="button"
-                onClick={() => setShowForgetPassword(true)}
+                onClick={() => navigate('/forgot-password')}
                 className="text-sm font-semibold text-primary hover:text-primaryHover"
               >
                 Forgot password?
