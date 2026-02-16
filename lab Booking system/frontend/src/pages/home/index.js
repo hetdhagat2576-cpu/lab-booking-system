@@ -18,23 +18,48 @@ style.textContent = `
   }
   
   .animate-scroll-x {
-    animation: scroll-x 30s linear infinite;
+    animation: scroll-x 40s linear infinite;
   }
   
   .animate-scroll-x:hover {
     animation-play-state: paused;
+  }
+
+  .carousel-container {
+    mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 10%,
+      black 90%,
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      transparent 0%,
+      black 10%,
+      black 90%,
+      transparent 100%
+    );
+  }
+
+  @media (max-width: 640px) {
+    .animate-scroll-x {
+      animation: scroll-x 30s linear infinite;
+    }
   }
 `;
 document.head.appendChild(style);
 
 export default function HomeIndex() {
   const navigate = useNavigate(); 
-  const { CheckCircle, ArrowRight, Home, Users, FileText, Clock, MessageSquare, Star } = IconConfig;
+  const { CheckCircle, ArrowRight, Home, Users, FileText, Clock, MessageSquare, Star, ChevronLeft, ChevronRight, Pause, Play } = IconConfig;
 
   const [whyBookData, setWhyBookData] = useState([]);
   const [howItWorksData, setHowItWorksData] = useState([]);
   const [userFeedbacks, setUserFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   // Fetch home content from API
   useEffect(() => {
@@ -115,6 +140,19 @@ export default function HomeIndex() {
 
     fetchHomeContent();
   }, []);
+
+  // Manual navigation controls
+  const handlePrevious = () => {
+    setCurrentIndex((prev) => (prev - 1 + userFeedbacks.length) % userFeedbacks.length);
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % userFeedbacks.length);
+  };
+
+  const togglePause = () => {
+    setIsPaused(!isPaused);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-slate50 text-gray800 font-sans">
@@ -269,7 +307,8 @@ export default function HomeIndex() {
         </section>
       </main>
 
-      {/* WHAT OUR USERS SAY SECTION */}
+      {/* WHAT OUR USERS SAY SECTION - HIDDEN */}
+      {/* 
       {userFeedbacks.length > 0 && (
         <section className="bg-gradient-to-br from-secondary/20 to-primary/10 py-8 sm:py-12 md:py-16 overflow-hidden">
           <div className="container mx-auto px-4">
@@ -283,48 +322,94 @@ export default function HomeIndex() {
               <div className="w-16 sm:w-24 h-1 bg-primary mx-auto mt-4 sm:mt-6 rounded-full" />
             </div>
             
-            {/* Auto-scrolling feedback carousel */}
             <div className="relative">
-              <div className="flex overflow-hidden">
-                <div className="flex animate-scroll-x space-x-4 sm:space-x-6">
-                  {/* Duplicate the feedbacks for seamless scrolling */}
-                  {[...userFeedbacks, ...userFeedbacks].map((feedback, index) => (
-                    <div key={`${feedback._id || index}-${index}`} className="flex-shrink-0 w-72 sm:w-80">
-                      <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray100 h-full flex flex-col">
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                            <MessageSquare className="text-primary" size={16} />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <h4 className="font-semibold text-gray800 truncate text-sm sm:text-base">{feedback.userName || "Anonymous User"}</h4>
-                            <div className="flex items-center gap-1">
-                              {[...Array(5)].map((_, i) => (
-                                <Star 
-                                  key={i} 
-                                  className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${i < (feedback.bookingEaseRating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
-                                />
-                              ))}
+              <div className="flex justify-center items-center gap-4 mb-6">
+                <button
+                  onClick={handlePrevious}
+                  className="p-2 rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
+                  aria-label="Previous feedback"
+                >
+                  <ChevronLeft className="text-primary" size={20} />
+                </button>
+                
+                <button
+                  onClick={togglePause}
+                  className="p-2 rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
+                  aria-label={isPaused ? "Play carousel" : "Pause carousel"}
+                >
+                  {isPaused ? (
+                    <Play className="text-primary" size={20} />
+                  ) : (
+                    <Pause className="text-primary" size={20} />
+                  )}
+                </button>
+                
+                <button
+                  onClick={handleNext}
+                  className="p-2 rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
+                  aria-label="Next feedback"
+                >
+                  <ChevronRight className="text-primary" size={20} />
+                </button>
+              </div>
+
+              <div className="carousel-container">
+                <div className="flex overflow-hidden">
+                  <div className={`flex ${isPaused ? '' : 'animate-scroll-x'} space-x-4 sm:space-x-6`}>
+                    {[...userFeedbacks, ...userFeedbacks].map((feedback, index) => (
+                      <div key={`${feedback._id || index}-${index}`} className="flex-shrink-0 w-72 sm:w-80">
+                        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray100 h-full flex flex-col">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                              <MessageSquare className="text-primary" size={16} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="font-semibold text-gray800 truncate text-sm sm:text-base">{feedback.userName || "Anonymous User"}</h4>
+                              <div className="flex items-center gap-1">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star 
+                                    key={i} 
+                                    className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${i < (feedback.bookingEaseRating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                                  />
+                                ))}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                        
-                        <p className="text-gray600 leading-relaxed mb-4 line-clamp-3 flex-grow text-sm sm:text-base">
-                          "{feedback.comment || 'Great experience with the platform!'}"
-                        </p>
-                        
-                        <div className="flex items-center justify-between text-sm text-gray500 mt-auto">
-                          <span className="truncate">Overall Experience</span>
-                          <span className="font-medium text-primary flex-shrink-0">{feedback.bookingEaseRating || 5}/5</span>
+                          
+                          <p className="text-gray600 leading-relaxed mb-4 line-clamp-3 flex-grow text-sm sm:text-base">
+                            "{feedback.comment || 'Great experience with the platform!'}"
+                          </p>
+                          
+                          <div className="flex items-center justify-between text-sm text-gray500 mt-auto">
+                            <span className="truncate">Overall Experience</span>
+                            <span className="font-medium text-primary flex-shrink-0">{feedback.bookingEaseRating || 5}/5</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
+              </div>
+
+              <div className="flex justify-center mt-6 gap-2">
+                {userFeedbacks.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentIndex(index)}
+                    className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                      index === currentIndex 
+                        ? 'bg-primary w-8' 
+                        : 'bg-gray-300 hover:bg-gray-400'
+                    }`}
+                    aria-label={`Go to feedback ${index + 1}`}
+                  />
+                ))}
               </div>
             </div>
           </div>
         </section>
       )}
+      */}
 
       <Footer/>
     </div>
