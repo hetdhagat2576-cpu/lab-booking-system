@@ -14,7 +14,7 @@ export default function Thyroid() {
   const navigate = useNavigate();
   const [showAllPackages, setShowAllPackages] = useState(false);
   const [synchronizedTests, setSynchronizedTests] = useState([]);
-  
+
   const { ArrowLeft, CheckCircle2, ShieldCheck, Clock, FlaskConical } = IconConfig;
 
   // Load synchronized tests from localStorage on component mount

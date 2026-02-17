@@ -125,7 +125,7 @@ export default function App() {
         <Route path="/health-packages/fever" element={<Fever />} />
         <Route path="/health-packages/thyroid" element={<Thyroid />} />
         <Route path="/health-packages/diabetes" element={<Diabetes />} />
-        <Route path="/package-details" element={<PackageDetails />} />
+        <Route path="/package-details/:id" element={<PackageDetails />} />
         <Route path="/recommended-detail" element={<RecommendedDetail />} />
         <Route path="/test-details" element={<TestDetails />} />
         <Route path="/tests" element={<AllTests />} />

@@ -408,6 +408,9 @@ export default function UserLogin() {
             error={errors.email}
             required
           />
+          {errors.email && (
+            <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+          )}
 
           <div className="space-y-1">
             <div className="relative">
@@ -423,6 +426,9 @@ export default function UserLogin() {
                 className="pr-10"
                 style={{ textAlign: 'center' }}
               />
+              {errors.password && (
+                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+              )}
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}

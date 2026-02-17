@@ -17,7 +17,7 @@ export default function Lungs() {
   const [showAllPackages, setShowAllPackages] = useState(false);
   const [synchronizedTests, setSynchronizedTests] = useState([]);
 
-  const { ArrowLeft, CheckCircle2, ShieldCheck, Clock, Activity } = IconConfig;
+  const { ArrowLeft, CheckCircle2, ShieldCheck, Clock, Activity} = IconConfig;
 
   // Load synchronized tests from localStorage on component mount
   useEffect(() => {

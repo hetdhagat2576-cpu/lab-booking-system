@@ -5,7 +5,7 @@ import Theme from "../../../config/theam/index.js";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 import CButton from "../../../components/cButton";
-import { KIDNEY_HEALTH_PACKAGES, RECOMMENDED_TESTS, getTestCount } from "../../../config/staticData";
+import { KIDNEY_HEALTH_PACKAGES, RECOMMENDED_TESTS, getTestCount, PACKAGE_TESTS } from "../../../config/staticData";
 import { getSynchronizedTests, formatTestForDisplay } from "../../../services/testSync";
 
 const { Home, UserCheck, FileBarChart } = IconConfig;
@@ -16,8 +16,9 @@ export default function Kidney() {
   // Separate states for two sections
   const [showAllPackages, setShowAllPackages] = useState(false);
   const [synchronizedTests, setSynchronizedTests] = useState([]);
+  const [expandedPackage, setExpandedPackage] = useState(null);
 
-  const { ArrowLeft, CheckCircle2, Clock, ShieldCheck, Droplets } = IconConfig;
+  const { ArrowLeft, CheckCircle2, Clock, ShieldCheck, Droplets, ChevronDown, ChevronUp, TestTube2 } = IconConfig;
 
   // Load synchronized tests from localStorage on component mount
   useEffect(() => {
@@ -36,6 +37,14 @@ export default function Kidney() {
 
   const handleBook = (packageId) => {
     navigate(`/new-booking?package=${packageId}`);
+  };
+
+  const togglePackageExpansion = (packageId) => {
+    setExpandedPackage(expandedPackage === packageId ? null : packageId);
+  };
+
+  const getPackageTests = (packageId) => {
+    return PACKAGE_TESTS.kidney[packageId] || [];
   };
 
   return (
@@ -143,6 +152,134 @@ export default function Kidney() {
                     </div>
                   </div>
                 </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Kidney Health Packages Section */}
+          <div className="mt-16">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+              <div className="space-y-1">
+                <h3 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+                  Kidney Health Packages
+                </h3>
+                <p className="text-slate-500 font-medium text-sm">
+                  Comprehensive renal function assessment packages
+                </p>
+              </div>
+              {KIDNEY_HEALTH_PACKAGES.length > 3 && (
+                <button
+                  onClick={() => setShowAllPackages(!showAllPackages)}
+                  className="text-primary font-bold text-sm hover:text-primary/80 transition-colors"
+                >
+                  {showAllPackages ? 'Show Less' : `Show All (${KIDNEY_HEALTH_PACKAGES.length})`}
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-6">
+              {displayPackages.map((pkg) => {
+                const packageTests = getPackageTests(pkg.id);
+                const isExpanded = expandedPackage === pkg.id;
+                
+                return (
+                  <div
+                    key={pkg.id}
+                    className="bg-white rounded-2xl border border-slate-200 hover:border-primary/50 hover:shadow-lg transition-all duration-300 overflow-hidden"
+                  >
+                    <div className="p-6">
+                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                        {/* Package Info */}
+                        <div className="flex-1">
+                          <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center flex-shrink-0">
+                              <Droplets className="w-6 h-6 text-primary" />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="text-xl font-bold text-slate-900 mb-2">{pkg.title}</h4>
+                              <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
+                                <span className="flex items-center gap-1">
+                                  <TestTube2 className="w-4 h-4" />
+                                  {packageTests.length} Tests
+                                </span>
+                                <span className="flex items-center gap-1">
+                                  <Clock className="w-4 h-4" />
+                                  {pkg.reportTime}
+                                </span>
+                                {pkg.fastingRequired && (
+                                  <span className="bg-orange-50 text-orange-600 text-xs font-bold px-2 py-1 rounded-full border border-orange-100">
+                                    Fasting Required
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Price and Actions */}
+                        <div className="flex flex-col items-end gap-4">
+                          <div className="flex items-baseline gap-3">
+                            <span className="text-2xl font-black text-slate-900">₹{pkg.price}</span>
+                            {pkg.originalPrice && (
+                              <span className="text-slate-400 line-through text-sm">₹{pkg.originalPrice}</span>
+                            )}
+                          </div>
+                          {pkg.discount && pkg.discount > 0 && (
+                            <span className="inline-flex items-center bg-red-50 text-red-600 text-xs font-bold px-2.5 py-1 rounded-full border border-red-100 uppercase">
+                              {pkg.discount}% OFF
+                            </span>
+                          )}
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => togglePackageExpansion(pkg.id)}
+                              className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-lg text-slate-700 hover:border-primary hover:text-primary transition-all font-medium text-sm"
+                            >
+                              {isExpanded ? (
+                                <>
+                                  <ChevronUp className="w-4 h-4" />
+                                  Hide Tests
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronDown className="w-4 h-4" />
+                                  View Tests
+                                </>
+                              )}
+                            </button>
+                            <CButton
+                              variant="primary"
+                              onClick={() => handleBook(pkg.id)}
+                              className="px-6 py-2 text-sm font-bold"
+                            >
+                              Book Now
+                            </CButton>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Expandable Test List */}
+                      {isExpanded && (
+                        <div className="mt-6 pt-6 border-t border-slate-100">
+                          <h5 className="text-lg font-bold text-slate-900 mb-4">Tests Included in this Package:</h5>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {packageTests.map((testName, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100"
+                              >
+                                <TestTube2 className="w-4 h-4 text-primary flex-shrink-0" />
+                                <span className="text-sm text-slate-700 font-medium">{testName}</span>
+                              </div>
+                            ))}
+                          </div>
+                          {packageTests.length === 0 && (
+                            <p className="text-slate-500 text-sm italic">No tests listed for this package</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 );
               })}
             </div>

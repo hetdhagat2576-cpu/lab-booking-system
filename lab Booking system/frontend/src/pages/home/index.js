@@ -17,11 +17,28 @@ style.textContent = `
     }
   }
   
+  @keyframes infinite-scroll {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(calc(-1 * (var(--card-width) + var(--gap)) * var(--total-cards)));
+    }
+  }
+  
   .animate-scroll-x {
     animation: scroll-x 40s linear infinite;
   }
   
+  .animate-infinite-scroll {
+    animation: infinite-scroll 30s linear infinite;
+  }
+  
   .animate-scroll-x:hover {
+    animation-play-state: paused;
+  }
+  
+  .animate-infinite-scroll:hover {
     animation-play-state: paused;
   }
 
@@ -42,9 +59,17 @@ style.textContent = `
     );
   }
 
+  .testimonials-scroll {
+    display: flex;
+    gap: 1.5rem;
+  }
+
   @media (max-width: 640px) {
     .animate-scroll-x {
       animation: scroll-x 30s linear infinite;
+    }
+    .animate-infinite-scroll {
+      animation: infinite-scroll 25s linear infinite;
     }
   }
 `;
@@ -178,25 +203,15 @@ export default function HomeIndex() {
             <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest bg-teal-600 w-fit px-3 sm:px-4 py-2 rounded">
               Laboratory Booking Platform
             </p>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-bold tracking-tight mt-4">
-              Book, Track & Test <br/> with Confidence
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold tracking-tight mt-4 leading-none">
+              Book, Track & Test with
             </h1>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-light tracking-wide mt-3 text-white/95">
+              Confidence
+            </h2>
             <p className="mt-4 sm:mt-6 max-w-2xl md:max-w-3xl text-sm sm:text-base md:text-lg text-white/90">
               Seamless scheduling, trusted diagnostics, and fast digital reports.
             </p>
-            
-            {/* Hero Section Overlay Text */}
-            <div className="mt-8 sm:mt-12 max-w-2xl md:max-w-4xl text-center">
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-4 drop-shadow-lg">
-                Trusted Laboratory Experts
-              </h2>
-              <p className="text-sm sm:text-base md:text-lg text-white/95 leading-relaxed drop-shadow-md">
-                Our platform connects patients with certified laboratories,
-                ensuring transparency, accuracy, and reliable diagnostics
-                for every test.
-              </p>
-              <div className="w-12 sm:w-16 h-1 bg-teal-400 mx-auto mt-4 rounded-full" />
-            </div>
             
             <button 
               onClick={() => navigate("/register")}
@@ -206,6 +221,21 @@ export default function HomeIndex() {
               <ArrowRight className="group-hover:translate-x-2 transition-transform duration-300" size={16} />
             </button>
           </div>
+        </div>
+      </section>
+
+      {/* Trusted Laboratory Experts Section */}
+      <section className="bg-white py-8 sm:py-12 md:py-16">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray900 mb-4">
+            Trusted Laboratory Experts
+          </h2>
+          <p className="text-gray600 text-base sm:text-lg max-w-2xl mx-auto mb-6">
+            Our platform connects patients with certified laboratories,
+            ensuring transparency, accuracy, and reliable diagnostics
+            for every test.
+          </p>
+          <div className="w-16 sm:w-24 h-1 bg-primary mx-auto rounded-full" />
         </div>
       </section>
 
@@ -308,7 +338,7 @@ export default function HomeIndex() {
       </main>
 
       {/* WHAT OUR USERS SAY SECTION - HIDDEN */}
-      {/* 
+      
       {userFeedbacks.length > 0 && (
         <section className="bg-gradient-to-br from-secondary/20 to-primary/10 py-8 sm:py-12 md:py-16 overflow-hidden">
           <div className="container mx-auto px-4">
@@ -322,61 +352,42 @@ export default function HomeIndex() {
               <div className="w-16 sm:w-24 h-1 bg-primary mx-auto mt-4 sm:mt-6 rounded-full" />
             </div>
             
-            <div className="relative">
-              <div className="flex justify-center items-center gap-4 mb-6">
-                <button
-                  onClick={handlePrevious}
-                  className="p-2 rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
-                  aria-label="Previous feedback"
+            <div className="carousel-container">
+              <div className="overflow-hidden">
+                <div 
+                  className={`testimonials-scroll ${isPaused ? '' : 'animate-infinite-scroll'}`}
+                  style={{
+                    '--card-width': '320px',
+                    '--gap': '24px',
+                    '--total-cards': userFeedbacks.length
+                  }}
                 >
-                  <ChevronLeft className="text-primary" size={20} />
-                </button>
-                
-                <button
-                  onClick={togglePause}
-                  className="p-2 rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
-                  aria-label={isPaused ? "Play carousel" : "Pause carousel"}
-                >
-                  {isPaused ? (
-                    <Play className="text-primary" size={20} />
-                  ) : (
-                    <Pause className="text-primary" size={20} />
-                  )}
-                </button>
-                
-                <button
-                  onClick={handleNext}
-                  className="p-2 rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 active:scale-95"
-                  aria-label="Next feedback"
-                >
-                  <ChevronRight className="text-primary" size={20} />
-                </button>
-              </div>
-
-              <div className="carousel-container">
-                <div className="flex overflow-hidden">
-                  <div className={`flex ${isPaused ? '' : 'animate-scroll-x'} space-x-4 sm:space-x-6`}>
-                    {[...userFeedbacks, ...userFeedbacks].map((feedback, index) => (
-                      <div key={`${feedback._id || index}-${index}`} className="flex-shrink-0 w-72 sm:w-80">
-                        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray100 h-full flex flex-col">
+                  {/* Create 3 sets of cards for seamless infinite scroll */}
+                  {[...Array(3)].flatMap((_, setIndex) => 
+                    userFeedbacks.map((feedback, index) => (
+                      <div 
+                        key={`${feedback._id || index}-set-${setIndex}`} 
+                        className="flex-shrink-0 w-80"
+                      >
+                        <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray100 h-full flex flex-col">
                           <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                            <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
                               <MessageSquare className="text-primary" size={16} />
                             </div>
                             <div className="min-w-0 flex-1">
-                              <h4 className="font-semibold text-gray800 truncate text-sm sm:text-base">{feedback.userName || "Anonymous User"}</h4>
+                              <h4 className="font-semibold text-gray800 truncate text-base">{feedback.userName || "Anonymous User"}</h4>
                               <div className="flex items-center gap-1">
                                 {[...Array(5)].map((_, i) => (
                                   <Star 
                                     key={i} 
-                                    className={`w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0 ${i < (feedback.bookingEaseRating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                                    className={`w-4 h-4 flex-shrink-0 ${i < (feedback.bookingEaseRating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
                                   />
                                 ))}
                               </div>
                             </div>
                           </div>
                           
-                          <p className="text-gray600 leading-relaxed mb-4 line-clamp-3 flex-grow text-sm sm:text-base">
+                          <p className="text-gray600 leading-relaxed mb-4 line-clamp-3 flex-grow text-base">
                             "{feedback.comment || 'Great experience with the platform!'}"
                           </p>
                           
@@ -386,30 +397,14 @@ export default function HomeIndex() {
                           </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    ))
+                  )}
                 </div>
-              </div>
-
-              <div className="flex justify-center mt-6 gap-2">
-                {userFeedbacks.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentIndex(index)}
-                    className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                      index === currentIndex 
-                        ? 'bg-primary w-8' 
-                        : 'bg-gray-300 hover:bg-gray-400'
-                    }`}
-                    aria-label={`Go to feedback ${index + 1}`}
-                  />
-                ))}
               </div>
             </div>
           </div>
         </section>
       )}
-      */}
 
       <Footer/>
     </div>

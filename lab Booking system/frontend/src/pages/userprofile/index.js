@@ -28,6 +28,8 @@ export default function UserProfileIndex() {
     phone: ""
   });
   
+  const [errors, setErrors] = useState({});
+  
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [stats, setStats] = useState({ total: 0, upcoming: 0, completed: 0 });
@@ -207,11 +209,20 @@ export default function UserProfileIndex() {
         [name]: value
       };
     });
-  }, []); // No dependencies needed as setFormData is stable
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  }, [errors]); // Add errors dependency
 
   // Handle form submission with API call
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate form before submission
+    if (!validateForm()) {
+      return;
+    }
     
     if (!user || !user.token) {
       Swal.fire({
@@ -285,6 +296,34 @@ export default function UserProfileIndex() {
     } finally {
       setSaving(false);
     }
+  };
+
+  // Form validation function
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = 'Full name is required';
+    }
+    
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Invalid email address';
+    }
+    
+    if (!formData.phone.trim()) {
+      newErrors.phone = 'Phone number is required';
+    } else if (!/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) {
+      newErrors.phone = 'Phone number must be 10 digits';
+    }
+    
+    if (formData.age && (isNaN(formData.age) || formData.age < 1 || formData.age > 120)) {
+      newErrors.age = 'Age must be between 1 and 120';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   // Helper functions for status colors
@@ -451,179 +490,199 @@ export default function UserProfileIndex() {
                   <form onSubmit={handleSubmit}>
                     <Grid container spacing={4}>
                       <Grid item xs={12} md={8}>
-                        <Typography variant="h6" fontWeight="700" className="mb-6">Personal Information</Typography>
+                        <Typography variant="h6" fontWeight="700" className="mb-8">Personal Information</Typography>
                                                 
                         <Box className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <TextField
-                            fullWidth
-                            label="Full Name"
-                            name="fullName"
-                            value={formData.fullName || ''}
-                            onChange={handleChange}
-                            variant="outlined"
-                            required
-                            InputLabelProps={{ 
-                              shrink: true,
-                              sx: { 
-                                '&.Mui-focused': { color: Theme.colors.primary },
-                                '&.Mui-error': { color: 'error.main' }
-                              }
-                            }}
-                            InputProps={{
-                              sx: { 
-                                borderRadius: '12px',
-                                '&:hover fieldset': {
-                                  borderColor: Theme.colors.primary,
-                                },
-                                '&.Mui-focused fieldset': {
-                                  borderColor: Theme.colors.primary,
-                                },
-                              }
-                            }}
-                          />
-                          <TextField
-                            fullWidth
-                            label="Email"
-                            name="email"
-                            value={formData.email || ''}
-                            onChange={handleChange}
-                            variant="outlined"
-                            type="email"
-                            InputLabelProps={{ 
-                              shrink: true,
-                              sx: { 
-                                '&.Mui-focused': { color: Theme.colors.primary },
-                                '&.Mui-error': { color: 'error.main' }
-                              }
-                            }}
-                            InputProps={{
-                              sx: { 
-                                borderRadius: '12px',
-                                '&:hover fieldset': {
-                                  borderColor: Theme.colors.primary,
-                                },
-                                '&.Mui-focused fieldset': {
-                                  borderColor: Theme.colors.primary,
-                                },
-                              }
-                            }}
-                          />
-                          <TextField
-                            fullWidth
-                            label="Age"
-                            name="age"
-                            value={formData.age || ''}
-                            onChange={handleChange}
-                            variant="outlined"
-                            type="number"
-                            InputLabelProps={{ 
-                              shrink: true,
-                              sx: { 
-                                '&.Mui-focused': { color: Theme.colors.primary },
-                                '&.Mui-error': { color: 'error.main' }
-                              }
-                            }}
-                            InputProps={{
-                              sx: { 
-                                borderRadius: '12px',
-                                '&:hover fieldset': {
-                                  borderColor: Theme.colors.primary,
-                                },
-                                '&.Mui-focused fieldset': {
-                                  borderColor: Theme.colors.primary,
-                                },
-                              }
-                            }}
-                          />
-                          <TextField
-                            fullWidth
-                            label="Gender"
-                            name="gender"
-                            value={formData.gender || ''}
-                            onChange={handleChange}
-                            variant="outlined"
-                            select
-                            SelectProps={{ native: true }}
-                            InputLabelProps={{ 
-                              shrink: true,
-                              sx: { 
-                                '&.Mui-focused': { color: Theme.colors.primary },
-                                '&.Mui-error': { color: 'error.main' }
-                              }
-                            }}
-                            InputProps={{
-                              sx: { 
-                                borderRadius: '12px',
-                                '&:hover fieldset': {
-                                  borderColor: Theme.colors.primary,
-                                },
-                                '&.Mui-focused fieldset': {
-                                  borderColor: Theme.colors.primary,
-                                },
-                              }
-                            }}
-                          >
-                            <option value="">Select Gender</option>
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                            <option value="other">Other</option>
-                          </TextField>
-                          <TextField
-                            fullWidth
-                            label="Phone Number"
-                            name="phone"
-                            value={formData.phone || ''}
-                            onChange={handleChange}
-                            variant="outlined"
-                            type="tel"
-                            InputLabelProps={{ 
-                              shrink: true,
-                              sx: { 
-                                '&.Mui-focused': { color: Theme.colors.primary },
-                                '&.Mui-error': { color: 'error.main' }
-                              }
-                            }}
-                            InputProps={{
-                              sx: { 
-                                borderRadius: '12px',
-                                '&:hover fieldset': {
-                                  borderColor: Theme.colors.primary,
-                                },
-                                '&.Mui-focused fieldset': {
-                                  borderColor: Theme.colors.primary,
-                                },
-                              }
-                            }}
-                          />
-                          <TextField
-                            fullWidth
-                            label="Home Address"
-                            name="homeAddress"
-                            value={formData.homeAddress || ''}
-                            onChange={handleChange}
-                            variant="outlined"
-                            InputLabelProps={{ 
-                              shrink: true,
-                              sx: { 
-                                '&.Mui-focused': { color: Theme.colors.primary },
-                                '&.Mui-error': { color: 'error.main' }
-                              }
-                            }}
-                            InputProps={{
-                              sx: { 
-                                borderRadius: '12px',
-                                '&:hover fieldset': {
-                                  borderColor: Theme.colors.primary,
-                                },
-                                '&.Mui-focused fieldset': {
-                                  borderColor: Theme.colors.primary,
-                                },
-                              }
-                            }}
-                          />
+                          <div>
+                            <TextField
+                              fullWidth
+                              label="Full Name"
+                              name="fullName"
+                              value={formData.fullName || ''}
+                              onChange={handleChange}
+                              variant="outlined"
+                              required
+                              error={!!errors.fullName}
+                              helperText={errors.fullName && <span className="text-red-500 text-xs">{errors.fullName}</span>}
+                              InputLabelProps={{ 
+                                shrink: true,
+                                sx: { 
+                                  '&.Mui-focused': { color: Theme.colors.primary },
+                                  '&.Mui-error': { color: 'error.main' }
+                                }
+                              }}
+                              InputProps={{
+                                sx: { 
+                                  borderRadius: '12px',
+                                  '&:hover fieldset': {
+                                    borderColor: Theme.colors.primary,
+                                  },
+                                  '&.Mui-focused fieldset': {
+                                    borderColor: Theme.colors.primary,
+                                  },
+                                }
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <TextField
+                              fullWidth
+                              label="Email"
+                              name="email"
+                              value={formData.email || ''}
+                              onChange={handleChange}
+                              variant="outlined"
+                              type="email"
+                              error={!!errors.email}
+                              helperText={errors.email && <span className="text-red-500 text-xs">{errors.email}</span>}
+                              InputLabelProps={{ 
+                                shrink: true,
+                                sx: { 
+                                  '&.Mui-focused': { color: Theme.colors.primary },
+                                  '&.Mui-error': { color: 'error.main' }
+                                }
+                              }}
+                              InputProps={{
+                                sx: { 
+                                  borderRadius: '12px',
+                                  '&:hover fieldset': {
+                                    borderColor: Theme.colors.primary,
+                                  },
+                                  '&.Mui-focused fieldset': {
+                                    borderColor: Theme.colors.primary,
+                                  },
+                                }
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <TextField
+                              fullWidth
+                              label="Age"
+                              name="age"
+                              value={formData.age || ''}
+                              onChange={handleChange}
+                              variant="outlined"
+                              type="number"
+                              error={!!errors.age}
+                              helperText={errors.age && <span className="text-red-500 text-xs">{errors.age}</span>}
+                              InputLabelProps={{ 
+                                shrink: true,
+                                sx: { 
+                                  '&.Mui-focused': { color: Theme.colors.primary },
+                                  '&.Mui-error': { color: 'error.main' }
+                                }
+                              }}
+                              InputProps={{
+                                sx: { 
+                                  borderRadius: '12px',
+                                  '&:hover fieldset': {
+                                    borderColor: Theme.colors.primary,
+                                  },
+                                  '&.Mui-focused fieldset': {
+                                    borderColor: Theme.colors.primary,
+                                  },
+                                }
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <TextField
+                              fullWidth
+                              label="Gender"
+                              name="gender"
+                              value={formData.gender || ''}
+                              onChange={handleChange}
+                              variant="outlined"
+                              select
+                              SelectProps={{ native: true }}
+                              InputLabelProps={{ 
+                                shrink: true,
+                                sx: { 
+                                  '&.Mui-focused': { color: Theme.colors.primary },
+                                  '&.Mui-error': { color: 'error.main' }
+                                }
+                              }}
+                              InputProps={{
+                                sx: { 
+                                  borderRadius: '12px',
+                                  '&:hover fieldset': {
+                                    borderColor: Theme.colors.primary,
+                                  },
+                                  '&.Mui-focused fieldset': {
+                                    borderColor: Theme.colors.primary,
+                                  },
+                                }
+                              }}
+                            >
+                              <option value="">Select Gender</option>
+                              <option value="male">Male</option>
+                              <option value="female">Female</option>
+                              <option value="other">Other</option>
+                            </TextField>
+                          </div>
+                          <div>
+                            <TextField
+                              fullWidth
+                              label="Phone Number"
+                              name="phone"
+                              value={formData.phone || ''}
+                              onChange={handleChange}
+                              variant="outlined"
+                              type="tel"
+                              error={!!errors.phone}
+                              helperText={errors.phone && <span className="text-red-500 text-xs">{errors.phone}</span>}
+                              InputLabelProps={{ 
+                                shrink: true,
+                                sx: { 
+                                  '&.Mui-focused': { color: Theme.colors.primary },
+                                  '&.Mui-error': { color: 'error.main' }
+                                }
+                              }}
+                              InputProps={{
+                                sx: { 
+                                  borderRadius: '12px',
+                                  '&:hover fieldset': {
+                                    borderColor: Theme.colors.primary,
+                                  },
+                                  '&.Mui-focused fieldset': {
+                                    borderColor: Theme.colors.primary,
+                                  },
+                                }
+                              }}
+                            />
+                          </div>
+                          <div>
+                            <TextField
+                              fullWidth
+                              label="Home Address"
+                              name="homeAddress"
+                              value={formData.homeAddress || ''}
+                              onChange={handleChange}
+                              variant="outlined"
+                              InputLabelProps={{ 
+                                shrink: true,
+                                sx: { 
+                                  '&.Mui-focused': { color: Theme.colors.primary },
+                                  '&.Mui-error': { color: 'error.main' }
+                                }
+                              }}
+                              InputProps={{
+                                sx: { 
+                                  borderRadius: '12px',
+                                  '&:hover fieldset': {
+                                    borderColor: Theme.colors.primary,
+                                  },
+                                  '&.Mui-focused fieldset': {
+                                    borderColor: Theme.colors.primary,
+                                  },
+                                }
+                              }}
+                            />
+                          </div>
                         </Box>
-                        <Divider className="my-8" />
-                        <div className="flex justify-end items-center">
+                        <Divider className="mt-8 mb-6" />
+                        <div className="flex justify-end items-center mt-6">
                           <Button 
                             type="submit"
                             variant="contained" 

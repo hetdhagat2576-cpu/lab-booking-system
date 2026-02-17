@@ -66,10 +66,30 @@ export default function FeedbackIndex() {
 
   const handleChange = (name, value) => {
     setForm((prev) => ({ ...prev, [name]: value }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!form.comment.trim()) {
+      newErrors.comment = 'Please provide your feedback comments';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate form before submission
+    if (!validateForm()) {
+      return;
+    }
     
     // Check if user is authenticated
     if (!isAuthenticated) {
@@ -255,7 +275,11 @@ export default function FeedbackIndex() {
                   value={form.comment}
                   onChange={(e) => handleChange("comment", e.target.value)}
                   className="h-8 text-sm border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                  error={errors.comment}
                 />
+                {errors.comment && (
+                  <p className="text-red-500 text-xs mt-1">{errors.comment}</p>
+                )}
               </div>
             </div>
           </div>

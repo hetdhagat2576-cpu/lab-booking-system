@@ -59,6 +59,8 @@ export default function FAQ() {
               Find answers to common questions about our laboratory booking services. 
               Can't find what you're looking for? Feel free to contact our support team.
             </p>
+            {/* Divider using Primary Color */}
+            <div className="w-24 h-1 bg-primary mx-auto mt-6 rounded-full" />
           </div>
 
           {/* FAQ Items */}

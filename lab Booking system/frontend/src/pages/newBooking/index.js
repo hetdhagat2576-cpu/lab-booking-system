@@ -647,7 +647,7 @@ const showPaymentSuccess = () => {
                       ))}
                     </Select>
                     {errors.labAppointment && (
-                      <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                      <Typography variant="caption" className="text-red-500 text-xs" sx={{ mt: 0.5, ml: 1.75 }}>
                         {errors.labAppointment}
                       </Typography>
                     )}
@@ -700,7 +700,7 @@ const showPaymentSuccess = () => {
                     value={formData.date}
                     onChange={handleChange}
                     error={!!errors.date}
-                    helperText={errors.date}
+                    helperText={errors.date && <span className="text-red-500 text-xs">{errors.date}</span>}
                     required
                     InputLabelProps={{ shrink: true }}
                     inputProps={{ min: today }}
@@ -744,7 +744,7 @@ const showPaymentSuccess = () => {
                       ))}
                     </Select>
                     {errors.time && (
-                      <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                      <Typography variant="caption" className="text-red-500 text-xs" sx={{ mt: 0.5, ml: 1.75 }}>
                         {errors.time}
                       </Typography>
                     )}
@@ -759,7 +759,7 @@ const showPaymentSuccess = () => {
                     value={formData.patientName}
                     onChange={handleChange}
                     error={!!errors.patientName}
-                    helperText={errors.patientName}
+                    helperText={errors.patientName && <span className="text-red-500 text-xs">{errors.patientName}</span>}
                     required
                     InputProps={{
                       startAdornment: (
@@ -777,12 +777,12 @@ const showPaymentSuccess = () => {
                   />
                   
                   {errors.package && (
-                    <Alert severity="error">{errors.package}</Alert>
+                    <Alert severity="error" className="text-red-500 text-xs">{errors.package}</Alert>
                   )}
 
                   {/* Error Alert */}
                   {submitError && (
-                    <Alert severity="error">{submitError}</Alert>
+                    <Alert severity="error" className="text-red-500 text-xs">{submitError}</Alert>
                   )}
 
                   {/* Create Booking Button */}

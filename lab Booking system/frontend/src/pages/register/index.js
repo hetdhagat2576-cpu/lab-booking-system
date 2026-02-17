@@ -270,7 +270,7 @@ export default function RegisterIndex() {
               value={formData.name}
               onChange={handleChange}
               error={!!errors.name}
-              helperText={errors.name}
+              helperText={errors.name && <span className="text-red-500 text-xs">{errors.name}</span>}
               required
               InputProps={{
                 startAdornment: (
@@ -290,6 +290,10 @@ export default function RegisterIndex() {
                     borderWidth: 2,
                   },
                 },
+                "& .MuiFormHelperText-root": {
+                  fontSize: '0.75rem',
+                  marginTop: '4px',
+                },
               }}
             />
 
@@ -301,7 +305,7 @@ export default function RegisterIndex() {
               value={formData.email}
               onChange={handleChange}
               error={!!errors.email}
-              helperText={errors.email}
+              helperText={errors.email && <span className="text-red-500 text-xs">{errors.email}</span>}
               required
               InputProps={{
                 startAdornment: (
@@ -321,6 +325,10 @@ export default function RegisterIndex() {
                     borderWidth: 2,
                   },
                 },
+                "& .MuiFormHelperText-root": {
+                  fontSize: '0.75rem',
+                  marginTop: '4px',
+                },
               }}
             />
 
@@ -333,7 +341,7 @@ export default function RegisterIndex() {
               value={formData.password}
               onChange={handleChange}
               error={!!errors.password}
-              helperText={errors.password}
+              helperText={errors.password && <span className="text-red-500 text-xs">{errors.password}</span>}
               required
               InputProps={{
                 startAdornment: (
@@ -364,6 +372,10 @@ export default function RegisterIndex() {
                     borderWidth: 2,
                   },
                 },
+                "& .MuiFormHelperText-root": {
+                  fontSize: '0.75rem',
+                  marginTop: '4px',
+                },
               }}
             />
 
@@ -376,7 +388,7 @@ export default function RegisterIndex() {
               value={formData.confirmPassword}
               onChange={handleChange}
               error={!!errors.confirmPassword}
-              helperText={errors.confirmPassword}
+              helperText={errors.confirmPassword && <span className="text-red-500 text-xs">{errors.confirmPassword}</span>}
               required
               InputProps={{
                 startAdornment: (
@@ -407,6 +419,10 @@ export default function RegisterIndex() {
                     borderWidth: 2,
                   },
                 },
+                "& .MuiFormHelperText-root": {
+                  fontSize: '0.75rem',
+                  marginTop: '4px',
+                },
               }}
             />
 
@@ -422,17 +438,25 @@ export default function RegisterIndex() {
               </Alert>
             )}
 
-            <CButton
+            <Button
               type="submit"
-              variant="primary"
-              size="sm"
-              fullWidth
-              isLoading={isLoading}
+              variant="contained"
+              size="large"
               disabled={isLoading}
-              sx={{ py: 1.5, fontSize: '1rem', fontWeight: 'bold' }}
+              fullWidth
+              sx={{
+                backgroundColor: Theme.colors.primary,
+                color: "white",
+                py: 1.5,
+                fontSize: '1rem',
+                fontWeight: 'bold',
+                "&:hover": {
+                  backgroundColor: Theme.colors.primaryHover,
+                },
+              }}
             >
               {isLoading ? 'Creating Account...' : REGISTER_PAGE_CONTENT.buttons.submit}
-            </CButton>
+            </Button>
 
             <Typography variant="body2" align="center" sx={{ mt: 2 }}>
               Already have an account?{" "}

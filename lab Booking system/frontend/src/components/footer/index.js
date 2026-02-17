@@ -17,36 +17,68 @@ export default function Footer() {
   ];
 
   const footerLinkStyles = `
-    relative w-fit cursor-pointer py-0.5 text-white/80 transition-all duration-300 ease-out
-    hover:text-white hover:pl-2
+    relative w-fit py-2 text-sm font-bold text-white/80 transition-all duration-300
+    hover:text-white
+    
+    /* The Beam */
     after:content-[''] 
     after:absolute 
     after:bottom-0 
     after:left-0 
-    after:w-full 
-    after:h-[1px] 
-    after:bg-gradient-to-r after:from-white after:to-transparent
+    after:right-0 
+    after:h-[2px] 
+    after:bg-gradient-to-r after:from-transparent after:via-white after:to-transparent
     after:scale-x-0 
-    after:origin-left 
     after:transition-transform 
-    after:duration-300
+    after:duration-500 
+    after:ease-in-out
+    
+    /* Hover Animation */
     hover:after:scale-x-100
+    
+    /* The Glow Effect */
+    before:content-['']
+    before:absolute
+    before:bottom-0
+    before:left-1/2
+    before:-translate-x-1/2
+    before:w-0
+    before:h-[4px]
+    before:bg-white/40
+    before:blur-md
+    before:transition-all
+    before:duration-500
+    hover:before:w-full
   `;
 
   const activeFooterLinkStyles = `
-    relative w-fit cursor-pointer py-0.5 text-white transition-all duration-300 ease-out
-    hover:pl-2
+    relative w-fit py-2 text-sm font-bold text-white transition-all duration-300
+    
+    /* Active Beam */
     after:content-[''] 
     after:absolute 
     after:bottom-0 
     after:left-0 
-    after:w-full 
+    after:right-0 
     after:h-[2px] 
-    after:bg-gradient-to-r after:from-white after:to-transparent
+    after:bg-gradient-to-r after:from-transparent after:via-white after:to-transparent
     after:scale-x-100 
-    after:origin-left 
     after:transition-transform 
-    after:duration-300
+    after:duration-500 
+    after:ease-in-out
+    
+    /* Active Glow */
+    before:content-['']
+    before:absolute
+    before:bottom-0
+    before:left-1/2
+    before:-translate-x-1/2
+    before:w-full
+    before:h-[4px]
+    before:bg-white/60
+    before:blur-md
+    before:transition-all
+    before:duration-500
   `;
 
   return (
@@ -58,9 +90,17 @@ export default function Footer() {
           <div className="sm:col-span-2 md:col-span-1">
             <h2
               onClick={() => navigate("/")}
-              className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-white cursor-pointer hover:opacity-80 transition flex items-center gap-2">
-              <span className="w-2 h-2 bg-white rounded-full"></span>
-              BookMyLab
+              className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4 text-white cursor-pointer hover:opacity-80 transition flex items-center gap-3"
+            >
+              <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 group-hover:border-white/40 transition-all shadow-inner">
+                <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+              </div>
+              <div className="flex flex-col text-left">
+                <span className="text-xl font-black text-white leading-none tracking-tight">BookMyLab</span>
+                <span className="text-[10px] text-white/50 font-bold uppercase tracking-[0.3em]"> System</span>
+              </div>
             </h2>
             <p className="text-white/70 text-xs sm:text-sm leading-relaxed max-w-xs">
               A smart and efficient laboratory booking system to manage

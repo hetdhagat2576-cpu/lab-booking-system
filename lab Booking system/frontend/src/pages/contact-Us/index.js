@@ -58,6 +58,11 @@ export default function ContactUsIndex() {
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = "Invalid email address";
     }
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone number is required";
+    } else if (!/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) {
+      newErrors.phone = "Phone number must be 10 digits";
+    }
     if (!formData.subject.trim()) newErrors.subject = "Subject is required";
     if (!formData.message.trim()) newErrors.message = "Message is required";
     
@@ -240,11 +245,31 @@ export default function ContactUsIndex() {
             <h2 className="text-3xl font-bold text-center mb-10 text-gray-800">Send Us a Message</h2>
             <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-2xl p-8 border border-secondary/30">
               <div className="grid md:grid-cols-2 gap-6 mb-6">
-                <CInput name="name" label="Full Name" value={formData.name} onChange={handleChange} required />
-                <CInput name="email" type="email" label="Email Address" value={formData.email} onChange={handleChange} required />
+                <div>
+                  <CInput name="name" label="Full Name" value={formData.name} onChange={handleChange} required />
+                  {errors.name && (
+                    <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                  )}
+                </div>
+                <div>
+                  <CInput name="email" type="email" label="Email Address" value={formData.email} onChange={handleChange} required />
+                  {errors.email && (
+                    <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                  )}
+                </div>
               </div>
-              <CInput name="phone" type="tel" label="Phone Number" value={formData.phone} onChange={handleChange} className="mb-6" />
-              <CInput name="subject" label="Subject" value={formData.subject} onChange={handleChange} required className="mb-6" />
+              <div className="mb-6">
+                <CInput name="phone" type="tel" label="Phone Number" value={formData.phone} onChange={handleChange} />
+                {errors.phone && (
+                  <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+                  )}
+              </div>
+              <div className="mb-6">
+                <CInput name="subject" label="Subject" value={formData.subject} onChange={handleChange} required />
+                {errors.subject && (
+                  <p className="text-red-500 text-xs mt-1">{errors.subject}</p>
+                  )}
+              </div>
               <div className="mb-8">
                 <label className="block font-semibold mb-2 text-gray-700">Message</label>
                 <textarea
@@ -254,8 +279,13 @@ export default function ContactUsIndex() {
                   onChange={handleChange}
                   required
                   placeholder="How can we help you?"
-                  className="w-full border rounded-lg p-3 border-gray-300 focus:ring-2 focus:ring-secondary focus:border-primary outline-none transition-all"
+                  className={`w-full border rounded-lg p-3 focus:ring-2 focus:ring-secondary focus:border-primary outline-none transition-all ${
+                    errors.message ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 />
+                {errors.message && (
+                  <p className="text-red-500 text-xs mt-1">{errors.message}</p>
+                  )}
               </div>
 
               <div className="text-center flex justify-center">

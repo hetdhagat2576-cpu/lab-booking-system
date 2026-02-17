@@ -287,7 +287,7 @@ export default function ResetPassword() {
                     <form onSubmit={handleSubmit}>
                       <Box className="space-y-6">
                         {error && (
-                          <Alert severity="error" className="rounded-xl">
+                          <Alert severity="error" className="text-red-500 text-xs rounded-xl">
                             {error}
                           </Alert>
                         )}
@@ -303,6 +303,8 @@ export default function ResetPassword() {
                           required
                           disabled={loading}
                           placeholder="Enter your new password"
+                          error={!!error}
+                          helperText={error && error.includes('password') && <span className="text-red-500 text-xs">{error}</span>}
                           InputLabelProps={{ 
                             shrink: true,
                             sx: { 
@@ -351,6 +353,8 @@ export default function ResetPassword() {
                           required
                           disabled={loading}
                           placeholder="Confirm your new password"
+                          error={!!error}
+                          helperText={error && error.includes('match') && <span className="text-red-500 text-xs">{error}</span>}
                           InputLabelProps={{ 
                             shrink: true,
                             sx: { 

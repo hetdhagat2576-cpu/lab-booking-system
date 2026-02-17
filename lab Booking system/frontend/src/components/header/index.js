@@ -53,7 +53,10 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
     { name: "Home", path: "/" },
     { name: "Service", path: "/services" },
     { name: "About Us", path: "/about" },
-    ];
+  ];
+  
+  // Filter nav links based on authentication state
+  const visibleNavLinks = isAuthenticated ? [] : navLinks;
     
   const beamUnderline = `
     relative py-2 text-sm font-bold text-white/90 transition-all duration-300
@@ -146,8 +149,8 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
         {!hideNavItems && (
           <>
             {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-10">
-              {navLinks.map((link) => (
+            <nav className={`hidden md:flex items-center ${isAuthenticated ? 'justify-center' : 'gap-10'}`}>
+              {visibleNavLinks.map((link) => (
                 <button 
                   key={link.name} 
                   onClick={() => navigate(link.path)} 
@@ -156,51 +159,108 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                   {link.name}
                 </button>
               ))}
-              <button 
-                onClick={() => navigate("/contact")} 
-                className={location.pathname === "/contact" ? activeBeamUnderline : beamUnderline}
-              >
-                Contact Us
-              </button>
-              <div className="relative dropdown-container">
-                <button
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                  className={`${(location.pathname === "/tests" || location.pathname === "/health-packages/all") ? activeBeamUnderline : beamUnderline} flex items-center gap-1`}
-                >
-                  Booking
-                  {ChevronDown && <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />}
-                </button>
-                {isDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden z-50">
+              
+              {/* Always show Contact Us and Booking for logged-in users, centered */}
+              {isAuthenticated && (
+                <>
+                  <button 
+                    onClick={() => navigate("/contact")} 
+                    className={location.pathname === "/contact" ? activeBeamUnderline : beamUnderline}
+                  >
+                    Contact Us
+                  </button>
+                  <div className="relative dropdown-container ml-10">
                     <button
-                      onClick={() => {
-                        navigate("/tests");
-                        setIsDropdownOpen(false);
-                      }}
-                      className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-                        location.pathname === "/tests" 
-                          ? "text-primary bg-gray-50" 
-                          : "text-gray-700 hover:bg-gray-50 hover:text-primary"
-                      }`}
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className={`${(location.pathname === "/tests" || location.pathname === "/health-packages/all") ? activeBeamUnderline : beamUnderline} flex items-center gap-1`}
                     >
-                      Tests
+                      Booking
+                      {ChevronDown && <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />}
                     </button>
-                    <button
-                      onClick={() => {
-                        navigate("/health-packages/all");
-                        setIsDropdownOpen(false);
-                      }}
-                      className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-                        location.pathname === "/health-packages/all" 
-                          ? "text-primary bg-gray-50" 
-                          : "text-gray-700 hover:bg-gray-50 hover:text-primary"
-                      }`}
-                    >
-                      Packages
-                    </button>
+                    {isDropdownOpen && (
+                      <div className="absolute top-full left-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden z-50">
+                        <button
+                          onClick={() => {
+                            navigate("/tests");
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                            location.pathname === "/tests" 
+                              ? "text-primary bg-gray-50" 
+                              : "text-gray-700 hover:bg-gray-50 hover:text-primary"
+                          }`}
+                        >
+                          Tests
+                        </button>
+                        <button
+                          onClick={() => {
+                            navigate("/health-packages/all");
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                            location.pathname === "/health-packages/all" 
+                              ? "text-primary bg-gray-50" 
+                              : "text-gray-700 hover:bg-gray-50 hover:text-primary"
+                          }`}
+                        >
+                          Packages
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </>
+              )}
+              
+              {/* Show Contact Us and Booking for non-logged-in users (original behavior) */}
+              {!isAuthenticated && (
+                <>
+                  <button 
+                    onClick={() => navigate("/contact")} 
+                    className={location.pathname === "/contact" ? activeBeamUnderline : beamUnderline}
+                  >
+                    Contact Us
+                  </button>
+                  <div className="relative dropdown-container">
+                    <button
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className={`${(location.pathname === "/tests" || location.pathname === "/health-packages/all") ? activeBeamUnderline : beamUnderline} flex items-center gap-1`}
+                    >
+                      Booking
+                      {ChevronDown && <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />}
+                    </button>
+                    {isDropdownOpen && (
+                      <div className="absolute top-full left-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden z-50">
+                        <button
+                          onClick={() => {
+                            navigate("/tests");
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                            location.pathname === "/tests" 
+                              ? "text-primary bg-gray-50" 
+                              : "text-gray-700 hover:bg-gray-50 hover:text-primary"
+                          }`}
+                        >
+                          Tests
+                        </button>
+                        <button
+                          onClick={() => {
+                            navigate("/health-packages/all");
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                            location.pathname === "/health-packages/all" 
+                              ? "text-primary bg-gray-50" 
+                              : "text-gray-700 hover:bg-gray-50 hover:text-primary"
+                          }`}
+                        >
+                          Packages
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </nav>
 
             {/* Mobile Menu Button */}
@@ -241,7 +301,7 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
             </>
           ) : (
             <>
-              {!hideProfileIcon && !isAdmin && (
+              {!hideProfileIcon && !isAdmin && !isLabTechnician && (
                 <button
                   onClick={() => {
                     const route = isLabTechnician ? "/lab-technician-profile" : "/user-profile";
@@ -281,8 +341,9 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
       {isMobileMenuOpen && (
         <div className="mobile-menu-container md:hidden bg-primary/95 backdrop-blur-md border-t border-white/10">
           <div className="container mx-auto px-4 py-4">
-            <nav className="flex flex-col space-y-3">
-              {navLinks.map((link) => (
+            <nav className={`flex flex-col space-y-3 ${isAuthenticated ? 'items-center' : ''}`}>
+              {/* Show nav links for non-logged-in users */}
+              {!isAuthenticated && visibleNavLinks.map((link) => (
                 <button 
                   key={link.name} 
                   onClick={() => {
@@ -296,46 +357,98 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                   {link.name}
                 </button>
               ))}
-              <button 
-                onClick={() => {
-                  navigate("/contact");
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`text-left px-4 py-3 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-all ${
-                  location.pathname === "/contact" ? 'bg-white/10 text-white' : ''
-                }`}
-              >
-                Contact Us
-              </button>
               
-              {/* Booking Dropdown for Mobile */}
-              <div className="px-4 py-2">
-                <p className="text-white/60 text-sm font-semibold mb-2">Booking</p>
-                <div className="space-y-2">
-                  <button
+              {/* Always show Contact Us and Booking for logged-in users, centered */}
+              {isAuthenticated && (
+                <>
+                  <button 
                     onClick={() => {
-                      navigate("/tests");
+                      navigate("/contact");
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`block w-full text-left px-3 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-all ${
-                      location.pathname === "/tests" ? 'bg-white/10 text-white' : ''
+                    className={`text-left px-4 py-3 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-all ${
+                      location.pathname === "/contact" ? 'bg-white/10 text-white' : ''
                     }`}
                   >
-                    Tests
+                    Contact Us
                   </button>
-                  <button
+                  
+                  {/* Booking Dropdown for Mobile */}
+                  <div className="px-4 py-2">
+                    <p className="text-white/60 text-sm font-semibold mb-2">Booking</p>
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => {
+                          navigate("/tests");
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`block w-full text-left px-3 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-all ${
+                          location.pathname === "/tests" ? 'bg-white/10 text-white' : ''
+                        }`}
+                      >
+                        Tests
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate("/health-packages/all");
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`block w-full text-left px-3 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-all ${
+                          location.pathname === "/health-packages/all" ? 'bg-white/10 text-white' : ''
+                        }`}
+                      >
+                        Packages
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+              
+              {/* Show Contact Us and Booking for non-logged-in users (original behavior) */}
+              {!isAuthenticated && (
+                <>
+                  <button 
                     onClick={() => {
-                      navigate("/health-packages/all");
+                      navigate("/contact");
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`block w-full text-left px-3 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-all ${
-                      location.pathname === "/health-packages/all" ? 'bg-white/10 text-white' : ''
+                    className={`text-left px-4 py-3 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-all ${
+                      location.pathname === "/contact" ? 'bg-white/10 text-white' : ''
                     }`}
                   >
-                    Packages
+                    Contact Us
                   </button>
-                </div>
-              </div>
+                  
+                  {/* Booking Dropdown for Mobile */}
+                  <div className="px-4 py-2">
+                    <p className="text-white/60 text-sm font-semibold mb-2">Booking</p>
+                    <div className="space-y-2">
+                      <button
+                        onClick={() => {
+                          navigate("/tests");
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`block w-full text-left px-3 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-all ${
+                          location.pathname === "/tests" ? 'bg-white/10 text-white' : ''
+                        }`}
+                      >
+                        Tests
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigate("/health-packages/all");
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`block w-full text-left px-3 py-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-all ${
+                          location.pathname === "/health-packages/all" ? 'bg-white/10 text-white' : ''
+                        }`}
+                      >
+                        Packages
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
 
               {/* Mobile Auth Buttons */}
               {!isAuthenticated && (
@@ -351,7 +464,7 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
               )}
 
               {/* Mobile Profile Button */}
-              {isAuthenticated && !hideProfileIcon && !isAdmin && (
+              {isAuthenticated && !hideProfileIcon && !isAdmin && !isLabTechnician && (
                 <button
                   onClick={() => {
                     const route = isLabTechnician ? "/lab-technician-profile" : "/user-profile";

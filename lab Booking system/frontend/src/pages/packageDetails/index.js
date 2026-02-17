@@ -24,6 +24,16 @@ export default function PackageDetails() {
     if (!packageId) {
       console.error('No package ID provided');
       setLoading(false);
+      // Show user-friendly error message
+      Swal.fire({
+        title: 'Error',
+        text: 'No package ID provided. Please select a package from the health packages page.',
+        icon: 'error',
+        confirmButtonColor: Theme.colors.primary,
+        confirmButtonText: 'Go to Health Packages'
+      }).then(() => {
+        navigate('/healthPackages');
+      });
       return;
     }
 
@@ -57,6 +67,13 @@ export default function PackageDetails() {
   useEffect(() => {
     fetchPackageData();
   }, [packageId]);
+
+  // Redirect to health packages if package data is not found
+  useEffect(() => {
+    if (!loading && !packageData) {
+      navigate('/healthPackages');
+    }
+  }, [loading, packageData, navigate]);
 
   // SweetAlert2 utility functions
   const showBookingConfirmation = () => {
@@ -140,25 +157,10 @@ export default function PackageDetails() {
         <Header />
         <main className="flex-grow pt-8 pb-12 bg-slate-50/50">
           <div className="container mx-auto px-4">
-            <CButton
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-2 text-slate-500 hover:text-primary font-bold mb-6 transition-colors"
-              variant="outline"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back</span>
-            </CButton>
-            
-            <div className="bg-white rounded-3xl p-8 text-center shadow-sm border border-slate-100">
-              <h2 className="text-2xl font-bold text-slate-800 mb-4">Package Not Found</h2>
-              <p className="text-slate-600 mb-6">The package you're looking for is not available in our database.</p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <CButton variant="primary" onClick={() => navigate("/all")}>
-                  View All Packages
-                </CButton>
-                <CButton variant="outline" onClick={() => navigate(-1)}>
-                  Go Back
-                </CButton>
+            <div className="flex justify-center items-center h-64">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-4 text-slate-600">Redirecting to health packages...</p>
               </div>
             </div>
           </div>
@@ -296,14 +298,15 @@ export default function PackageDetails() {
                     <h2 className="text-xl font-bold text-slate-900 mb-6">Benefits</h2>
                     
                     <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-                        <span className="text-slate-700">Benefit 1</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-                        <span className="text-slate-700">Benefit 2</span>
-                      </div>
+                      {safeMap(packageDetails?.benefits || packageData?.benefits || [], (benefit, index) => (
+                        <div key={`benefit-${index}`} className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                          <span className="text-slate-700">{benefit}</span>
+                        </div>
+                      ))}
+                      {safeLength(packageDetails?.benefits || packageData?.benefits || []) === 0 && (
+                        <p className="text-slate-500 text-sm italic">No benefits information available</p>
+                      )}
                     </div>
                   </div>
 
@@ -312,14 +315,15 @@ export default function PackageDetails() {
                     <h2 className="text-xl font-bold text-slate-900 mb-6">Suitable For</h2>
                     
                     <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                        <span className="text-slate-700">Group 1</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                        <span className="text-slate-700">Group 2</span>
-                      </div>
+                      {safeMap(packageDetails?.suitableFor || packageData?.suitableFor || [], (group, index) => (
+                        <div key={`suitable-${index}`} className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                          <span className="text-slate-700">{group}</span>
+                        </div>
+                      ))}
+                      {safeLength(packageDetails?.suitableFor || packageData?.suitableFor || []) === 0 && (
+                        <p className="text-slate-500 text-sm italic">No suitability information available</p>
+                      )}
                     </div>
                   </div>
                 </div>

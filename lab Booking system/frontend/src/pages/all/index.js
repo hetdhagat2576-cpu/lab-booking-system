@@ -121,7 +121,7 @@ export default function AllHealthPackages() {
                       {pkg.category}
                     </div>
                   </div>
-                  <h3 className="text-lg font-bold text-slate-900">{pkg.title}</h3>
+                  <h3 className="text-lg font-bold text-slate-900">{pkg.name || pkg.title}</h3>
                                     <div className="flex items-baseline gap-3 mt-4 mb-4">
                     <span className="text-2xl font-black text-slate-900">₹{pkg.price}</span>
                     {pkg.originalPrice && (

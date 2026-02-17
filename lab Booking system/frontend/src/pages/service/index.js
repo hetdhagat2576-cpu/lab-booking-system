@@ -161,27 +161,23 @@ export default function ServiceIndex() {
     <div className="w-full">
       <Header />
 
+      {/* Hero Image Section */}
+      <div className="w-full relative h-96 bg-slate900 overflow-hidden">
+        <img 
+          src={ImageConfig.serviceImage || "https://via.placeholder.com/1920x400"}
+          alt="Services" 
+          className="w-full h-full object-cover"
+        />
+      </div>
+
       {/* Our Services Section */}
       <div className="w-full flex flex-col items-center justify-center py-16 bg-gradient-to-b from-secondary/20 to-white">
         <h1 className="text-4xl font-bold text-gray-800">{heroTitle}</h1>
         <p className="text-lg text-gray-600 mt-4 text-center max-w-2xl">
           {heroDescription}
         </p>
-      </div>
-
-      {/* Smart Lab Ecosystem Section */}
-      <div className="w-full relative h-96 bg-slate900 overflow-hidden">
-        <img 
-          src={ImageConfig.serviceImage || "https://via.placeholder.com/1920x400"}
-          alt="Smart Lab Ecosystem" 
-          className="w-full h-full object-cover opacity-50"
-        />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center text-white px-4">
-            <h2 className="text-5xl font-bold mb-4">{ecosystemTitle}</h2>
-            <p className="text-xl font-semibold">{ecosystemSubtitle}</p>
-          </div>
-        </div>
+        {/* Divider using Primary Color */}
+        <div className="w-24 h-1 bg-primary mx-auto mt-6 rounded-full" />
       </div>
 
       {/* Comprehensive Features Section */}

@@ -136,7 +136,7 @@ export default function ForgotPassword() {
                     <form onSubmit={handleSubmit}>
                       <Box className="space-y-6">
                         {error && (
-                          <Alert severity="error" className="rounded-xl">
+                          <Alert severity="error" className="text-red-500 text-xs rounded-xl">
                             {error}
                           </Alert>
                         )}
@@ -152,6 +152,8 @@ export default function ForgotPassword() {
                           required
                           disabled={loading}
                           placeholder="Enter your registered email"
+                          error={!!error}
+                          helperText={error && <span className="text-red-500 text-xs">{error}</span>}
                           InputLabelProps={{ 
                             shrink: true,
                             sx: { 

@@ -415,7 +415,7 @@ export default function OtpVerification() {
 
             <Paper elevation={8} sx={{ p: 6, borderRadius: 3, boxShadow: "0 10px 40px rgba(0,0,0,0.1)" }}>
               {error && (
-                <Alert severity="error" sx={{ mb: 4, borderRadius: 2 }}>
+                <Alert severity="error" className="text-red-500 text-xs" sx={{ mb: 4, borderRadius: 2 }}>
                   {error}
                 </Alert>
               )}
