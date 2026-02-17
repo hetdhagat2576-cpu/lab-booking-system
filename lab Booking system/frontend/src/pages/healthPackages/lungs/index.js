@@ -37,13 +37,8 @@ export default function Lungs() {
     const user = storedUser ? JSON.parse(storedUser) : null;
     
     if (user && (user.emailVerified || user.isEmailVerified)) {
-      // User is authenticated, navigate to booking page
-      navigate('/test-booking', { 
-        state: { 
-          testName: testName,
-          price: price
-        } 
-      });
+      // User is authenticated, navigate to booking page with query parameters
+      navigate(`/new-booking?name=${encodeURIComponent(testName)}&price=${price}`);
     } else {
       // User is not authenticated, show SweetAlert prompt
       Swal.fire({
@@ -59,8 +54,7 @@ export default function Lungs() {
         if (result.isConfirmed) {
           navigate('/login', { 
             state: { 
-              redirectTo: '/test-booking',
-              bookingData: { testName: testName, price: price },
+              redirectTo: `/new-booking?name=${encodeURIComponent(testName)}&price=${price}`,
               message: 'Please login to book this test'
             } 
           });
