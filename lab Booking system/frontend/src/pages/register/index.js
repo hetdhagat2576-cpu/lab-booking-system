@@ -270,7 +270,7 @@ export default function RegisterIndex() {
               value={formData.name}
               onChange={handleChange}
               error={!!errors.name}
-              helperText={errors.name && <span className="text-red-500 text-xs">{errors.name}</span>}
+              helperText={errors.name && <span className="text-red-500 text-xs font-medium">{errors.name}</span>}
               required
               InputProps={{
                 startAdornment: (
@@ -283,16 +283,25 @@ export default function RegisterIndex() {
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
                   "&:hover fieldset": {
-                    borderColor: Theme.colors.primary,
+                    borderColor: errors.name ? "#ef4444" : Theme.colors.primary,
                   },
                   "&.Mui-focused fieldset": {
-                    borderColor: Theme.colors.primary,
+                    borderColor: errors.name ? "#ef4444" : Theme.colors.primary,
                     borderWidth: 2,
+                  },
+                  "&.Mui-error fieldset": {
+                    borderColor: "#ef4444",
+                    borderWidth: 2,
+                  },
+                  "&.Mui-error": {
+                    backgroundColor: "#fef2f2",
                   },
                 },
                 "& .MuiFormHelperText-root": {
                   fontSize: '0.75rem',
                   marginTop: '4px',
+                  fontWeight: 'medium',
+                  color: '#dc2626',
                 },
               }}
             />
@@ -305,7 +314,7 @@ export default function RegisterIndex() {
               value={formData.email}
               onChange={handleChange}
               error={!!errors.email}
-              helperText={errors.email && <span className="text-red-500 text-xs">{errors.email}</span>}
+              helperText={errors.email && <span className="text-red-500 text-xs font-medium">{errors.email}</span>}
               required
               InputProps={{
                 startAdornment: (
@@ -318,16 +327,25 @@ export default function RegisterIndex() {
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
                   "&:hover fieldset": {
-                    borderColor: Theme.colors.primary,
+                    borderColor: errors.email ? "#ef4444" : Theme.colors.primary,
                   },
                   "&.Mui-focused fieldset": {
-                    borderColor: Theme.colors.primary,
+                    borderColor: errors.email ? "#ef4444" : Theme.colors.primary,
                     borderWidth: 2,
+                  },
+                  "&.Mui-error fieldset": {
+                    borderColor: "#ef4444",
+                    borderWidth: 2,
+                  },
+                  "&.Mui-error": {
+                    backgroundColor: "#fef2f2",
                   },
                 },
                 "& .MuiFormHelperText-root": {
                   fontSize: '0.75rem',
                   marginTop: '4px',
+                  fontWeight: 'medium',
+                  color: '#dc2626',
                 },
               }}
             />
@@ -341,7 +359,7 @@ export default function RegisterIndex() {
               value={formData.password}
               onChange={handleChange}
               error={!!errors.password}
-              helperText={errors.password && <span className="text-red-500 text-xs">{errors.password}</span>}
+              helperText={errors.password && <span className="text-red-500 text-xs font-medium">{errors.password}</span>}
               required
               InputProps={{
                 startAdornment: (
@@ -365,16 +383,25 @@ export default function RegisterIndex() {
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
                   "&:hover fieldset": {
-                    borderColor: Theme.colors.primary,
+                    borderColor: errors.password ? "#ef4444" : Theme.colors.primary,
                   },
                   "&.Mui-focused fieldset": {
-                    borderColor: Theme.colors.primary,
+                    borderColor: errors.password ? "#ef4444" : Theme.colors.primary,
                     borderWidth: 2,
+                  },
+                  "&.Mui-error fieldset": {
+                    borderColor: "#ef4444",
+                    borderWidth: 2,
+                  },
+                  "&.Mui-error": {
+                    backgroundColor: "#fef2f2",
                   },
                 },
                 "& .MuiFormHelperText-root": {
                   fontSize: '0.75rem',
                   marginTop: '4px',
+                  fontWeight: 'medium',
+                  color: '#dc2626',
                 },
               }}
             />
@@ -388,7 +415,7 @@ export default function RegisterIndex() {
               value={formData.confirmPassword}
               onChange={handleChange}
               error={!!errors.confirmPassword}
-              helperText={errors.confirmPassword && <span className="text-red-500 text-xs">{errors.confirmPassword}</span>}
+              helperText={errors.confirmPassword && <span className="text-red-500 text-xs font-medium">{errors.confirmPassword}</span>}
               required
               InputProps={{
                 startAdornment: (
@@ -412,16 +439,25 @@ export default function RegisterIndex() {
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
                   "&:hover fieldset": {
-                    borderColor: Theme.colors.primary,
+                    borderColor: errors.confirmPassword ? "#ef4444" : Theme.colors.primary,
                   },
                   "&.Mui-focused fieldset": {
-                    borderColor: Theme.colors.primary,
+                    borderColor: errors.confirmPassword ? "#ef4444" : Theme.colors.primary,
                     borderWidth: 2,
+                  },
+                  "&.Mui-error fieldset": {
+                    borderColor: "#ef4444",
+                    borderWidth: 2,
+                  },
+                  "&.Mui-error": {
+                    backgroundColor: "#fef2f2",
                   },
                 },
                 "& .MuiFormHelperText-root": {
                   fontSize: '0.75rem',
                   marginTop: '4px',
+                  fontWeight: 'medium',
+                  color: '#dc2626',
                 },
               }}
             />

@@ -6,6 +6,7 @@ import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 import CButton from "../../../components/cButton";
 import { FULL_BODY_PACKAGES, getTestCount } from "../../../config/staticData";
+import Swal from "sweetalert2";
 const { Home, UserCheck, FileBarChart } = IconConfig;
 
 export default function FullBodyCheckups() {
@@ -15,8 +16,36 @@ export default function FullBodyCheckups() {
 
   const packages = showAll ? FULL_BODY_PACKAGES : FULL_BODY_PACKAGES.slice(0, 3);
 
+  // Check if user is logged in before booking package
   const handleBook = (packageId) => {
-    navigate(`/new-booking?package=${packageId}`);
+    const storedUser = localStorage.getItem('lab_user');
+    const user = storedUser ? JSON.parse(storedUser) : null;
+    
+    if (user && (user.emailVerified || user.isEmailVerified)) {
+      // User is authenticated, navigate to booking page
+      navigate(`/new-booking?package=${packageId}`);
+    } else {
+      // User is not authenticated, show SweetAlert prompt
+      Swal.fire({
+        title: 'Login Required',
+        text: 'Please login to book this package. Would you like to login now?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: Theme.colors.primary,
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Login',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate('/login', { 
+            state: { 
+              redirectTo: `/new-booking?package=${packageId}`,
+              message: 'Please login to book this package'
+            } 
+          });
+        }
+      });
+    }
   };
 
   return (

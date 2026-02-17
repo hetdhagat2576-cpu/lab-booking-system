@@ -17,6 +17,7 @@ import {
   FEVER_PACKAGES,
   PACKAGE_TESTS,
 } from "../../config/staticData";
+import Swal from "sweetalert2";
 
 const PACKAGE_DATA = {
   "Full Body": FULL_BODY_PACKAGES,
@@ -169,6 +170,38 @@ export default function RecommendedDetail() {
     fetchData();
   }, [type, category, id]);
 
+  // Check if user is logged in before booking
+  const handleBook = (item) => {
+    const storedUser = localStorage.getItem('lab_user');
+    const user = storedUser ? JSON.parse(storedUser) : null;
+    
+    if (user && (user.emailVerified || user.isEmailVerified)) {
+      // User is authenticated, navigate to booking page
+      navigate(`/new-booking?${type}=${item.packageId || item.id}&price=${item.price || 500}`);
+    } else {
+      // User is not authenticated, show SweetAlert prompt
+      Swal.fire({
+        title: 'Login Required',
+        text: 'Please log in to your account to book this package.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: Theme.colors.primary,
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Login Now',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate('/login', { 
+            state: { 
+              redirectTo: `/new-booking?${type}=${item.packageId || item.id}&price=${item.price || 500}`,
+              message: 'Please log in to your account to book this package'
+            } 
+          });
+        }
+      });
+    }
+  };
+
   if (loading) {
      return (
         <div className={Theme.layout.standardPage}>
@@ -316,7 +349,7 @@ export default function RecommendedDetail() {
                     fullWidth={false}
                     variant="primary"
                     className="flex-1 justify-center text-lg"
-                    onClick={() => navigate(`/new-booking?${type}=${item.packageId || item.id}&price=${item.price || 500}`)}
+                    onClick={() => handleBook(item)}
                   >
                     Book Now at ₹{item.price || 500}
                   </CButton>

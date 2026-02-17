@@ -83,106 +83,6 @@ export default function UserLogin() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // reCAPTCHA utility function
-  const showRecaptchaAlert = async (title, message, confirmButtonText = 'Continue') => {
-    return new Promise((resolve, reject) => {
-      let recaptchaToken = null;
-      let widgetId = null;
-
-      // Ensure reCAPTCHA script is loaded
-      const loadRecaptchaScript = () => {
-        return new Promise((scriptResolve, scriptReject) => {
-          if (window.grecaptcha && window.grecaptcha.render) {
-            scriptResolve();
-            return;
-          }
-
-          const script = document.createElement('script');
-          script.src = 'https://www.google.com/recaptcha/api.js?onload=recaptchaCallback&render=explicit';
-          script.async = true;
-          script.defer = true;
-          
-          // Set up global callback
-          window.recaptchaCallback = () => {
-            scriptResolve();
-          };
-          
-          script.onload = scriptResolve;
-          script.onerror = scriptReject;
-          document.head.appendChild(script);
-        });
-      };
-
-      const showAlert = async () => {
-        try {
-          await loadRecaptchaScript();
-
-          Swal.fire({
-            title: title,
-            html: `
-              <div style="text-align: left;">
-                <p style="margin-bottom: 20px; color: #666;">${message}</p>
-                <div id="recaptcha-container" style="display: flex; justify-content: center; margin: 20px 0;"></div>
-              </div>
-            `,
-            icon: 'info',
-            showCancelButton: true,
-            confirmButtonText: confirmButtonText,
-            cancelButtonText: 'Cancel',
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            didOpen: () => {
-              // Render reCAPTCHA inside the SweetAlert
-              const container = document.getElementById('recaptcha-container');
-              
-              // Wait a bit for reCAPTCHA to be ready
-              setTimeout(() => {
-                if (container && window.grecaptcha && window.grecaptcha.render) {
-                  // Clear any existing content
-                  container.innerHTML = '';
-                  
-                  // Render reCAPTCHA
-                  widgetId = window.grecaptcha.render(container, {
-                    sitekey: process.env.REACT_APP_RECAPTCHA_SITE_KEY || "6LcolFcsAAAAAHu4qJFpMgWFj_SW9jD6obXysvES",
-                    callback: (token) => {
-                      recaptchaToken = token;
-                    },
-                    'expired-callback': () => {
-                      recaptchaToken = null;
-                    },
-                    'aria-hidden': false,
-                    'tabindex': 0
-                  });
-                } else {
-                  console.error('reCAPTCHA not available');
-                  Swal.showValidationMessage('reCAPTCHA failed to load. Please refresh the page.');
-                }
-              }, 500); // 500ms delay
-            },
-            preConfirm: () => {
-              if (!recaptchaToken) {
-                Swal.showValidationMessage('Please verify you are not a robot');
-                return false;
-              }
-              return recaptchaToken;
-            }
-          }).then((result) => {
-            if (result.isConfirmed && result.value) {
-              resolve(result.value);
-            } else {
-              reject(new Error('User cancelled or reCAPTCHA not completed'));
-            }
-          }).catch((error) => {
-            reject(error);
-          });
-        } catch (error) {
-          reject(error);
-        }
-      };
-
-      showAlert();
-    });
-  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -208,20 +108,10 @@ export default function UserLogin() {
       
       console.log('Login attempt with:', { email: formData.email, role: "user" });
       
-      // Show reCAPTCHA in SweetAlert before proceeding
-      const recaptchaToken = await showRecaptchaAlert(
-        'Verify You Are Human',
-        'Please complete the reCAPTCHA verification to proceed with login.',
-        'Login'
-      );
-
-      console.log('reCAPTCHA token received:', !!recaptchaToken);
-
       const payload = { 
         email: formData.email, 
         password: formData.password, 
-        role: "user",
-        recaptchaToken: recaptchaToken
+        role: "user"
       };
       
       console.log('Sending login payload:', { ...payload, password: '[HIDDEN]' });
@@ -294,15 +184,10 @@ export default function UserLogin() {
       }
     } catch (err) {
       console.error(err);
-      // User cancelled reCAPTCHA or other error
-      if (err.message === 'User cancelled or reCAPTCHA not completed') {
-        // User cancelled, don't show error
-        return;
-      }
       await Swal.fire({
         icon: 'error',
-        title: 'Server Error',
-        text: 'Server error. Please try again later.',
+        title: 'Login Failed',
+        text: err.message || 'Invalid credentials. Please try again.',
         confirmButtonColor: Theme.colors.primary
       });
     } finally {
@@ -408,9 +293,6 @@ export default function UserLogin() {
             error={errors.email}
             required
           />
-          {errors.email && (
-            <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-          )}
 
           <div className="space-y-1">
             <div className="relative">
@@ -426,9 +308,6 @@ export default function UserLogin() {
                 className="pr-10"
                 style={{ textAlign: 'center' }}
               />
-              {errors.password && (
-                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
-              )}
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}

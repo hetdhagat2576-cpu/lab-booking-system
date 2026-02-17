@@ -5,8 +5,9 @@ import Theme from "../../../config/theam/index.js";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 import CButton from "../../../components/cButton";
-import { LUNG_HEALTH_PACKAGES, RECOMMENDED_TESTS, getTestCount } from "../../../config/staticData";
+import { LUNG_HEALTH_PACKAGES, RECOMMENDED_TESTS, getTestCount, PACKAGE_TESTS } from "../../../config/staticData";
 import { getSynchronizedTests, formatTestForDisplay } from "../../../services/testSync";
+import Swal from "sweetalert2";
 
 const { Home, UserCheck, FileBarChart } = IconConfig;
 
@@ -30,13 +31,81 @@ export default function Lungs() {
   // Use synchronized tests if available, otherwise fall back to static data
   const recommendedTests = synchronizedTests.length > 0 ? synchronizedTests : RECOMMENDED_TESTS.lungs;
 
+  // Check if user is logged in before booking
+  const handleBookTest = (testName, price) => {
+    const storedUser = localStorage.getItem('lab_user');
+    const user = storedUser ? JSON.parse(storedUser) : null;
+    
+    if (user && (user.emailVerified || user.isEmailVerified)) {
+      // User is authenticated, navigate to booking page
+      navigate('/test-booking', { 
+        state: { 
+          testName: testName,
+          price: price
+        } 
+      });
+    } else {
+      // User is not authenticated, show SweetAlert prompt
+      Swal.fire({
+        title: 'Login Required',
+        text: 'Please login to book this test. Would you like to login now?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: Theme.colors.primary,
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Login',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate('/login', { 
+            state: { 
+              redirectTo: '/test-booking',
+              bookingData: { testName: testName, price: price },
+              message: 'Please login to book this test'
+            } 
+          });
+        }
+      });
+    }
+  };
+
+  // Check if user is logged in before booking package
+  const handleBookPackage = (packageId) => {
+    const storedUser = localStorage.getItem('lab_user');
+    const user = storedUser ? JSON.parse(storedUser) : null;
+    
+    if (user && (user.emailVerified || user.isEmailVerified)) {
+      // User is authenticated, navigate to booking page
+      navigate(`/new-booking?package=${packageId}`);
+    } else {
+      // User is not authenticated, show SweetAlert prompt
+      Swal.fire({
+        title: 'Login Required',
+        text: 'Please login to book this package. Would you like to login now?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: Theme.colors.primary,
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Login',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate('/login', { 
+            state: { 
+              redirectTo: `/new-booking?package=${packageId}`,
+              message: 'Please login to book this package'
+            } 
+          });
+        }
+      });
+    }
+  };
+
   // Slicing logic
   const displayPackages = showAllPackages ? LUNG_HEALTH_PACKAGES : LUNG_HEALTH_PACKAGES.slice(0, 3);
   const displayTests = recommendedTests;
 
-  const handleBook = (packageId) => {
-    navigate(`/new-booking?package=${packageId}`);
-  };
+  const handleBook = (packageId) => handleBookPackage(packageId);
 
   return (
     <div className={Theme.layout.standardPage}>
@@ -134,7 +203,7 @@ export default function Lungs() {
                         <CButton
                           variant="primary"
                           fullWidth={true}
-                          onClick={() => navigate(`/new-booking?name=${encodeURIComponent(formattedTest.displayTitle)}&price=${formattedTest.displayPrice}`)}
+                          onClick={() => handleBookTest(formattedTest.displayTitle, formattedTest.displayPrice)}
                           className="rounded-xl h-11 font-bold uppercase tracking-widest"
                         >
                           Book

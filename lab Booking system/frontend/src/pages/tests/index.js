@@ -10,6 +10,7 @@ import { safeTestName, safeMap } from "../../services/testSync";
 import {
   RECOMMENDED_TESTS,
 } from "../../config/staticData";
+import Swal from "sweetalert2";
 
 export default function AllTests() {
   const navigate = useNavigate();
@@ -42,6 +43,44 @@ export default function AllTests() {
       console.error('Error refreshing tests:', error);
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  // Check if user is logged in before booking
+  const handleBookTest = (testName, price) => {
+    const storedUser = localStorage.getItem('lab_user');
+    const user = storedUser ? JSON.parse(storedUser) : null;
+    
+    if (user && (user.emailVerified || user.isEmailVerified)) {
+      // User is authenticated, navigate to booking page
+      navigate('/test-booking', { 
+        state: { 
+          testName: testName,
+          price: price
+        } 
+      });
+    } else {
+      // User is not authenticated, show SweetAlert prompt
+      Swal.fire({
+        title: 'Login Required',
+        text: 'Please login to book this test. Would you like to login now?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: Theme.colors.primary,
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Login',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate('/login', { 
+            state: { 
+              redirectTo: '/test-booking',
+              bookingData: { testName: testName, price: price },
+              message: 'Please login to book this test'
+            } 
+          });
+        }
+      });
     }
   };
 
@@ -205,10 +244,7 @@ export default function AllTests() {
                       <CButton
                         variant="primary"
                         fullWidth={false}
-                        onClick={() => {
-                          // For individual tests, go to booking
-                          navigate(`/new-booking?name=${encodeURIComponent(safeTestName(test))}&price=${test.price}`);
-                        }}
+                        onClick={() => handleBookTest(safeTestName(test), test.price)}
                         className="rounded-xl h-10 font-bold uppercase tracking-widest"
                       >
                         BOOK

@@ -130,7 +130,19 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
         {/* LOGO */}
         <div className="flex-1">
           <button 
-            onClick={() => navigate("/")} 
+            onClick={() => {
+              if (isAuthenticated) {
+                if (isAdmin) {
+                  navigate("/admin-dashboard");
+                } else if (isLabTechnician) {
+                  navigate("/lab-technician-dashboard");
+                } else {
+                  navigate("/dashboard");
+                }
+              } else {
+                navigate("/");
+              }
+            }} 
             className="flex items-center gap-3 group"
           >
             <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 group-hover:border-white/40 transition-all shadow-inner">

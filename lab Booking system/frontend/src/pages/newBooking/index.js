@@ -67,13 +67,13 @@ const sweetAlertConfig = {
     background: Theme.colors.white,
     color: Theme.colors.textDark,
     confirmButtonColor: Theme.colors.primary,
-    cancelButtonColor: Theme.colors.secondary,
+    cancelButtonColor: '#6b7280',
     customClass: {
       popup: 'rounded-lg shadow-xl',
       title: 'text-xl font-semibold',
       content: 'text-gray-700',
-      confirmButton: 'px-6 py-2 text-white font-medium rounded-lg hover:opacity-90 transition-opacity',
-      cancelButton: 'px-6 py-2 text-white font-medium rounded-lg hover:opacity-90 transition-opacity'
+      confirmButton: 'px-6 py-2 font-medium rounded-lg hover:opacity-90 transition-opacity',
+      cancelButton: 'px-6 py-2 font-medium rounded-lg hover:opacity-90 transition-opacity'
     },
     buttonsStyling: false
   },
@@ -219,12 +219,31 @@ const showPaymentSuccess = () => {
   useEffect(() => {
     const stored = localStorage.getItem("lab_user");
     const userData = stored ? JSON.parse(stored) : null;
-    if (!userData) {
-      showLoginRequiredAlert(navigate);
-      return;
-    }
     setUser(userData);
-  }, [navigate]);
+  }, []);
+
+  // Disable body scroll when modal is open
+  useEffect(() => {
+    if (showBill) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      
+      // Disable scrolling
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      document.body.style.overflow = 'hidden';
+      
+      return () => {
+        // Re-enable scrolling and restore position
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        document.body.style.overflow = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [showBill]);
 
   // Update form data when packageId or testNameParam changes
   useEffect(() => {
@@ -335,7 +354,14 @@ const showPaymentSuccess = () => {
   };
 
   const handleCreateBooking = () => {
-    if (!validateForm() || !user) return;
+    if (!validateForm()) return;
+    
+    // Check if user is authenticated
+    if (!user) {
+      showLoginRequiredAlert(navigate);
+      return;
+    }
+    
     setModalStatus({ type: "", message: "" });
     setShowBill(true);
   };

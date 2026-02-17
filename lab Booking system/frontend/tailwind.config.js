@@ -6,6 +6,28 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Success theme from the image
+        success: "#16a34a",
+        successLight: "#22c55e",
+        successBg: "#f0fdf4",
+        successBorder: "#bbf7d0",
+        
+        // Text colors
+        textPrimary: "#16a34a",
+        textSecondary: "#6b7280",
+        textMuted: "#9ca3af",
+        
+        // Background colors
+        bgPrimary: "#ffffff",
+        bgSecondary: "#f0fdf4",
+        bgMuted: "#f9fafb",
+        
+        // Button colors
+        btnPrimary: "#16a34a",
+        btnPrimaryHover: "#15803d",
+        btnSecondary: "#e5e7eb",
+        
+        // Existing colors for compatibility
         primary: "#2a7a8e",
         secondary: "#98d2e0",
         primaryHover: "#1e5a6a", 

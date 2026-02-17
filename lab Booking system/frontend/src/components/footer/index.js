@@ -1,7 +1,6 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import IconConfig from "../icon/index.js";
-import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
 
 export default function Footer() {
   const navigate = useNavigate();
@@ -106,20 +105,6 @@ export default function Footer() {
               A smart and efficient laboratory booking system to manage
               schedules, availability, and research resources with ease.
             </p>
-            <div className="flex items-center gap-2 sm:gap-3 mt-3 sm:mt-4">
-              <a href="#" aria-label="Facebook" className="p-1.5 sm:p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
-                <FaFacebook className="text-white" size={16} />
-              </a>
-              <a href="#" aria-label="Twitter" className="p-1.5 sm:p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
-                <FaTwitter className="text-white" size={16} />
-              </a>
-              <a href="#" aria-label="Instagram" className="p-1.5 sm:p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
-                <FaInstagram className="text-white" size={16} />
-              </a>
-              <a href="#" aria-label="LinkedIn" className="p-1.5 sm:p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
-                <FaLinkedin className="text-white" size={16} />
-              </a>
-            </div>
           </div>
 
           {/* MIDDLE: Quick Links */}
@@ -129,12 +114,24 @@ export default function Footer() {
             </h3>
             <ul className="space-y-1 sm:space-y-2">
               {quickLinks.map((link) => (
-                <li
-                  key={link.path}
-                  onClick={() => navigate(link.path)}
-                  className={location.pathname === link.path ? activeFooterLinkStyles : footerLinkStyles}
-                >
-                  {link.name}
+                <li key={link.path}>
+                  {link.name === "Contact Us" ? (
+                    <button
+                      onClick={() => navigate(link.path)}
+                      className={location.pathname === link.path ? activeFooterLinkStyles : footerLinkStyles}
+                    >
+                      {link.name}
+                    </button>
+                  ) : (
+                    <a
+                      href={link.path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={location.pathname === link.path ? activeFooterLinkStyles : footerLinkStyles}
+                    >
+                      {link.name}
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>

@@ -6,10 +6,10 @@ import Theme from "../../config/theam/index.js";
 import IconConfig from "../../components/icon/index.js";
 import CButton from "../../components/cButton";
 import CInput from "../../components/cInput";
-import Swal from "sweetalert2";
 import { safeFetch } from "../../config/api";
 import { CONTACT_OPTIONS, CONTACT_FAQ_ITEMS } from "../../config/staticData";
 import { useAuth } from "../../context/authContext";
+import Swal from 'sweetalert2';
 
 export default function ContactUsIndex() {
   const navigate = useNavigate();
@@ -74,137 +74,37 @@ export default function ContactUsIndex() {
     e.preventDefault();
     if (!validateForm()) return;
     
-    // Check if user is authenticated
-    if (!isAuthenticated) {
-      Swal.fire({
-        title: 'Login Required',
-        text: 'Please login to submit the Contact Us form.',
-        icon: 'warning',
-        confirmButtonColor: Theme.colors.primary,
-        confirmButtonText: 'OK',
-        customClass: {
-          popup: 'rounded-lg shadow-xl',
-          title: 'text-xl font-semibold',
-          content: 'text-gray-700',
-          confirmButton: 'px-6 py-2 text-white font-medium rounded-lg hover:opacity-90 transition-opacity'
-        },
-        buttonsStyling: false
-      });
-      navigate('/login-selection');
-      return;
-    }
-
-    // Check if user is admin (admins are not allowed to submit contact forms)
-    if (isAdmin) {
-      Swal.fire({
-        title: 'Access Denied',
-        text: 'Admin users are not allowed to submit Contact Us forms.',
-        icon: 'error',
-        confirmButtonColor: '#dc3741',
-        confirmButtonText: 'OK',
-        customClass: {
-          popup: 'rounded-lg shadow-xl',
-          title: 'text-xl font-semibold',
-          content: 'text-gray-700',
-          confirmButton: 'px-6 py-2 text-white font-medium rounded-lg hover:opacity-90 transition-opacity'
-        },
-        buttonsStyling: false
-      });
-      return;
-    }
-
-    // Allow access for authenticated users and lab technicians
-    const stored = localStorage.getItem("lab_user");
-    const user = stored ? JSON.parse(stored) : null;
-    const token = user?.token;
-    
-    if (!token) {
-      Swal.fire({
-        title: 'Authentication Error',
-        text: 'Please login again to submit the Contact Us form.',
-        icon: 'warning',
-        confirmButtonColor: Theme.colors.primary,
-        confirmButtonText: 'OK',
-        customClass: {
-          popup: 'rounded-lg shadow-xl',
-          title: 'text-xl font-semibold',
-          content: 'text-gray-700',
-          confirmButton: 'px-6 py-2 text-white font-medium rounded-lg hover:opacity-90 transition-opacity'
-        },
-        buttonsStyling: false
-      });
-      navigate('/login-selection');
-      return;
-    }
-      
     try {
       const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/contact`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          "Content-Type": "application/json"
         },
         body: JSON.stringify(formData)
       });
       const data = await res.json();
       if (res.ok && (data.success || data._id)) {
         Swal.fire({
-          title: 'Success',
-          text: 'Thank you! Your message has been sent.',
           icon: 'success',
+          title: 'Message Sent!',
+          text: 'Your message has been sent successfully. We\'ll get back to you soon.',
           confirmButtonColor: Theme.colors.primary,
-          confirmButtonText: 'OK',
-          customClass: {
-            popup: 'rounded-lg shadow-xl',
-            title: 'text-xl font-semibold',
-            content: 'text-gray-700',
-            confirmButton: 'px-6 py-2 text-white font-medium rounded-lg hover:opacity-90 transition-opacity'
-          },
-          buttonsStyling: false,
-          timer: 2000,
+          timer: 3000,
           timerProgressBar: true
         });
-        // Clear form and refresh page to update state
+        // Clear form
         setFormData({
-          name: user?.name || "",
-          email: user?.email || "",
-          phone: user?.phone || "",
+          name: "",
+          email: "",
+          phone: "",
           subject: "",
           message: ""
         });
-        // Force a page refresh to update state
-        window.location.reload();
       } else {
-        Swal.fire({
-          title: 'Error',
-          text: data.message || "Failed to submit. Please try again.",
-          icon: 'error',
-          confirmButtonColor: '#dc3741',
-          confirmButtonText: 'OK',
-          customClass: {
-            popup: 'rounded-lg shadow-xl',
-            title: 'text-xl font-semibold',
-            content: 'text-gray-700',
-            confirmButton: 'px-6 py-2 text-white font-medium rounded-lg hover:opacity-90 transition-opacity'
-          },
-          buttonsStyling: false
-        });
+        alert(data.message || "Failed to submit. Please try again.");
       }
     } catch {
-      Swal.fire({
-        title: 'Connection Error',
-        text: 'Unable to connect to server',
-        icon: 'error',
-        confirmButtonColor: '#dc3741',
-        confirmButtonText: 'OK',
-        customClass: {
-          popup: 'rounded-lg shadow-xl',
-          title: 'text-xl font-semibold',
-          content: 'text-gray-700',
-          confirmButton: 'px-6 py-2 text-white font-medium rounded-lg hover:opacity-90 transition-opacity'
-        },
-        buttonsStyling: false
-      });
+      alert('Unable to connect to server');
     }
   };
 
@@ -246,32 +146,20 @@ export default function ContactUsIndex() {
             <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-2xl p-8 border border-secondary/30">
               <div className="grid md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <CInput name="name" label="Full Name" value={formData.name} onChange={handleChange} required />
-                  {errors.name && (
-                    <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-                  )}
+                  <CInput name="name" label="Full Name" value={formData.name} onChange={handleChange} error={errors.name} required />
                 </div>
                 <div>
-                  <CInput name="email" type="email" label="Email Address" value={formData.email} onChange={handleChange} required />
-                  {errors.email && (
-                    <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-                  )}
+                  <CInput name="email" type="email" label="Email Address" value={formData.email} onChange={handleChange} error={errors.email} required />
                 </div>
               </div>
               <div className="mb-6">
-                <CInput name="phone" type="tel" label="Phone Number" value={formData.phone} onChange={handleChange} />
-                {errors.phone && (
-                  <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
-                  )}
+                <CInput name="phone" type="tel" label="Phone Number" value={formData.phone} onChange={handleChange} error={errors.phone} required />
               </div>
               <div className="mb-6">
-                <CInput name="subject" label="Subject" value={formData.subject} onChange={handleChange} required />
-                {errors.subject && (
-                  <p className="text-red-500 text-xs mt-1">{errors.subject}</p>
-                  )}
+                <CInput name="subject" label="Subject" value={formData.subject} onChange={handleChange} error={errors.subject} required />
               </div>
               <div className="mb-8">
-                <label className="block font-semibold mb-2 text-gray-700">Message</label>
+                <label className="block font-semibold mb-2 text-gray-700">Message *</label>
                 <textarea
                   name="message"
                   rows={6}
@@ -280,17 +168,22 @@ export default function ContactUsIndex() {
                   required
                   placeholder="How can we help you?"
                   className={`w-full border rounded-lg p-3 focus:ring-2 focus:ring-secondary focus:border-primary outline-none transition-all ${
-                    errors.message ? 'border-red-500' : 'border-gray-300'
+                    errors.message ? 'border-red-500 focus:ring-red-500 focus:border-red-500 bg-red-50' : 'border-gray-300'
                   }`}
                 />
                 {errors.message && (
-                  <p className="text-red-500 text-xs mt-1">{errors.message}</p>
+                  <p className="mt-1 text-sm font-medium text-red-600 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {errors.message}
+                  </p>
                   )}
               </div>
 
               <div className="text-center flex justify-center">
                 {/* Primary Color Button */}
-                <CButton type="submit" size="lg" className="px-16 bg-primary hover:bg-primaryHover text-white">
+                <CButton type="submit" size="lg" className="px-16 bg-success hover:bg-btnPrimaryHover text-white">
                   Send Message
                 </CButton>
               </div>

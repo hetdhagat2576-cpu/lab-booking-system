@@ -16,6 +16,7 @@ export default function AdminLogin() {
   const { login } = useAuth();
   const { Shield, ArrowLeft, Mail, Lock, Eye, EyeOff, User, UserCog } = IconConfig || {};
   const [formData, setFormData] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -54,7 +55,22 @@ export default function AdminLogin() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    if (errors[name]) setErrors({ ...errors, [name]: "" });
     setError("");
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Invalid email address";
+    }
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   // reCAPTCHA utility function
@@ -181,6 +197,9 @@ export default function AdminLogin() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    if (!validateForm()) {
+      return;
+    }
     setError("");
     setLoading(true);
     
@@ -293,6 +312,7 @@ export default function AdminLogin() {
               label="Email Address"
               value={formData.email}
               onChange={handleChange}
+              error={errors.email}
               required
               icon={<Mail className="w-5 h-5" />}
             />
@@ -304,6 +324,7 @@ export default function AdminLogin() {
               label="Password"
               value={formData.password}
               onChange={handleChange}
+              error={errors.password}
               required
               icon={<Lock className="w-5 h-5" />}
               className="pr-10"

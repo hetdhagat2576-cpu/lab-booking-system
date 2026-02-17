@@ -153,12 +153,12 @@ export default function ForgotPassword() {
                           disabled={loading}
                           placeholder="Enter your registered email"
                           error={!!error}
-                          helperText={error && <span className="text-red-500 text-xs">{error}</span>}
+                          helperText={error && <span className="text-red-500 text-xs font-medium">{error}</span>}
                           InputLabelProps={{ 
                             shrink: true,
                             sx: { 
                               '&.Mui-focused': { color: Theme.colors.primary },
-                              '&.Mui-error': { color: 'error.main' }
+                              '&.Mui-error': { color: '#dc2626' }
                             }
                           }}
                           InputProps={{
@@ -170,10 +170,17 @@ export default function ForgotPassword() {
                             sx: { 
                               borderRadius: '12px',
                               '&:hover fieldset': {
-                                borderColor: Theme.colors.primary,
+                                borderColor: error ? "#ef4444" : Theme.colors.primary,
                               },
                               '&.Mui-focused fieldset': {
-                                borderColor: Theme.colors.primary,
+                                borderColor: error ? "#ef4444" : Theme.colors.primary,
+                              },
+                              '&.Mui-error fieldset': {
+                                borderColor: "#ef4444",
+                                borderWidth: 2,
+                              },
+                              '&.Mui-error': {
+                                backgroundColor: "#fef2f2",
                               },
                             }
                           }}

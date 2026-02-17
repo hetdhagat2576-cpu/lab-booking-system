@@ -141,7 +141,7 @@ export default function AllHealthPackages() {
                         onClick={() => {
                           const packageId = pkg._id || pkg.packageId || pkg.id;
                           if (packageId) {
-                            navigate(`/package-details?id=${packageId}`);
+                            navigate(`/package-details/${packageId}`);
                           } else {
                             console.error('Package ID is missing:', pkg);
                           }
@@ -156,7 +156,23 @@ export default function AllHealthPackages() {
                         onClick={() => {
                           const packageId = pkg._id || pkg.packageId || pkg.id;
                           if (packageId) {
-                            navigate(`/new-booking?${pkg.type || 'package'}=${packageId}&price=${pkg.price}`);
+                            // Get user data from localStorage
+                            const storedUser = localStorage.getItem('lab_user');
+                            const user = storedUser ? JSON.parse(storedUser) : null;
+                            
+                            // Check if user is authenticated and email is verified
+                            if (user && (user.emailVerified || user.isEmailVerified)) {
+                              // User is authenticated, navigate to booking page
+                              navigate(`/booking/${packageId}`);
+                            } else {
+                              // User is not authenticated, redirect to login with booking intent
+                              navigate('/login', { 
+                                state: { 
+                                  redirectTo: `/booking/${packageId}`,
+                                  message: 'Please login to book this package'
+                                } 
+                              });
+                            }
                           } else {
                             console.error('Package ID is missing for booking:', pkg);
                           }

@@ -238,7 +238,14 @@ export default function TestDetails() {
                     fullWidth={false}
                     variant="primary"
                     className="flex-1 justify-center text-lg"
-                    onClick={() => navigate(`/new-booking?test=${test._id || test.id}&price=${test.price || 500}`)}
+                    onClick={() => {
+                      navigate('/test-booking', { 
+                        state: { 
+                          testName: safeTestName(test),
+                          price: test.price || 500
+                        } 
+                      });
+                    }}
                   >
                     Book Now at ₹{test.price || 500}
                   </CButton>

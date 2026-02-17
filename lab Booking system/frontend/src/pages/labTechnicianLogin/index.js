@@ -16,6 +16,7 @@ export default function LabTechnicianLogin() {
   const { login } = useAuth();
   const { UserCog, ArrowLeft, Mail, Lock, Eye, EyeOff, User, Shield } = IconConfig || {};
   const [formData, setFormData] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState({});
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -54,7 +55,22 @@ export default function LabTechnicianLogin() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    if (errors[name]) setErrors({ ...errors, [name]: "" });
     setError("");
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Invalid email address";
+    }
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   // reCAPTCHA utility function
@@ -188,6 +204,9 @@ export default function LabTechnicianLogin() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    if (!validateForm()) {
+      return;
+    }
     const { email, password } = formData;
     setError("");
     setLoading(true);
@@ -323,6 +342,7 @@ export default function LabTechnicianLogin() {
               label="Email Address"
               value={formData.email}
               onChange={handleChange}
+              error={errors.email}
               required
               placeholder=""
               icon={<Mail className="w-5 h-5" />}
@@ -335,6 +355,7 @@ export default function LabTechnicianLogin() {
                 label="Password"
                 value={formData.password}
                 onChange={handleChange}
+                error={errors.password}
                 required
                 icon={<Lock className="w-5 h-5" />}
                 className="pr-10"
