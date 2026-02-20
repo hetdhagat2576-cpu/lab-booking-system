@@ -313,7 +313,8 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
             </>
           ) : (
             <>
-              {!hideProfileIcon && !isAdmin && !isLabTechnician && (
+              {/* Profile Icon for authenticated users */}
+              {isAuthenticated && !hideProfileIcon && !isAdmin && !isLabTechnician && (
                 <button
                   onClick={() => {
                     const route = isLabTechnician ? "/lab-technician-profile" : "/user-profile";

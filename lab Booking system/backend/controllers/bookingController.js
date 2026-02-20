@@ -71,7 +71,7 @@ const createBooking = async (req, res) => {
       rescheduleFrom: rescheduleFrom || null,
     });
 
-    // Broadcast WebSocket notification for new booking
+    // Broadcast WebSocket message for new booking
     broadcastToLabTechnicians({
       type: 'booking_created',
       data: {
@@ -214,9 +214,9 @@ const updateBookingStatus = async (req, res) => {
         booking.rejectionReason = rejectionReason;
       }
       
-      // Send WebSocket notification when booking is approved
+      // Send WebSocket message when booking is approved
       if (adminStatus === 'approved') {
-        console.log('Broadcasting booking approval notification');
+        console.log('Broadcasting booking approval message');
         broadcastToLabTechnicians({
           type: 'booking_approved',
           data: {
@@ -234,7 +234,11 @@ const updateBookingStatus = async (req, res) => {
             timestamp: new Date().toISOString()
           }
         });
+
+        console.log('Booking approval message sent via WebSocket');
       }
+
+      console.log('Booking rejection processed');
     }
 
     // Handle booking status updates (for lab technicians)
@@ -260,7 +264,7 @@ const updateBookingStatus = async (req, res) => {
 
     await booking.save();
 
-    // Broadcast WebSocket notification for booking status update
+    // Broadcast WebSocket message for booking status update
     broadcastToLabTechnicians({
       type: 'booking_status_updated',
       data: {

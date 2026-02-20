@@ -181,7 +181,33 @@ const showBookingSuccess = () => {
 };
 
 const showPaymentSuccess = () => {
-  return showSuccessAlert('Payment Successful', 'Your booking has been confirmed!');
+  Swal.fire({
+    title: 'Payment Successful!',
+    text: 'Your booking has been confirmed! Redirecting to dashboard...',
+    icon: 'success',
+    iconColor: Theme.colors.primary,
+    background: Theme.colors.white,
+    color: Theme.colors.textDark,
+    confirmButtonColor: Theme.colors.primary,
+    customClass: {
+      popup: 'rounded-lg shadow-xl',
+      title: 'text-xl font-semibold',
+      content: 'text-gray-700',
+      confirmButton: 'px-6 py-2 font-medium rounded-lg hover:opacity-90 transition-opacity'
+    },
+    buttonsStyling: false,
+    timer: 3000,
+    timerProgressBar: true,
+    showConfirmButton: false
+  }).then(() => {
+    // Redirect to dashboard after alert closes
+    navigate('/dashboard');
+  });
+  
+  // Also redirect as fallback after 3.5 seconds
+  setTimeout(() => {
+    navigate('/dashboard');
+  }, 3500);
 };
 
   // Get selected tests for individual test
@@ -551,19 +577,19 @@ const showPaymentSuccess = () => {
             setShowBill(false);
             if (isReschedule) {
               showSuccessAlert('Booking Rescheduled', 'Your appointment has been successfully rescheduled!');
+              // Reset form after reschedule
+              setFormData({
+                labAppointment: "",
+                date: "",
+                time: "",
+                patientName: "",
+                packageName: "Lab Appointment",
+                packagePrice: 0
+              });
+              setPackageData(null);
             } else {
               showPaymentSuccess();
             }
-            // Reset form instead of redirecting
-            setFormData({
-              labAppointment: "",
-              date: "",
-              time: "",
-              patientName: "",
-              packageName: "Lab Appointment",
-              packagePrice: 0
-            });
-            setPackageData(null);
             return;
           } else {
             setModalStatus({ type: "error", message: verifyData.message || "Payment verification failed" });
@@ -652,19 +678,19 @@ const showPaymentSuccess = () => {
             setShowBill(false);
             if (isReschedule) {
               showSuccessAlert('Booking Rescheduled', 'Your appointment has been successfully rescheduled!');
+              // Reset form after reschedule
+              setFormData({
+                labAppointment: "",
+                date: "",
+                time: "",
+                patientName: "",
+                packageName: "Lab Appointment",
+                packagePrice: 0
+              });
+              setPackageData(null);
             } else {
               showPaymentSuccess();
             }
-            // Reset form instead of redirecting
-            setFormData({
-              labAppointment: "",
-              date: "",
-              time: "",
-              patientName: "",
-              packageName: "Lab Appointment",
-              packagePrice: 0
-            });
-            setPackageData(null);
             return;
           } else {
             setModalStatus({ type: "error", message: verifyData.message || "Payment verification failed" });

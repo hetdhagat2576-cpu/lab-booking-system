@@ -123,10 +123,10 @@ export default function RazorpayPaymentPage() {
             setLoading(false);
             return;
           }
-          setStatus({ type: "success", message: "Payment successful (mock)! Redirecting..." });
+          setStatus({ type: "success", message: "Payment successful (mock)! Redirecting to dashboard..." });
           setLoading(false);
           setTimeout(() => {
-            navigate("/history");
+            navigate("/dashboard");
           }, 2000);
           return;
         } catch (e) {
@@ -184,9 +184,9 @@ export default function RazorpayPaymentPage() {
               setLoading(false);
               return;
             }
-            setStatus({ type: "success", message: "Payment successful! Redirecting..." });
+            setStatus({ type: "success", message: "Payment successful! Redirecting to dashboard..." });
             setTimeout(() => {
-              navigate("/history");
+              navigate("/dashboard");
             }, 2000);
           } catch (e) {
             console.error('Payment verification error:', e);

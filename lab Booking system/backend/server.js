@@ -132,18 +132,41 @@ const wss = new WebSocket.Server({ server });
 const bookingController = require('./controllers/bookingController');
 bookingController.setWebSocketServer(wss);
 
-wss.on('connection', (ws) => {
+
+wss.on('connection', (ws, req) => {
   console.log('New WebSocket connection established');
+  
+  // Extract user ID from query parameters or headers
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const userId = url.searchParams.get('userId');
+  
+  if (userId) {
+    ws.userId = userId;
+    console.log(`WebSocket connection associated with user: ${userId}`);
+  }
   
   ws.on('message', (message) => {
     console.log('Received:', message);
     
-    // Broadcast to all connected clients
-    wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(message);
+    try {
+      const parsedMessage = JSON.parse(message);
+      
+      // Handle user identification
+      if (parsedMessage.type === 'authenticate' && parsedMessage.userId) {
+        ws.userId = parsedMessage.userId;
+        console.log(`WebSocket authenticated for user: ${parsedMessage.userId}`);
+        return;
       }
-    });
+      
+      // Broadcast to all connected clients
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(message);
+        }
+      });
+    } catch (error) {
+      console.error('Error parsing WebSocket message:', error);
+    }
   });
 
   ws.on('close', () => {

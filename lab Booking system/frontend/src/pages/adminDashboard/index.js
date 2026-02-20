@@ -78,37 +78,6 @@ export default function AdminDashboardIndex() {
     FileText, Settings, HelpCircle, ShieldCheck, Globe, Home, TestTube, Package, Plus, Edit2, Calendar, Zap, Cloud, Eye, Lock, Clock, TrendingUp, Mail, Phone, Stethoscope
   } = IconConfig;
 
-  // WebSocket connection for real-time notifications
-  const [ws, setWs] = useState(null);
-
-  // Initialize WebSocket connection
-  useEffect(() => {
-    if (user?.token) {
-      const websocketUrl = `${process.env.REACT_APP_WS_URL || 'ws://localhost:5001'}`;
-      const websocket = new WebSocket(websocketUrl);
-      
-      websocket.onopen = () => {
-        console.log('Admin WebSocket connected');
-        setWs(websocket);
-      };
-      
-      websocket.onerror = (error) => {
-        console.error('Admin WebSocket error:', error);
-      };
-      
-      websocket.onclose = () => {
-        console.log('Admin WebSocket disconnected');
-        setWs(null);
-      };
-      
-      return () => {
-        if (websocket.readyState === WebSocket.OPEN) {
-          websocket.close();
-        }
-      };
-    }
-  }, [user]);
-
   const [activeTab, setActiveTab] = useState("registration");
   const [bookings, setBookings] = useState([]);
   const [lastUpdated, setLastUpdated] = useState(new Date());
@@ -3152,20 +3121,6 @@ export default function AdminDashboardIndex() {
           confirmButtonColor: Theme.colors.primary
         });
         console.log(`Booking ${id} approved successfully`);
-        
-        // Emit WebSocket event to notify technicians
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          const approvedBooking = bookings.find(b => b._id === id);
-          ws.send(JSON.stringify({
-            type: 'booking_approved',
-            data: {
-              bookingId: id,
-              booking: approvedBooking,
-              timestamp: new Date().toISOString()
-            }
-          }));
-          console.log('WebSocket event sent for booking approval');
-        }
         
         // Refresh bookings to ensure data consistency
         setTimeout(() => fetchBookings(), 1000);

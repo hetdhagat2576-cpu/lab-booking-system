@@ -91,9 +91,9 @@ export default function App() {
   return (
     <AuthProvider>
       <Router>
-        <Loader />
-        <ScrollToTop />
-        <Routes>
+          <Loader />
+          <ScrollToTop />
+          <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login-selection" element={<LoginSelection />} />
         <Route path="/admin-login" element={<AdminLogin />} />
@@ -162,7 +162,7 @@ export default function App() {
           </ProtectedRoute>
         } />
       </Routes>
-    </Router>
-  </AuthProvider>
-);
+        </Router>
+    </AuthProvider>
+  );
 }
