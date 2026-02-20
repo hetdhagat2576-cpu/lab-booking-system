@@ -36,12 +36,7 @@ export default function Fever() {
     
     if (user && (user.emailVerified || user.isEmailVerified)) {
       // User is authenticated, navigate to booking page
-      navigate('/test-booking', { 
-        state: { 
-          testName: testName,
-          price: price
-        } 
-      });
+      navigate(`/new-booking?name=${encodeURIComponent(testName)}&price=${price}`);
     } else {
       // User is not authenticated, show SweetAlert prompt
       Swal.fire({
@@ -57,7 +52,7 @@ export default function Fever() {
         if (result.isConfirmed) {
           navigate('/login', { 
             state: { 
-              redirectTo: '/test-booking',
+              redirectTo: `/new-booking?name=${encodeURIComponent(testName)}&price=${price}`,
               bookingData: { testName: testName, price: price },
               message: 'Please login to book this test'
             } 

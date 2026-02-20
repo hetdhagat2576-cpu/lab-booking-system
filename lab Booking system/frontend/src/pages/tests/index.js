@@ -81,44 +81,15 @@ export default function AllTests() {
   useEffect(() => {
     const fetchTests = async () => {
       try {
-        // First try to get synchronized tests from localStorage (from dashboard)
-        const dashboardTests = [];
+        // Clear localStorage cache to ensure fresh data from API
+        console.log('=== Clearing localStorage cache for fresh data ===');
         const healthConcerns = ['diabetes', 'thyroid', 'kidney', 'liver', 'lungs', 'fever'];
-        
-        console.log('=== Checking localStorage for synchronized tests ===');
         healthConcerns.forEach(concern => {
-          const storageKey = `health_concern_${concern}_tests`;
-          const storedTests = localStorage.getItem(storageKey);
-          console.log(`Key: ${storageKey}, Data exists: ${!!storedTests}`);
-          
-          if (storedTests) {
-            try {
-              const tests = JSON.parse(storedTests);
-              console.log(`Found ${tests.length} tests for ${concern}:`, tests.map(t => ({ name: t.name, _id: t._id })));
-              dashboardTests.push(...tests);
-            } catch (error) {
-              console.error(`Error parsing synchronized tests for ${concern}:`, error);
-            }
-          }
+          localStorage.removeItem(`health_concern_${concern}_tests`);
         });
 
-        // Remove duplicates based on _id
-        const uniqueTests = dashboardTests.filter((test, index, self) =>
-          index === self.findIndex((t) => t._id === test._id)
-        );
-
-        console.log(`Total unique tests from localStorage: ${uniqueTests.length}`);
-        console.log('All unique tests:', uniqueTests.map(t => ({ name: t.name, category: t.category, _id: t._id })));
-
-        if (uniqueTests.length > 0) {
-          console.log('✅ Using synchronized tests from localStorage');
-          setTests(uniqueTests);
-          setLoading(false);
-          return;
-        }
-
-        // Fallback to API fetch if no synchronized data available
-        console.log('❌ No synchronized data found, fetching from API...');
+        // Fetch fresh data from API
+        console.log('=== Fetching fresh tests from API ===');
         const response = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests?isActive=true`);
         
         if (response.ok) {
@@ -186,7 +157,7 @@ export default function AllTests() {
           </div>
         </div>
 
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-8 overflow-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {tests.map((test) => (
               <div

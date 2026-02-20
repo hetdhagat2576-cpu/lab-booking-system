@@ -91,6 +91,11 @@ const bookingSchema = new mongoose.Schema({
       default: 0,
     },
   }],
+  rescheduleFrom: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Booking',
+    default: null,
+  },
 }, {
   timestamps: true,
 });

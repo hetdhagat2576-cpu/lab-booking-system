@@ -33,6 +33,7 @@ const createBooking = async (req, res) => {
       razorpayPaymentId,
       purpose,
       selectedTests,
+      rescheduleFrom,
     } = req.body;
 
     if (!labAppointment && !labName) {
@@ -67,6 +68,29 @@ const createBooking = async (req, res) => {
       status: 'pending',
       adminStatus: 'pending',
       selectedTests: req.body.selectedTests || [],
+      rescheduleFrom: rescheduleFrom || null,
+    });
+
+    // Broadcast WebSocket notification for new booking
+    broadcastToLabTechnicians({
+      type: 'booking_created',
+      data: {
+        booking: {
+          _id: booking._id,
+          patientName: booking.patientName,
+          labName: booking.labName,
+          labAppointment: booking.labAppointment,
+          date: booking.date,
+          time: booking.time,
+          purpose: booking.purpose,
+          packageName: booking.packageName,
+          status: booking.status,
+          adminStatus: booking.adminStatus,
+          rescheduleFrom: booking.rescheduleFrom,
+          user: booking.user
+        },
+        timestamp: new Date().toISOString()
+      }
     });
 
     res.status(201).json({
@@ -108,7 +132,8 @@ const getBookings = async (req, res) => {
       : { user: req.user._id };
 
     const bookings = await Booking.find(query)
-      .populate('user', 'name email')
+      .populate('user', 'name email phone')
+      .populate('rescheduleFrom', '_id patientName date time')
       .sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -174,6 +199,14 @@ const updateBookingStatus = async (req, res) => {
         });
       }
 
+      // Prevent admin actions on cancelled bookings
+      if (booking.status === 'cancelled') {
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot approve or reject a cancelled booking',
+        });
+      }
+
       booking.adminStatus = adminStatus;
       
       // Add rejection reason if provided
@@ -226,6 +259,28 @@ const updateBookingStatus = async (req, res) => {
     }
 
     await booking.save();
+
+    // Broadcast WebSocket notification for booking status update
+    broadcastToLabTechnicians({
+      type: 'booking_status_updated',
+      data: {
+        booking: {
+          _id: booking._id,
+          patientName: booking.patientName,
+          labName: booking.labName,
+          labAppointment: booking.labAppointment,
+          date: booking.date,
+          time: booking.time,
+          purpose: booking.purpose,
+          packageName: booking.packageName,
+          status: booking.status,
+          adminStatus: booking.adminStatus,
+          rescheduleFrom: booking.rescheduleFrom,
+          user: booking.user
+        },
+        timestamp: new Date().toISOString()
+      }
+    });
 
     console.log(`Booking ${bookingId} updated by ${req.user.role}:`, { status, adminStatus });
     res.status(200).json({

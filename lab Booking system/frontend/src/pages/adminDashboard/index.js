@@ -111,6 +111,7 @@ export default function AdminDashboardIndex() {
 
   const [activeTab, setActiveTab] = useState("registration");
   const [bookings, setBookings] = useState([]);
+  const [lastUpdated, setLastUpdated] = useState(new Date());
   const [bookingFilter, setBookingFilter] = useState('all');
   const [stats, setStats] = useState({ totalBookings: 0, pendingBookings: 0, approvedBookings: 0, rejectedBookings: 0, totalUsers: 0, adminUsers: 0, labtechUsers: 0, regularUsers: 0 });
   const [feedbackStats, setFeedbackStats] = useState({ totalFeedbacks: 0, pendingFeedbacks: 0, reviewedFeedbacks: 0, resolvedFeedbacks: 0 });
@@ -355,6 +356,7 @@ export default function AdminDashboardIndex() {
         console.log('Bookings response:', result);
         const list = result.data || [];
         setBookings(list);
+        setLastUpdated(new Date());
         const pending = list.filter(b => (b.adminStatus || '').toLowerCase() === 'pending').length;
         const approved = list.filter(b => (b.adminStatus || '').toLowerCase() === 'approved').length;
         const rejected = list.filter(b => (b.adminStatus || '').toLowerCase() === 'rejected').length;
@@ -1250,8 +1252,8 @@ export default function AdminDashboardIndex() {
       // For now, we'll use the existing health concern data since there's no separate details API
       const concern = healthConcerns.find(c => c._id === concernId);
       if (concern) {
-        // Ensure recommendedTests is always an array of strings
-        const recommendedTests = tests.slice(0, 3).map(test => 
+        // Ensure recommendedTests includes all available tests
+        const recommendedTests = tests.map(test => 
           typeof test === 'string' ? test : (test.name || 'Test')
         );
         
@@ -1261,7 +1263,7 @@ export default function AdminDashboardIndex() {
             // Add some mock detailed data for demonstration
             detailedDescription: `${concern.description} This category includes comprehensive health screenings and diagnostic tests specifically designed for ${concern.title.toLowerCase()} health assessment.`,
             recommendedTests: recommendedTests,
-            averagePrice: tests.slice(0, 3).reduce((sum, test) => sum + (test.price || 0), 0) / 3,
+            averagePrice: tests.length > 0 ? tests.reduce((sum, test) => sum + (test.price || 0), 0) / tests.length : 0,
             preparationRequired: 'Fasting for 8-12 hours may be required. Please bring previous medical reports.',
             sampleCollection: 'Blood and urine samples will be collected at our facility.',
             reportDelivery: 'Reports will be available within 24-48 hours.'
@@ -3048,8 +3050,18 @@ export default function AdminDashboardIndex() {
   useEffect(() => {
     if (activeTab === 'bookings' && user?.token) {
       fetchBookings();
+      
+      // Set up polling to refresh bookings every 10 seconds
+      const pollingInterval = setInterval(() => {
+        fetchBookings();
+      }, 10000);
+      
+      // Cleanup interval when component unmounts or tab changes
+      return () => {
+        clearInterval(pollingInterval);
+      };
     }
-  }, [activeTab, user]);
+  }, [activeTab, user, fetchBookings]);
 
   // Fetch feedbacks when feedback tab is active
   useEffect(() => {
@@ -4050,18 +4062,24 @@ export default function AdminDashboardIndex() {
                                   <td className="p-4 text-sm">
                                     <div>{b.date}</div>
                                     <div className="text-gray-500">{b.time} ({b.duration})</div>
+                                    {b.rescheduleFrom && (
+                                      <div className="text-xs text-blue-600 mt-1">
+                                        Rescheduled from: {b.rescheduleFrom._id?.slice(-6) || b.rescheduleFrom.slice(-6)}
+                                      </div>
+                                    )}
                                   </td>
                                   <td className="p-4">
                                     <span className={`px-2 py-1 text-xs rounded-full font-medium ${
+                                      b.status === 'cancelled' ? 'bg-red-100 text-red-800' :
                                       b.adminStatus === 'approved' ? 'bg-green-100 text-green-800' :
                                       b.adminStatus === 'rejected' ? 'bg-red-100 text-red-800' :
                                       'bg-yellow-100 text-yellow-800'
                                     }`}>
-                                      {b.adminStatus || 'pending'}
+                                      {b.status === 'cancelled' ? 'Cancelled' : (b.adminStatus || 'pending')}
                                     </span>
                                   </td>
                                   <td className="p-4 text-right">
-                                    {b.adminStatus === 'pending' && (
+                                    {b.adminStatus === 'pending' && b.status !== 'cancelled' && (
                                       <div className="flex justify-end gap-2">
                                         <CButton 
                                           onClick={() => handleApprove(b._id || b.id)} 
@@ -4096,6 +4114,13 @@ export default function AdminDashboardIndex() {
                                         </CButton>
                                       </div>
                                     )}
+                                    {b.status === 'cancelled' && (
+                                      <div className="flex justify-end">
+                                        <span className="px-3 py-1 text-xs font-medium text-red-600 bg-red-100 rounded-full">
+                                          Cancelled by User
+                                        </span>
+                                      </div>
+                                    )}
                                   </td>
                                 </tr>
                               ))}
@@ -4123,13 +4148,15 @@ export default function AdminDashboardIndex() {
                             </div>
                             <span className={`px-2 py-1 text-xs rounded-full`}
                               style={{
-                                backgroundColor: b.adminStatus === 'approved' ? Theme.colors.emerald100 : 
+                                backgroundColor: b.status === 'cancelled' ? '#FEE2E2' : 
+                                               b.adminStatus === 'approved' ? Theme.colors.emerald100 : 
                                                b.adminStatus === 'rejected' ? Theme.colors.red50 : Theme.colors.yellow50,
-                                color: b.adminStatus === 'approved' ? Theme.colors.emerald600 : 
+                                color: b.status === 'cancelled' ? '#DC2626' : 
+                                       b.adminStatus === 'approved' ? Theme.colors.emerald600 : 
                                        b.adminStatus === 'rejected' ? Theme.colors.red600 : Theme.colors.yellow600
                               }}
                             >
-                              {b.adminStatus || 'pending'}
+                              {b.status === 'cancelled' ? 'Cancelled' : (b.adminStatus || 'pending')}
                             </span>
                           </div>
                           <div className="space-y-2 text-sm">
@@ -4153,6 +4180,12 @@ export default function AdminDashboardIndex() {
                               <span className="text-gray-500">Schedule: </span>
                               <span>{b.date} at {b.time} ({b.duration})</span>
                             </div>
+                            {b.rescheduleFrom && (
+                              <div>
+                                <span className="text-gray-500">Rescheduled from: </span>
+                                <span className="text-blue-600 text-xs">{b.rescheduleFrom._id?.slice(-6) || b.rescheduleFrom.slice(-6)}</span>
+                              </div>
+                            )}
                             <div>
                               <span className="text-gray-500">Purpose: </span>
                               <span>{b.purpose}</span>
@@ -4164,7 +4197,7 @@ export default function AdminDashboardIndex() {
                               </div>
                             )}
                           </div>
-                          {b.adminStatus === 'pending' && (
+                          {b.adminStatus === 'pending' && b.status !== 'cancelled' && (
                             <div className="flex justify-end gap-2 mt-4">
                               <CButton 
                                 onClick={() => handleApprove(b._id || b.id)} 
@@ -4191,6 +4224,13 @@ export default function AdminDashboardIndex() {
                               >
                                 Reject
                               </CButton>
+                            </div>
+                          )}
+                          {b.status === 'cancelled' && (
+                            <div className="flex justify-end mt-4">
+                              <span className="px-3 py-1 text-xs font-medium text-red-600 bg-red-100 rounded-full">
+                                Cancelled by User
+                              </span>
                             </div>
                           )}
                         </div>

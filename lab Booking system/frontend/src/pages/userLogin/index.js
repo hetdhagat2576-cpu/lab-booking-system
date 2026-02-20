@@ -295,32 +295,17 @@ export default function UserLogin() {
           />
 
           <div className="space-y-1">
-            <div className="relative">
-              <CInput
-                type={showPassword ? "text" : "password"}
-                name="password"
-                label="Password"
-                value={formData.password}
-                onChange={handleChange}
-                error={errors.password}
-                required
-                icon={<Lock className="w-5 h-5" />}
-                className="pr-10"
-                style={{ textAlign: 'center' }}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none focus:text-gray-600 transition-colors z-10"
-                aria-label={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? (
-                  <EyeOff size={20} />
-                ) : (
-                  <Eye size={20} />
-                )}
-              </button>
-            </div>
+            <CInput
+              type="password"
+              name="password"
+              label="Password"
+              value={formData.password}
+              onChange={handleChange}
+              error={errors.password}
+              required
+              icon={<Lock className="w-5 h-5" />}
+              showPasswordToggle={true}
+            />
             <div className="flex justify-end">
               <button
                 type="button"

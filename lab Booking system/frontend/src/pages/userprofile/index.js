@@ -16,7 +16,7 @@ import {
 export default function UserProfileIndex() {
   const navigate = useNavigate();
   const { user, updateUser } = useAuth();
-  const { User, Mail, MapPin, Activity, Award, Calendar, Phone, MessageSquare, FileText, Settings, History, Star, ChevronLeft, Trash2 } = IconConfig;
+  const { User, Mail, MapPin, Activity, Award, Calendar, Phone, MessageSquare, FileText, Settings, History, Star, ChevronLeft, Trash2, X, Clock } = IconConfig;
   
   // State for user profile fields
   const [formData, setFormData] = useState({
@@ -398,6 +398,88 @@ export default function UserProfileIndex() {
         });
       }
     }
+  };
+
+  // Handle cancel booking
+  const handleCancelBooking = async (bookingId) => {
+    const result = await Swal.fire({
+      title: 'Cancel Booking',
+      text: "Are you sure you want to cancel this booking? This action cannot be undone.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Yes, Cancel Booking',
+      cancelButtonText: 'No, Keep Booking'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await safeFetch(createApiUrl(`/api/bookings/${bookingId}/status`), {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user?.token || ""}`
+          },
+          body: JSON.stringify({ status: 'cancelled' })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          // Update local state to reflect the change
+          setBookings(prev => prev.map(booking => 
+            booking._id === bookingId 
+              ? { ...booking, status: 'cancelled' }
+              : booking
+          ));
+
+          // Update stats
+          setStats(prev => ({
+            ...prev,
+            upcoming: prev.upcoming - 1
+          }));
+
+          Swal.fire({
+            icon: 'success',
+            title: 'Booking Cancelled',
+            text: 'Your booking has been successfully cancelled.',
+            timer: 2000,
+            showConfirmButton: false
+          });
+        } else {
+          throw new Error(data.message || 'Failed to cancel booking');
+        }
+      } catch (error) {
+        console.error('Error cancelling booking:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Cancellation Failed',
+          text: error.message || 'Unable to cancel booking. Please try again.',
+          confirmButtonColor: Theme.colors.primary
+        });
+      }
+    }
+  };
+
+  // Handle reschedule booking
+  const handleRescheduleBooking = (booking) => {
+    // Navigate to booking page with pre-filled data
+    const queryParams = new URLSearchParams();
+    
+    if (booking.packageName) {
+      queryParams.append('name', booking.packageName);
+    }
+    if (booking.packagePrice) {
+      queryParams.append('price', booking.packagePrice);
+    }
+    if (booking.selectedTests && booking.selectedTests.length > 0) {
+      queryParams.append('tests', JSON.stringify(booking.selectedTests));
+    }
+    queryParams.append('reschedule', 'true');
+    queryParams.append('originalBookingId', booking._id);
+    
+    navigate(`/new-booking?${queryParams.toString()}`);
   };
   // Loading state
   if (loading) {
@@ -1144,7 +1226,7 @@ export default function UserProfileIndex() {
                               </div>
                             </div>
                             
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between mb-3">
                               <span className="text-sm font-medium text-gray-700">
                                 {booking.testName || booking.packageName || "Lab Test"}
                               </span>
@@ -1153,6 +1235,7 @@ export default function UserProfileIndex() {
                                 size="small"
                                 color={booking.status === "completed" ? "success" : 
                                        booking.status === "confirmed" ? "primary" : 
+                                       booking.status === "cancelled" ? "error" :
                                        "warning"}
                                 variant="outlined"
                                 className="font-medium text-xs"
@@ -1160,9 +1243,61 @@ export default function UserProfileIndex() {
                             </div>
                             
                             <div className="mt-3 pt-3 border-t border-gray-100">
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-gray-600 mb-3">
                                 {booking.location || "Wellness Center Lab"}
                               </p>
+                              
+                              {/* Action buttons based on booking status */}
+                              {booking.status === "pending" && (
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="error"
+                                    onClick={() => handleCancelBooking(booking._id)}
+                                    startIcon={<X className="w-4 h-4" />}
+                                    sx={{
+                                      fontSize: '0.75rem',
+                                      py: 0.5,
+                                      px: 1,
+                                      borderColor: '#ef4444',
+                                      color: '#ef4444',
+                                      '&:hover': {
+                                        borderColor: '#dc2626',
+                                        backgroundColor: '#fef2f2'
+                                      }
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              )}
+                              
+                              {/* Show Reschedule button only for cancelled bookings */}
+                              {booking.status === "cancelled" && (
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="primary"
+                                    onClick={() => handleRescheduleBooking(booking)}
+                                    startIcon={<Clock className="w-4 h-4" />}
+                                    sx={{
+                                      fontSize: '0.75rem',
+                                      py: 0.5,
+                                      px: 1,
+                                      borderColor: Theme.colors.primary,
+                                      color: Theme.colors.primary,
+                                      '&:hover': {
+                                        borderColor: Theme.colors.primaryHover,
+                                        backgroundColor: `${Theme.colors.primary}08`
+                                      }
+                                    }}
+                                  >
+                                    Reschedule
+                                  </Button>
+                                </div>
+                              )}
                             </div>
                           </CardContent>
                         </Card>

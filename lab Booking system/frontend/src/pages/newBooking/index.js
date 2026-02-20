@@ -18,6 +18,9 @@ export default function NewBooking() {
   const packageId = searchParams.get("package");
   const testNameParam = searchParams.get("name");
   const testPriceParam = searchParams.get("price");
+  const isReschedule = searchParams.get("reschedule") === "true";
+  const originalBookingId = searchParams.get("originalBookingId");
+  const testsParam = searchParams.get("tests");
   const { Calendar, ArrowLeft, Send, CheckCircle2, User, Receipt, X } = IconConfig;
 
   // Find package by ID across all package categories
@@ -54,7 +57,7 @@ export default function NewBooking() {
     }
     
     return {
-      name: "Lab Appointment",
+      name: isReschedule ? "Reschedule Lab Appointment" : "Lab Appointment",
       price: 0
     };
   };
@@ -183,6 +186,15 @@ const showPaymentSuccess = () => {
 
   // Get selected tests for individual test
   const getSelectedTests = () => {
+    // Handle reschedule with existing tests
+    if (testsParam) {
+      try {
+        return JSON.parse(decodeURIComponent(testsParam));
+      } catch (error) {
+        console.error('Error parsing tests parameter:', error);
+      }
+    }
+    
     // Handle individual test selection
     if (testNameParam) {
       return [{
@@ -404,7 +416,26 @@ const showPaymentSuccess = () => {
         packagePrice: 0,
         totalAmount: 0,
         selectedTests: selectedTests,
+        rescheduleFrom: isReschedule ? originalBookingId : null,
       };
+      
+      // Handle reschedule - cancel original booking first
+      if (isReschedule && originalBookingId) {
+        try {
+          await fetch(createApiUrl(`/api/bookings/${originalBookingId}/status`), {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ status: 'cancelled' })
+          });
+        } catch (error) {
+          console.error('Error cancelling original booking:', error);
+          // Continue with new booking even if cancellation fails
+        }
+      }
+      
       // Direct booking creation without payment
       try {
         const bookingRes = await fetch(createApiUrl('/api/bookings'), {
@@ -418,7 +449,11 @@ const showPaymentSuccess = () => {
         const bookingResult = await bookingRes.json();
         if (bookingRes.ok && bookingResult.success) {
           setShowBill(false);
-          showBookingSuccess();
+          if (isReschedule) {
+            showSuccessAlert('Booking Rescheduled', 'Your appointment has been successfully rescheduled!');
+          } else {
+            showBookingSuccess();
+          }
           // Reset form instead of redirecting
           setFormData({
             labAppointment: "",
@@ -479,7 +514,26 @@ const showPaymentSuccess = () => {
             packagePrice: formData.packagePrice,
             totalAmount: amount,
             selectedTests: selectedTests,
+            rescheduleFrom: isReschedule ? originalBookingId : null,
           };
+          
+          // Handle reschedule - cancel original booking first
+          if (isReschedule && originalBookingId) {
+            try {
+              await fetch(createApiUrl(`/api/bookings/${originalBookingId}/status`), {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status: 'cancelled' })
+              });
+            } catch (error) {
+              console.error('Error cancelling original booking:', error);
+              // Continue with new booking even if cancellation fails
+            }
+          }
+          
           const verifyRes = await fetch(createApiUrl('/api/payments/verify'), {
             method: "POST",
             headers: {
@@ -495,7 +549,11 @@ const showPaymentSuccess = () => {
           if (verifyRes.ok && verifyData.success) {
             // Only close modal and show success AFTER payment is verified
             setShowBill(false);
-            showPaymentSuccess();
+            if (isReschedule) {
+              showSuccessAlert('Booking Rescheduled', 'Your appointment has been successfully rescheduled!');
+            } else {
+              showPaymentSuccess();
+            }
             // Reset form instead of redirecting
             setFormData({
               labAppointment: "",
@@ -555,7 +613,26 @@ const showPaymentSuccess = () => {
             packagePrice: formData.packagePrice,
             totalAmount: amount,
             selectedTests: selectedTests,
+            rescheduleFrom: isReschedule ? originalBookingId : null,
           };
+          
+          // Handle reschedule - cancel original booking first
+          if (isReschedule && originalBookingId) {
+            try {
+              await fetch(createApiUrl(`/api/bookings/${originalBookingId}/status`), {
+                method: 'PATCH',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ status: 'cancelled' })
+              });
+            } catch (error) {
+              console.error('Error cancelling original booking:', error);
+              // Continue with new booking even if cancellation fails
+            }
+          }
+          
           const verifyRes = await fetch(createApiUrl('/api/payments/verify'), {
             method: "POST",
             headers: {
@@ -573,7 +650,11 @@ const showPaymentSuccess = () => {
           if (verifyRes.ok && verifyData.success) {
             // Only close modal and show success AFTER payment is verified
             setShowBill(false);
-            showPaymentSuccess();
+            if (isReschedule) {
+              showSuccessAlert('Booking Rescheduled', 'Your appointment has been successfully rescheduled!');
+            } else {
+              showPaymentSuccess();
+            }
             // Reset form instead of redirecting
             setFormData({
               labAppointment: "",
@@ -631,10 +712,10 @@ const showPaymentSuccess = () => {
             Back to Dashboard
           </Button>
           <Typography variant="h4" component="h1" fontWeight="bold" color={Theme.colors.primary} mb={1}>
-            New Booking
+            {isReschedule ? 'Reschedule Booking' : 'New Booking'}
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            Fill in the details below to create a new hospital lab appointment
+            {isReschedule ? 'Select a new date and time for your lab appointment' : 'Fill in the details below to create a new hospital lab appointment'}
           </Typography>
         </Box>
 
@@ -717,64 +798,107 @@ const showPaymentSuccess = () => {
                     </Card>
                   )}
 
-                  {/* Date */}
-                  <TextField
-                    fullWidth
-                    type="date"
-                    name="date"
-                    label="Appointment Date *"
-                    value={formData.date}
-                    onChange={handleChange}
-                    error={!!errors.date}
-                    helperText={errors.date && <span className="text-red-500 text-xs">{errors.date}</span>}
-                    required
-                    InputLabelProps={{ shrink: true }}
-                    inputProps={{ min: today }}
-                    InputProps={{
-                      startAdornment: (
-                        <Box sx={{ mr: 1, display: "flex", alignItems: "center" }}>
-                          <Calendar size={20} style={{ color: Theme.colors.primary }} />
-                        </Box>
-                      ),
-                    }}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        "&:hover fieldset": { borderColor: Theme.colors.primary },
-                        "&.Mui-focused fieldset": { borderColor: Theme.colors.primary },
-                      },
-                    }}
-                  />
-
-                  {/* Time */}
-                  <FormControl fullWidth error={!!errors.time}>
-                    <InputLabel id="time-label">Time *</InputLabel>
-                    <Select
-                      labelId="time-label"
-                      id="time"
-                      name="time"
-                      value={formData.time}
+                  {/* Date and Time Side by Side */}
+                  <Box sx={{ display: "flex", gap: 2 }}>
+                    {/* Date */}
+                    <TextField
+                      fullWidth
+                      type="date"
+                      name="date"
+                      label="Appointment Date *"
+                      value={formData.date}
                       onChange={handleChange}
-                      label="Time *"
-                      sx={{
-                        "& .MuiOutlinedInput-notchedOutline": {
-                          borderColor: errors.time ? "error.main" : Theme.colors.primary,
-                        },
-                        "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: Theme.colors.primary },
-                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: Theme.colors.primary },
+                      error={!!errors.date}
+                      helperText={errors.date && <span className="text-red-500 text-xs">{errors.date}</span>}
+                      required
+                      InputLabelProps={{ shrink: true }}
+                      inputProps={{ 
+                        min: today,
+                        style: { cursor: 'pointer' }
                       }}
-                    >
-                      {timeSlots.map((slot) => (
-                        <MenuItem key={slot} value={slot}>
-                          {slot}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    {errors.time && (
-                      <Typography variant="caption" className="text-red-500 text-xs" sx={{ mt: 0.5, ml: 1.75 }}>
-                        {errors.time}
-                      </Typography>
-                    )}
-                  </FormControl>
+                      InputProps={{
+                        startAdornment: (
+                          <Box sx={{ mr: 1, display: "flex", alignItems: "center", cursor: 'pointer' }}>
+                            <Calendar size={20} style={{ color: Theme.colors.primary }} />
+                          </Box>
+                        ),
+                        style: { cursor: 'pointer' },
+                        onClick: (e) => {
+                          // Stop propagation to prevent double triggering
+                          e.stopPropagation();
+                        }
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          cursor: 'pointer',
+                          "&:hover fieldset": { borderColor: Theme.colors.primary },
+                          "&.Mui-focused fieldset": { borderColor: Theme.colors.primary },
+                        },
+                        "& .MuiInputBase-input": {
+                          cursor: 'pointer'
+                        },
+                        "& .MuiFormControl-root": {
+                          cursor: 'pointer'
+                        }
+                      }}
+                      onClick={(e) => {
+                        // Force the date picker to open when clicking anywhere in the field
+                        const input = e.target.querySelector('input[type="date"]') || 
+                                     e.target.closest('.MuiOutlinedInput-root')?.querySelector('input[type="date"]') ||
+                                     document.querySelector('input[name="date"]');
+                        
+                        if (input) {
+                          input.focus();
+                          input.click();
+                          // Try to show the date picker using multiple methods
+                          if (input.showPicker) {
+                            input.showPicker();
+                          } else {
+                            // Fallback for browsers that don't support showPicker
+                            input.focus();
+                            // Create a click event to trigger the date picker
+                            const clickEvent = new MouseEvent('click', {
+                              view: window,
+                              bubbles: true,
+                              cancelable: true
+                            });
+                            input.dispatchEvent(clickEvent);
+                          }
+                        }
+                      }}
+                    />
+
+                    {/* Time */}
+                    <FormControl fullWidth error={!!errors.time}>
+                      <InputLabel id="time-label">Time *</InputLabel>
+                      <Select
+                        labelId="time-label"
+                        id="time"
+                        name="time"
+                        value={formData.time}
+                        onChange={handleChange}
+                        label="Time *"
+                        sx={{
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            borderColor: errors.time ? "error.main" : Theme.colors.primary,
+                          },
+                          "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: Theme.colors.primary },
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: Theme.colors.primary },
+                        }}
+                      >
+                        {timeSlots.map((slot) => (
+                          <MenuItem key={slot} value={slot}>
+                            {slot}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      {errors.time && (
+                        <Typography variant="caption" className="text-red-500 text-xs" sx={{ mt: 0.5, ml: 1.75 }}>
+                          {errors.time}
+                        </Typography>
+                      )}
+                    </FormControl>
+                  </Box>
 
                   {/* Patient Name - Single Patient Only */}
                   <TextField

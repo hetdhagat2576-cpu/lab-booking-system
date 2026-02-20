@@ -155,6 +155,7 @@ export default function AllHealthPackages() {
                         fullWidth
                         onClick={() => {
                           const packageId = pkg._id || pkg.packageId || pkg.id;
+                          
                           if (packageId) {
                             // Get user data from localStorage
                             const storedUser = localStorage.getItem('lab_user');
@@ -162,13 +163,13 @@ export default function AllHealthPackages() {
                             
                             // Check if user is authenticated and email is verified
                             if (user && (user.emailVerified || user.isEmailVerified)) {
-                              // User is authenticated, navigate to booking page
-                              navigate(`/booking/${packageId}`);
+                              // User is authenticated, navigate to new booking page with package ID
+                              navigate(`/new-booking?package=${encodeURIComponent(packageId)}`);
                             } else {
                               // User is not authenticated, redirect to login with booking intent
                               navigate('/login', { 
                                 state: { 
-                                  redirectTo: `/booking/${packageId}`,
+                                  redirectTo: `/new-booking?package=${encodeURIComponent(packageId)}`,
                                   message: 'Please login to book this package'
                                 } 
                               });
