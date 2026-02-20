@@ -5,6 +5,7 @@ const {
   getAllReports,
   getPatientReports,
   getReportById,
+  getReportByBookingId,
   getTodayBookings,
   getPendingReports,
   updateReport,
@@ -18,10 +19,13 @@ router.post('/', protect, authorize('labtechnician'), createReport);
 router.get('/today/bookings', protect, authorize('labtechnician'), getTodayBookings);
 router.get('/pending/reports', protect, authorize('labtechnician'), getPendingReports);
 
-// General routes (more specific first)
+// Specific routes must come before parameterized routes
+router.get('/booking/:bookingId', protect, getReportByBookingId);
 router.get('/patient/:patientId', protect, getPatientReports);
 router.get('/:id/download', protect, downloadReportPDF);
 router.get('/:id', protect, getReportById);
+
+// General routes
 router.get('/', protect, authorize('labtechnician', 'admin'), getAllReports);
 router.put('/:id', protect, authorize('labtechnician'), updateReport);
 router.delete('/:id', protect, authorize('labtechnician', 'admin'), deleteReport);

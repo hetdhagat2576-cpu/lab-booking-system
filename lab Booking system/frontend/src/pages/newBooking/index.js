@@ -810,7 +810,6 @@ const showPaymentSuccess = () => {
                       onChange={handleChange}
                       error={!!errors.date}
                       helperText={errors.date && <span className="text-red-500 text-xs">{errors.date}</span>}
-                      required
                       InputLabelProps={{ shrink: true }}
                       inputProps={{ 
                         min: today,
@@ -910,7 +909,6 @@ const showPaymentSuccess = () => {
                     onChange={handleChange}
                     error={!!errors.patientName}
                     helperText={errors.patientName && <span className="text-red-500 text-xs">{errors.patientName}</span>}
-                    required
                     InputProps={{
                       startAdornment: (
                         <Box sx={{ mr: 1, display: "flex", alignItems: "center" }}>

@@ -233,7 +233,6 @@ export default function UserLogin() {
                 label="Email Address"
                 value={forgetEmail}
                 onChange={(e) => setForgetEmail(e.target.value)}
-                required
               />
               <CButton
                 type="submit"
@@ -291,7 +290,6 @@ export default function UserLogin() {
             value={formData.email}
             onChange={handleChange}
             error={errors.email}
-            required
           />
 
           <div className="space-y-1">
@@ -302,7 +300,6 @@ export default function UserLogin() {
               value={formData.password}
               onChange={handleChange}
               error={errors.password}
-              required
               icon={<Lock className="w-5 h-5" />}
               showPasswordToggle={true}
             />

@@ -343,7 +343,6 @@ export default function LabTechnicianLogin() {
               value={formData.email}
               onChange={handleChange}
               error={errors.email}
-              required
               placeholder=""
               icon={<Mail className="w-5 h-5" />}
             />
@@ -355,7 +354,6 @@ export default function LabTechnicianLogin() {
                 value={formData.password}
                 onChange={handleChange}
                 error={errors.password}
-                required
                 icon={<Lock className="w-5 h-5" />}
                 showPasswordToggle={true}
               />

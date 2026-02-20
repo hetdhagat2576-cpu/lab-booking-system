@@ -34,6 +34,8 @@ import TermsCondition from "./pages/termsCondition";
 import Feedback from "./pages/feedBack";
 import FAQ from "./pages/faq";
 import RazorpayPaymentPage from "./pages/razorepay";
+import Reports from "./pages/reports";
+import ReportView from "./pages/reportView";
 import PackageDetails from "./pages/packageDetails";
 import RecommendedDetail from "./pages/recommendedDetail";
 import TestDetails from "./pages/testDetails";
@@ -149,6 +151,16 @@ export default function App() {
         <Route path="/terms-condition" element={<TermsCondition />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/feedback" element={<Feedback />} />
+        <Route path="/reports" element={
+          <ProtectedRoute>
+            <Reports />
+          </ProtectedRoute>
+        } />
+        <Route path="/reportView/:reportId" element={
+          <ProtectedRoute>
+            <ReportView />
+          </ProtectedRoute>
+        } />
       </Routes>
     </Router>
   </AuthProvider>

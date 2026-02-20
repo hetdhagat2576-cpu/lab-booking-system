@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -12,12 +12,40 @@ const api = axios.create({
 
 // Add auth token to requests
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  const storedUser = localStorage.getItem('lab_user');
+  console.log('ReportService - Stored user found:', !!storedUser);
+  
+  if (storedUser) {
+    try {
+      const userData = JSON.parse(storedUser);
+      console.log('ReportService - User data parsed:', !!userData);
+      console.log('ReportService - Token found:', !!userData.token);
+      
+      if (userData.token) {
+        config.headers.Authorization = `Bearer ${userData.token}`;
+        console.log('ReportService - Authorization header set:', config.headers.Authorization);
+      }
+    } catch (error) {
+      console.error('Error parsing user data for token:', error);
+    }
   }
   return config;
 });
+
+// Add response interceptor for debugging
+api.interceptors.response.use(
+  (response) => {
+    console.log('ReportService - Response successful:', response.status, response.config.url);
+    return response;
+  },
+  (error) => {
+    console.error('ReportService - Response error:', error.response?.status, error.response?.data, error.config?.url);
+    if (error.response?.status === 401) {
+      console.error('ReportService - Authentication failed. Token may be expired or invalid.');
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const reportService = {
   // Get all reports (for lab technicians/admins)
@@ -32,6 +60,12 @@ export const reportService = {
     return response.data;
   },
 
+  // Get report by booking ID
+  getReportByBookingId: async (bookingId) => {
+    const response = await api.get(`/api/reports/booking/${bookingId}`);
+    return response.data;
+  },
+
   // Get single report by ID
   getReportById: async (reportId) => {
     const response = await api.get(`/api/reports/${reportId}`);
@@ -41,6 +75,12 @@ export const reportService = {
   // Create new report (for lab technicians)
   createReport: async (reportData) => {
     const response = await api.post('/api/reports', reportData);
+    return response.data;
+  },
+
+  // Get pending reports for lab technicians
+  getPendingReports: async () => {
+    const response = await api.get('/api/reports/pending/reports');
     return response.data;
   },
 

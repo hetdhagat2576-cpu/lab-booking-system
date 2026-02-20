@@ -344,8 +344,13 @@ const ReportsPage = () => {
     }
   };
 
+  const handleViewReport = (reportId) => {
+    window.open(`/reportView/${reportId}`, '_blank');
+  };
+
   const handleDeleteReport = async (reportId) => {
-    const confirmed = await showDeleteConfirm(report.testName);
+    const report = reports.find(r => r._id === reportId);
+    const confirmed = await showDeleteConfirm(report?.testName || 'this report');
     if (confirmed.isConfirmed) {
       try {
         await reportService.deleteReport(reportId);
@@ -408,6 +413,13 @@ const ReportsPage = () => {
                 </div>
                 
                 <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleViewReport(report._id)}
+                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                  >
+                    View
+                  </button>
+                  
                   <button
                     onClick={() => handleDownloadPDF(report._id)}
                     className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"

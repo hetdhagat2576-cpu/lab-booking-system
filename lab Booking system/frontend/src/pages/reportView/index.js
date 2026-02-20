@@ -119,6 +119,16 @@ const ReportView = () => {
   useEffect(() => {
     const fetchReport = async () => {
       try {
+        // Check if user is authenticated
+        console.log('ReportView - User:', user);
+        console.log('ReportView - Token exists:', !!user?.token);
+        
+        if (!user || !user.token) {
+          setError('Please log in to view reports');
+          setLoading(false);
+          return;
+        }
+
         const response = await reportService.getReportById(reportId);
         if (response.success) {
           setReport(response.data);
@@ -126,8 +136,18 @@ const ReportView = () => {
           setError(response.message || 'Failed to load report');
         }
       } catch (err) {
-        setError('Error loading report. Please try again.');
         console.error('Error fetching report:', err);
+        if (err.response?.status === 401) {
+          setError('Authentication failed. Please log in again.');
+          // Optionally redirect to login
+          setTimeout(() => {
+            navigate('/login-selection');
+          }, 2000);
+        } else if (err.response?.status === 404) {
+          setError('Report not found.');
+        } else {
+          setError('Error loading report. Please try again.');
+        }
       } finally {
         setLoading(false);
       }
@@ -136,7 +156,7 @@ const ReportView = () => {
     if (reportId) {
       fetchReport();
     }
-  }, [reportId]);
+  }, [reportId, user]);
 
   const handleDownloadPDF = async () => {
     try {

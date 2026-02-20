@@ -300,7 +300,6 @@ export default function ResetPassword() {
                           value={formData.newPassword}
                           onChange={handleChange}
                           variant="outlined"
-                          required
                           disabled={loading}
                           placeholder="Enter your new password"
                           error={!!error}
@@ -350,7 +349,6 @@ export default function ResetPassword() {
                           value={formData.confirmPassword}
                           onChange={handleChange}
                           variant="outlined"
-                          required
                           disabled={loading}
                           placeholder="Confirm your new password"
                           error={!!error}

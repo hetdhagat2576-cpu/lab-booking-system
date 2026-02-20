@@ -80,10 +80,6 @@ app.use('/api/terms', require('./routes/termsContentRoutes'));
 app.use('/api/privacy', require('./routes/privacyRoutes'));
 app.use('/api/about', require('./routes/aboutRoutes'));
 app.use('/api/payments', require('./routes/paymentRoutes'));
-app.use('/api', require('./routes/catalogRoutes'));
-app.use('/api', require('./routes/appointmentRoutes'));
-app.use('/api/user', require('./routes/userRoutes'));
-app.use('/api/session', require('./routes/sessionRoutes'));
 app.use('/api/reports', require('./routes/reportRoutes'));
 app.use('/api/tests', require('./routes/testRoutes'));
 app.use('/api/packages', require('./routes/packageRoutes'));
@@ -92,6 +88,10 @@ app.use('/api/test-details', require('./routes/testDetailRoutes'));
 app.use('/api/package-details', require('./routes/packageDetailRoutes'));
 app.use('/api/faq', require('./routes/faqRoutes'));
 app.use('/api/health-concerns', require('./routes/healthConcernRoutes'));
+app.use('/api', require('./routes/catalogRoutes'));
+app.use('/api', require('./routes/appointmentRoutes'));
+app.use('/api/user', require('./routes/userRoutes'));
+app.use('/api/session', require('./routes/sessionRoutes'));
 // Admin routes (list users, etc.)
 app.use('/api/admin', require('./routes/adminRoutes'));
 

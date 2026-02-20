@@ -10,6 +10,7 @@ import CButton from '../../components/cButton';
 import IconConfig from '../../components/icon/index.js';
 import Theme from '../../config/theam/index.js';
 import Swal from 'sweetalert2';
+import { reportService } from '../../services/reportService';
 
 const alertConfig = {
   base: { background: Theme.colors.white, color: Theme.colors.textDark, confirmButtonColor: Theme.colors.primary, cancelButtonColor: Theme.colors.secondary, customClass: { popup: 'rounded-lg shadow-xl', title: 'text-xl font-semibold', content: 'text-gray-700', confirmButton: 'px-6 py-2 text-white font-medium rounded-lg hover:opacity-90 transition-opacity', cancelButton: 'px-6 py-2 text-white font-medium rounded-lg hover:opacity-90 transition-opacity' }, buttonsStyling: false },
@@ -54,7 +55,7 @@ const TechnicianDashboard = () => {
   const getFilteredBookings = () => {
     if (testFilter === 'all') return bookings;
     if (testFilter === 'completed') return bookings.filter(b => b.status === 'completed');
-    if (testFilter === 'pending') return bookings.filter(b => (!b.status || b.status === 'pending' || b.status === 'confirmed'));
+    if (testFilter === 'pending') return bookings.filter(b => (!b.status || b.status === 'pending' || b.status === 'confirmed' || b.status === 'in_progress' || b.status === 'testing'));
     return bookings;
   };
 
@@ -82,9 +83,9 @@ const TechnicianDashboard = () => {
         setBookings(approvedBookings);
         setStats({
           todayTests: approvedBookings.length,
-          inProgress: approvedBookings.filter(b => b.status === 'in_progress').length,
+          inProgress: approvedBookings.filter(b => b.status === 'in_progress' || b.status === 'testing').length,
           completed: approvedBookings.filter(b => b.status === 'completed').length,
-          pending: approvedBookings.filter(b => (!b.status || b.status === 'pending' || b.status === 'confirmed')).length,
+          pending: approvedBookings.filter(b => (!b.status || b.status === 'pending' || b.status === 'confirmed' || b.status === 'in_progress' || b.status === 'testing')).length,
         });
       }
     } catch (error) {
@@ -146,11 +147,8 @@ const TechnicianDashboard = () => {
 
   const fetchPendingReports = useCallback(async () => {
     try {
-      const response = await fetch(createApiUrl('/api/reports/pending/reports'), {
-        headers: { Authorization: `Bearer ${user?.token || ""}` },
-      });
-      const data = await response.json();
-      if (response.ok && data.success) {
+      const data = await reportService.getPendingReports();
+      if (data.success) {
         setPendingReports(data.data || []);
       }
     } catch (error) {
@@ -174,6 +172,42 @@ const TechnicianDashboard = () => {
     
     return () => clearInterval(interval);
   }, [fetchBookings, fetchPendingReports, activeView]);
+
+  const handleViewReport = async (bookingId) => {
+    try {
+      // Check if user is authenticated
+      if (!user || !user.token) {
+        alerts.reportError('Please log in to view reports');
+        return;
+      }
+      
+      console.log('User:', user);
+      console.log('Token:', user.token ? 'Present' : 'Missing');
+      console.log('Booking ID:', bookingId);
+      
+      // Use reportService to get report by booking ID
+      const bookingData = await reportService.getReportByBookingId(bookingId);
+      
+      console.log('Response data:', bookingData);
+      
+      if (bookingData.success && bookingData.data) {
+        // Open the report view with the report ID in the same tab
+        // This ensures authentication context is preserved
+        navigate(`/reportView/${bookingData.data._id}`);
+      } else {
+        alerts.reportError('Report not found for this appointment');
+      }
+    } catch (error) {
+      console.error('Error viewing report:', error);
+      if (error.response?.status === 401) {
+        alerts.reportError('Authentication failed. Please log in again.');
+      } else if (error.response?.status === 404) {
+        alerts.reportError('Report not found for this appointment');
+      } else {
+        alerts.networkError();
+      }
+    }
+  };
 
   const handleStatusUpdate = async (bookingId, status) => {
     try {
@@ -501,13 +535,13 @@ const TechnicianDashboard = () => {
               <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-bold text-gray-900">Appointments</h2>
-                  {!showAllToday && bookings.length > 3 && (
+                  {bookings.length > 3 && (
                     <CButton
                       variant="outline"
                       size="sm"
-                      onClick={() => setShowAllToday(true)}
+                      onClick={() => setShowAllToday(!showAllToday)}
                     >
-                      View All
+                      {showAllToday ? 'View Less' : 'View All'}
                     </CButton>
                   )}
                 </div>
@@ -518,15 +552,23 @@ const TechnicianDashboard = () => {
                     <p className="text-gray-500 mt-2">Loading appointments...</p>
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-3 transition-all duration-300 ease-in-out">
                     {getFilteredBookings()
                       .slice(0, showAllToday ? undefined : 3)
                       .map((appointment, index) => (
                         <div
                           key={appointment._id || appointment.id || index}
-                          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                          className={`flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all cursor-pointer ${
+                            (appointment.status === "in_progress" || appointment.status === "testing") ? 'hover:shadow-md hover:border-primary hover:border' : ''
+                          }`}
+                          onClick={() => {
+                            if (appointment.status === "in_progress" || appointment.status === "testing") {
+                              setActiveView('reports');
+                              handleSelectAppointment(appointment);
+                            }
+                          }}
                         >
-                          <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-4 flex-1">
                             <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
                               <Users className="w-6 h-6 text-white" />
                             </div>
@@ -539,9 +581,11 @@ const TechnicianDashboard = () => {
                               </p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 ml-13">
-                            <Clock className="w-4 h-4 text-primary" />
-                            <span className="font-medium">{appointment.time || "N/A"}</span>
+                          <div className="flex flex-col justify-center items-center w-28 px-4">
+                            <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+                              <Clock className="w-4 h-4 text-primary flex-shrink-0" />
+                              <span className="font-medium text-center">{appointment.time || "N/A"}</span>
+                            </div>
                           </div>
                           <div className="flex items-center gap-3">
                             <span className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
@@ -551,9 +595,21 @@ const TechnicianDashboard = () => {
                               "bg-yellow-100 text-yellow-800"
                             }`}>
                               {appointment.adminStatus === "approved" && (!appointment.status || appointment.status === "pending") ? "Accepted" :
-                               appointment.status === "in_progress" || appointment.status === "testing" ? "Testing" :
+                               appointment.status === "in_progress" || appointment.status === "testing" ? "Testing - Click to Generate Report" :
                                appointment.status || "Pending"}
                             </span>
+                            {appointment.status === "completed" && (
+                              <CButton 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={() => handleViewReport(appointment._id || appointment.id)}
+                                fullWidth={false}
+                                className="text-xs px-3 py-1 flex items-center gap-1"
+                              >
+                                <Eye className="w-3 h-3" />
+                                View
+                              </CButton>
+                            )}
                             {appointment.adminStatus === "approved" && (!appointment.status || appointment.status === "pending") ? (
                               <CButton 
                                 variant="primary" 
@@ -594,34 +650,57 @@ const TechnicianDashboard = () => {
             <div className="dashboard-content">
               {/* Appointments List */}
               <div className="appointments-section">
-                <h2>Pending Reports</h2>
+                <div className="flex justify-between items-center mb-4">
+                  <h2>Pending Reports</h2>
+                  {selectedAppointment && (
+                    <CButton
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedAppointment(null);
+                        setActiveView('overview');
+                      }}
+                    >
+                      Back to Overview
+                    </CButton>
+                  )}
+                </div>
                 <div className="appointments-list">
-                  {pendingReports.length > 0 ? (
-                    pendingReports.map(booking => (
-                      <div
-                        key={booking._id}
-                        className={`appointment-card ${selectedAppointment?._id === booking._id ? 'selected' : ''}`}
-                        onClick={() => handleSelectAppointment(booking)}
-                      >
-                        <div className="appointment-header">
-                          <h3>{booking.patientName || booking.user?.name}</h3>
+                  {selectedAppointment ? (
+                    pendingReports.length > 0 ? (
+                      pendingReports
+                        .filter(booking => booking._id === selectedAppointment._id)
+                        .map(booking => (
+                        <div
+                          key={booking._id}
+                          className={`appointment-card ${selectedAppointment?._id === booking._id ? 'selected' : ''}`}
+                          onClick={() => handleSelectAppointment(booking)}
+                        >
+                          <div className="appointment-header">
+                            <h3>{booking.patientName || booking.user?.name}</h3>
+                          </div>
+                          <div className="appointment-details">
+                            <p><strong>Email:</strong> {booking.user?.email || 'N/A'}</p>
+                            <p><strong>Patient ID:</strong> {booking.user?._id?.toString().slice(-8) || 'N/A'}</p>
+                            <p><strong>Package:</strong> {booking.packageName}</p>
+                            <p><strong>Lab:</strong> {booking.labName}</p>
+                            <p><strong>Appointment:</strong> {booking.date} at {booking.time}</p>
+                            {booking.selectedTests && (
+                              <p><strong>Tests:</strong> {booking.selectedTests.length} test{booking.selectedTests.length > 1 ? 's' : ''}</p>
+                            )}
+                          </div>
                         </div>
-                        <div className="appointment-details">
-                          <p><strong>Email:</strong> {booking.user?.email || 'N/A'}</p>
-                          <p><strong>Patient ID:</strong> {booking.user?._id?.toString().slice(-8) || 'N/A'}</p>
-                          <p><strong>Package:</strong> {booking.packageName}</p>
-                          <p><strong>Lab:</strong> {booking.labName}</p>
-                          <p><strong>Appointment:</strong> {booking.date} at {booking.time}</p>
-                          {booking.selectedTests && (
-                            <p><strong>Tests:</strong> {booking.selectedTests.length} test{booking.selectedTests.length > 1 ? 's' : ''}</p>
-                          )}
-                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>No pending reports found for {selectedAppointment.patientName || selectedAppointment.user?.name}.</p>
+                        <p className="text-sm mt-2">This user may not have any reports pending generation.</p>
                       </div>
-                    ))
+                    )
                   ) : (
                     <div className="text-center py-8 text-gray-500">
-                      <p>No pending reports found.</p>
-                      <p className="text-sm mt-2">Approved bookings will appear here once reports are generated.</p>
+                      <p>Please select an appointment from the Overview to generate reports.</p>
+                      <p className="text-sm mt-2">Click on "Testing - Click to Generate Report" in the Overview section.</p>
                     </div>
                   )}
                 </div>

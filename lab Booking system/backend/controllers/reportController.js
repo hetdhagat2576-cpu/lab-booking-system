@@ -178,13 +178,13 @@ const getTodayBookings = async (req, res) => {
 // Get pending reports for lab technicians
 const getPendingReports = async (req, res) => {
   try {
-    // Get approved bookings that don't have reports yet
-    const bookingsWithReports = await Report.find({
+    // Get approved bookings that don't have completed reports yet
+    const bookingsWithCompletedReports = await Report.find({
       status: 'Completed'
     }).distinct('bookingId');
 
     const pendingBookings = await Booking.find({
-      _id: { $nin: bookingsWithReports },
+      _id: { $nin: bookingsWithCompletedReports },
       adminStatus: 'approved'
     })
     .populate('user', 'name email phone')
@@ -298,11 +298,38 @@ const downloadReportPDF = async (req, res) => {
   }
 };
 
+// Get report by booking ID
+const getReportByBookingId = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    
+    const report = await Report.findOne({ bookingId })
+      .populate([
+        { path: 'patientId', select: 'name email phone' },
+        { path: 'technicianId', select: 'name email' },
+        { path: 'bookingId', select: 'date time labName packageName' }
+      ]);
+
+    if (!report) {
+      return res.status(404).json({ success: false, message: 'Report not found for this booking' });
+    }
+
+    res.status(200).json({ success: true, data: report });
+  } catch (error) {
+    console.error('Get report by booking ID error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Error fetching report' 
+    });
+  }
+};
+
 module.exports = {
   createReport,
   getAllReports,
   getPatientReports,
   getReportById,
+  getReportByBookingId,
   getTodayBookings,
   getPendingReports,
   updateReport,

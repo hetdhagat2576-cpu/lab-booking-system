@@ -313,7 +313,6 @@ export default function AdminLogin() {
               value={formData.email}
               onChange={handleChange}
               error={errors.email}
-              required
               icon={<Mail className="w-5 h-5" />}
             />
           
@@ -324,7 +323,6 @@ export default function AdminLogin() {
               value={formData.password}
               onChange={handleChange}
               error={errors.password}
-              required
               icon={<Lock className="w-5 h-5" />}
               showPasswordToggle={true}
             />

@@ -271,7 +271,6 @@ export default function RegisterIndex() {
               onChange={handleChange}
               error={!!errors.name}
               helperText={errors.name && <span className="text-red-500 text-xs font-medium">{errors.name}</span>}
-              required
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -315,7 +314,6 @@ export default function RegisterIndex() {
               onChange={handleChange}
               error={!!errors.email}
               helperText={errors.email && <span className="text-red-500 text-xs font-medium">{errors.email}</span>}
-              required
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -353,14 +351,13 @@ export default function RegisterIndex() {
             <TextField
               fullWidth
               name="password"
+              type={showPassword ? "text" : "password"}
               label={REGISTER_PAGE_CONTENT.labels.password}
               placeholder="Create a strong password"
-              type={showPassword ? "text" : "password"}
               value={formData.password}
               onChange={handleChange}
               error={!!errors.password}
               helperText={errors.password && <span className="text-red-500 text-xs font-medium">{errors.password}</span>}
-              required
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -409,14 +406,13 @@ export default function RegisterIndex() {
             <TextField
               fullWidth
               name="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
               label={REGISTER_PAGE_CONTENT.labels.confirmPassword}
               placeholder="Confirm your password"
-              type={showConfirmPassword ? "text" : "password"}
               value={formData.confirmPassword}
               onChange={handleChange}
               error={!!errors.confirmPassword}
               helperText={errors.confirmPassword && <span className="text-red-500 text-xs font-medium">{errors.confirmPassword}</span>}
-              required
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">

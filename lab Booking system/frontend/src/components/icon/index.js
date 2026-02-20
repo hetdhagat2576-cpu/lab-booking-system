@@ -11,7 +11,7 @@ import {
   Map, Shield, Bell, BarChart3, ChevronLeft, Sparkles, CalendarCheck,
   Share2, Trash2, UserCheck, HardDrive, UserCircle, CalendarClock, Home, FileBarChart,
   ChevronUp, Info, Star, LayoutDashboard, MessageSquare, PhoneCall, Menu, Plus, Edit2, Save, Settings, FileCheck, Package,
-  RotateCw, Cloud, History, Pause, Play
+  RotateCw, Cloud, History, Pause, Play, Download
 } from "lucide-react";
 
 import { FaUser, FaArrowLeft } from "react-icons/fa";
@@ -29,7 +29,7 @@ const IconConfig = {
   Bell, BarChart3, ChevronLeft, Sparkles, CalendarCheck,
   Share2, Trash2, UserCheck, HardDrive, UserCircle, CalendarClock, Home, FileBarChart,
   ChevronUp, Info, Star, LayoutDashboard, MessageSquare, PhoneCall, Menu, Plus, Edit2, Save, Settings, FileCheck, Package,
-  RotateCw, Cloud, History, Pause, Play,
+  RotateCw, Cloud, History, Pause, Play, Download,
   FaUser, FaArrowLeft
 };
 
