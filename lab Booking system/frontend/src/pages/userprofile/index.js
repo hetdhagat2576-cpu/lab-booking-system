@@ -481,6 +481,70 @@ export default function UserProfileIndex() {
     
     navigate(`/new-booking?${queryParams.toString()}`);
   };
+  // Handle delete account
+  const handleDeleteAccount = async () => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'This will permanently delete your account from our records.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#dc2626',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (result.isConfirmed) {
+      if (!user || !user.token) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Authentication Error',
+          text: 'Please login to delete your account',
+          confirmButtonColor: Theme.colors.primary
+        });
+        return;
+      }
+
+      try {
+        const response = await safeFetch(createApiUrl('/api/user/delete-account'), {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.token}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Account Deleted',
+            text: 'Your account has been permanently deleted.',
+            confirmButtonColor: Theme.colors.primary,
+            timer: 2000,
+            timerProgressBar: true,
+            showConfirmButton: false
+          }).then(() => {
+            // Clear user context and redirect to signup/home page
+            updateUser(null);
+            navigate('/signup');
+          });
+        } else {
+          throw new Error(data.message || 'Failed to delete account');
+        }
+      } catch (error) {
+        console.error('Error deleting account:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Deletion Failed',
+          text: error.message || 'Unable to delete your account. Please try again.',
+          confirmButtonColor: Theme.colors.primary
+        });
+      }
+    }
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -767,7 +831,7 @@ export default function UserProfileIndex() {
                           />
                         </div>
                       </div>
-                      <div className="flex justify-end mt-6">
+                      <div className="flex justify-between mt-6">
                         <Button 
                           type="submit"
                           variant="contained" 
@@ -794,6 +858,30 @@ export default function UserProfileIndex() {
                           className="transition-all"
                         >
                           {saving ? 'Saving...' : 'Save Changes'}
+                        </Button>
+                        
+                        <Button 
+                          variant="contained" 
+                          color="error"
+                          onClick={handleDeleteAccount}
+                          sx={{ 
+                            backgroundColor: '#dc2626', 
+                            borderRadius: '10px', 
+                            textTransform: 'none', 
+                            px: 4, 
+                            py: 1.5,
+                            fontWeight: 'bold',
+                            boxShadow: `0 4px 12px #dc262630`,
+                            "&:hover": { 
+                              backgroundColor: '#b91c1c',
+                              boxShadow: `0 6px 16px #b91c1c40`,
+                              transform: 'translateY(-1px)'
+                            }
+                          }}
+                          size="medium"
+                          className="transition-all"
+                        >
+                          Delete Account
                         </Button>
                       </div>
                     </form>

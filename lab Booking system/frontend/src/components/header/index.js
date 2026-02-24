@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/authContext";
 import IconConfig from "../icon/index.js";
 import LogoutConfirmation from "../logoutConfirmation/index.js";
+import NotificationBell from "../notificationBell/index.js";
 import Theme from "../../config/theam/index.js";
 
 
@@ -313,6 +314,11 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
             </>
           ) : (
             <>
+              {/* Notification Bell for authenticated users */}
+              {isAuthenticated && !isAdmin && !isLabTechnician && (
+                <NotificationBell />
+              )}
+              
               {/* Profile Icon for authenticated users */}
               {isAuthenticated && !hideProfileIcon && !isAdmin && !isLabTechnician && (
                 <button

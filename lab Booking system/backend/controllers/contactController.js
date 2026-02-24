@@ -166,7 +166,77 @@ const deleteContact = async (req, res) => {
   }
 };
 
-module.exports = { createContactMessage, getContacts, updateContactStatus, deleteContact, clearContactsForUser };
+const markAsReviewed = async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admins only.',
+      });
+    }
+    
+    const { contactId } = req.params;
+    const contact = await ContactMessage.findById(contactId);
+    
+    if (!contact) {
+      return res.status(404).json({
+        success: false,
+        message: 'Contact message not found',
+      });
+    }
+    
+    if (contact.status === 'reviewed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Contact request is already marked as reviewed',
+      });
+    }
+    
+    const oldStatus = contact.status;
+    contact.status = 'reviewed';
+    await contact.save();
+    
+    let emailSent = false;
+    let emailError = null;
+    
+    // Send email notification
+    try {
+      console.log(`Attempting to send email to: ${contact.email} for user: ${contact.name}`); // Added for debugging
+      const emailResult = await sendContactReviewEmail(
+        contact.email,
+        contact.name,
+        contact.subject
+      );
+      
+      if (emailResult.success) {
+        emailSent = true;
+        console.log(`Email notification sent to ${contact.email} for contact request: ${contact.subject}`);
+      } else {
+        emailError = emailResult.error;
+        console.error(`Failed to send email notification: ${emailResult.error}`);
+      }
+    } catch (error) {
+      emailError = error.message;
+      console.error('Error sending email notification:', error);
+    }
+    
+    return res.status(200).json({
+      success: true,
+      message: emailSent 
+        ? 'Contact request marked as reviewed and email sent successfully'
+        : 'Contact request marked as reviewed (email delivery failed)',
+      data: contact,
+      emailSent,
+      emailError: emailError || null,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Error marking contact as reviewed',
+      error: error.message,
+    });
+  }
+};
 
 const getContactsForUser = async (req, res) => {
   try {
@@ -185,5 +255,13 @@ const getContactsForUser = async (req, res) => {
     });
   }
 };
- 
-module.exports.getContactsForUser = getContactsForUser;
+
+module.exports = { 
+  createContactMessage, 
+  getContacts, 
+  updateContactStatus, 
+  markAsReviewed,
+  deleteContact, 
+  clearContactsForUser,
+  getContactsForUser 
+};

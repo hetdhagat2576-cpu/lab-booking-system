@@ -214,6 +214,12 @@ export default function AdminLogin() {
         );
       }
       
+      console.log('Admin login attempt:', { 
+        email: formData.email, 
+        role: "admin",
+        apiUrl: createApiUrl("/api/auth/login")
+      });
+      
       const response = await fetch(createApiUrl("/api/auth/login"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -224,6 +230,8 @@ export default function AdminLogin() {
           recaptchaToken: recaptchaToken
         }),
       });
+      
+      console.log('Admin login response status:', response.status);
       
       // Handle different response scenarios
       if (!response.ok) {
@@ -238,6 +246,8 @@ export default function AdminLogin() {
       }
       
       const data = await response.json();
+      console.log('Admin login response data:', data);
+      
       if (response.ok && data.success) {
         // Show SweetAlert success message
         await Swal.fire({

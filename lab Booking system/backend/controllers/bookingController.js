@@ -1,4 +1,5 @@
 const Booking = require('../models/booking');
+const { createNotification } = require('./notificationController');
 
 // WebSocket reference - will be set from server.js
 let wss = null;
@@ -15,6 +16,35 @@ const broadcastToLabTechnicians = (message) => {
       client.send(JSON.stringify(message));
     }
   });
+};
+
+const sendNotificationToUser = (userId, notification) => {
+  if (!wss) {
+    console.log('⚠️ WebSocket server not available');
+    return;
+  }
+  
+  console.log(`🔔 Sending notification to user ${userId}:`, notification.title);
+  console.log(`📊 Active WebSocket clients: ${wss.clients.size}`);
+  
+  let sent = false;
+  wss.clients.forEach((client) => {
+    if (client.readyState === client.OPEN) {
+      console.log(`🔍 Client userId: ${client.userId}, Target userId: ${userId}`);
+      if (client.userId === userId) {
+        client.send(JSON.stringify({
+          type: 'notification',
+          data: notification
+        }));
+        console.log(`✅ Notification sent to user ${userId}`);
+        sent = true;
+      }
+    }
+  });
+  
+  if (!sent) {
+    console.log(`❌ No active WebSocket connection found for user ${userId}`);
+  }
 };
 const createBooking = async (req, res) => {
   try {
@@ -213,6 +243,50 @@ const updateBookingStatus = async (req, res) => {
       if (adminStatus === 'rejected' && rejectionReason) {
         booking.rejectionReason = rejectionReason;
       }
+
+      // Create notification for the user
+      try {
+        let notificationData = null;
+        
+        console.log(`Creating notification for booking user: ${booking.user}`);
+        console.log(`Admin status: ${adminStatus}`);
+        
+        if (adminStatus === 'approved') {
+          notificationData = await createNotification(
+            booking.user,
+            'Booking Approved',
+            'Your lab booking has been approved!',
+            'success',
+            'booking',
+            booking._id
+          );
+          console.log('✅ Approval notification created:', notificationData._id);
+        } else if (adminStatus === 'rejected') {
+          const message = rejectionReason 
+            ? `Sorry, your lab booking was rejected. Reason: ${rejectionReason}`
+            : 'Sorry, your lab booking was rejected.';
+          notificationData = await createNotification(
+            booking.user,
+            'Booking Rejected',
+            message,
+            'error',
+            'booking',
+            booking._id
+          );
+          console.log('❌ Rejection notification created:', notificationData._id);
+        }
+
+        // Send real-time notification via WebSocket
+        if (notificationData) {
+          console.log(`🔔 Sending WebSocket notification to user: ${booking.user.toString()}`);
+          sendNotificationToUser(booking.user.toString(), notificationData);
+        } else {
+          console.log('⚠️ No notification data to send via WebSocket');
+        }
+      } catch (notificationError) {
+        console.error('❌ Failed to create notification:', notificationError);
+        // Continue with the booking update even if notification fails
+      }
       
       // Send WebSocket message when booking is approved
       if (adminStatus === 'approved') {
@@ -236,6 +310,7 @@ const updateBookingStatus = async (req, res) => {
         });
 
         console.log('Booking approval message sent via WebSocket');
+
       }
 
       console.log('Booking rejection processed');

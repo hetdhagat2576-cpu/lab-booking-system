@@ -176,6 +176,25 @@ const registerUser = async (req, res) => {
       });
     }
 
+    // SECURITY: Check if user is trying to register with admin-like email
+    const adminKeywords = ['admin', 'administrator', 'superadmin', 'root'];
+    const emailLower = email.toLowerCase();
+    const hasAdminKeyword = adminKeywords.some(keyword => emailLower.includes(keyword));
+    
+    if (hasAdminKeyword) {
+      const allowedAdminEmails = [
+        'admin@labbooking.com',
+        'superadmin@labbooking.com'
+      ];
+      
+      if (!allowedAdminEmails.includes(emailLower)) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied: Admin emails require pre-authorization. Contact system administrator.',
+        });
+      }
+    }
+
     if (password.length < 6) {
       return res.status(400).json({
         success: false,
@@ -191,8 +210,20 @@ const registerUser = async (req, res) => {
       });
     }
 
-    // Auto-assign admin role for the default admin email
-    const role = email === 'admin@labbooking.com' ? 'admin' : 'user';
+    // SECURITY: Only allow pre-authorized admin emails to register as admin
+    // No automatic admin role assignment - admins must be manually created in database
+    const allowedAdminEmails = [
+      'admin@labbooking.com',
+      'superadmin@labbooking.com'
+    ];
+    
+    let role = 'user'; // Default role is always user
+    
+    // Only assign admin role if email is in the pre-authorized list
+    if (allowedAdminEmails.includes(email.toLowerCase())) {
+      role = 'admin';
+      console.log(`🔐 Admin registration attempted for pre-authorized email: ${email}`);
+    }
 
     const user = await User.create({
       name,
@@ -440,6 +471,7 @@ module.exports = {
   deleteUserByAdmin,
   forgotPassword,
   resetPassword,
+  deleteAccount,
 };
 
 async function forgotPassword(req, res) {
@@ -761,5 +793,63 @@ async function deleteUserByAdmin(req, res) {
   } catch (error) {
     console.error('Delete user error:', error);
     return res.status(500).json({ success: false, message: 'Error deleting user', error: error.message });
+  }
+}
+
+async function deleteAccount(req, res) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
+
+    const userId = req.user._id;
+    
+    // Delete related user data first
+    const Booking = require('../models/booking');
+    const Feedback = require('../models/feedback');
+    const ContactMessage = require('../models/contactMessage');
+    const Report = require('../models/report');
+    const OtpCode = require('../models/otpCode');
+    const PasswordResetToken = require('../models/passwordResetToken');
+    
+    // Delete user's bookings
+    await Booking.deleteMany({ userId: userId });
+    
+    // Delete user's feedback
+    await Feedback.deleteMany({ userId: userId });
+    
+    // Delete user's contact messages
+    await ContactMessage.deleteMany({ userId: userId });
+    
+    // Delete user's reports
+    await Report.deleteMany({ patientId: userId });
+    
+    // Delete user's OTP codes
+    await OtpCode.deleteMany({ userId: userId });
+    
+    // Delete user's password reset tokens
+    await PasswordResetToken.deleteMany({ userId: userId });
+    
+    // Delete the user
+    const deletedUser = await User.findByIdAndDelete(userId);
+    
+    if (!deletedUser) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    console.log(`User and all related data deleted: ${deletedUser.email} (ID: ${deletedUser._id})`);
+    console.log('Deleted data includes: bookings, feedback, contact messages, reports, OTP codes, password reset tokens');
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Account and all related data deleted successfully' 
+    });
+  } catch (error) {
+    console.error('Delete account error:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Error deleting account', 
+      error: error.message 
+    });
   }
 }

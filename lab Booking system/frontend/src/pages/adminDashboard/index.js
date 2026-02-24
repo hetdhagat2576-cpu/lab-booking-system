@@ -16,7 +16,7 @@ const renderHealthConcernIcon = (iconKey) => {
 };
 
 // StarRating Component
-const StarRating = ({ rating, maxRating = 5, size = 'small', showValue = true, className = '' }) => {
+const StarRating = ({ rating, maxRating = 5, size = 'small', showValue = false, className = '' }) => {
   const sizeClasses = {
     small: 'w-4 h-4',
     medium: 'w-5 h-5',
@@ -38,7 +38,7 @@ const StarRating = ({ rating, maxRating = 5, size = 'small', showValue = true, c
         </svg>
       ))}
       {showValue && (
-        <span className="ml-1 text-sm font-medium text-gray-700">
+        <span className="ml-2 text-sm font-medium text-gray-700">
           {rating}/{maxRating}
         </span>
       )}
@@ -115,6 +115,7 @@ export default function AdminDashboardIndex() {
   const [feedbacks, setFeedbacks] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [contactFilter, setContactFilter] = useState('all');
+  const [markingReviewed, setMarkingReviewed] = useState({});
   const [feedbackFilter, setFeedbackFilter] = useState('all');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
@@ -3342,6 +3343,60 @@ export default function AdminDashboardIndex() {
     }
   };
 
+  const markAsReviewed = async (id) => {
+    setMarkingReviewed(prev => ({ ...prev, [id]: true }));
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/contact/${id}/mark-reviewed`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        
+        if (result.success) {
+          await Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            html: `
+              <div class="text-left">
+                <p class="mb-2">Contact request marked as reviewed!</p>
+                ${result.emailSent ? 
+                  '<p class="text-green-600"><i class="fas fa-check-circle"></i> Email notification sent successfully</p>' : 
+                  '<p class="text-orange-600"><i class="fas fa-exclamation-triangle"></i> Email delivery failed</p>'
+                }
+              </div>
+            `,
+            confirmButtonColor: Theme.colors.primary,
+            timer: 3000,
+            timerProgressBar: true
+          });
+          
+          fetchContactsAdmin();
+        } else {
+          throw new Error(result.message || 'Failed to mark as reviewed');
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `HTTP ${response.status}: Failed to mark as reviewed`);
+      }
+    } catch (error) {
+      console.error('Error marking contact as reviewed:', error);
+      
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: error.message || 'Failed to mark contact as reviewed. Please try again.',
+        confirmButtonColor: Theme.colors.primary
+      });
+    } finally {
+      setMarkingReviewed(prev => ({ ...prev, [id]: false }));
+    }
+  };
+
   const updateContactStatus = async (id, newStatus) => {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/contact/${id}/status`, {
@@ -4250,22 +4305,27 @@ export default function AdminDashboardIndex() {
                                 <div className="flex items-center gap-2">
                                   <span className="text-xs font-medium text-gray-600 w-24">Booking:</span>
                                   <StarRating rating={f.bookingEaseRating || 0} size="small" />
+                                  <span className="text-xs font-medium text-gray-700 ml-1">{f.bookingEaseRating || 0}/5</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className="text-xs font-medium text-gray-600 w-24">Staff:</span>
                                   <StarRating rating={f.staffFriendlinessRating || 0} size="small" />
+                                  <span className="text-xs font-medium text-gray-700 ml-1">{f.staffFriendlinessRating || 0}/5</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className="text-xs font-medium text-gray-600 w-24">Wait Time:</span>
                                   <StarRating rating={f.waitTimeSatisfactionRating || 0} size="small" />
+                                  <span className="text-xs font-medium text-gray-700 ml-1">{f.waitTimeSatisfactionRating || 0}/5</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className="text-xs font-medium text-gray-600 w-24">Turnaround:</span>
                                   <StarRating rating={f.turnaroundSatisfactionRating || 0} size="small" />
+                                  <span className="text-xs font-medium text-gray-700 ml-1">{f.turnaroundSatisfactionRating || 0}/5</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className="text-xs font-medium text-gray-600 w-24">Portal:</span>
                                   <StarRating rating={f.portalEaseRating || 0} size="small" />
+                                  <span className="text-xs font-medium text-gray-700 ml-1">{f.portalEaseRating || 0}/5</span>
                                 </div>
                               </div>
                             </td>
@@ -4452,14 +4512,25 @@ export default function AdminDashboardIndex() {
                                   {c.status === 'new' && (
                                     <CButton 
                                       variant="primary" 
-                                      className="py-1 px-3 text-xs text-white border"
+                                      className="py-1 px-3 text-xs text-white border relative"
                                       style={{
                                         backgroundColor: Theme.colors.emerald600,
                                         borderColor: Theme.colors.emerald600
                                       }}
-                                      onClick={() => updateContactStatus(c._id, 'reviewed')}
+                                      onClick={() => markAsReviewed(c._id)}
+                                      disabled={markingReviewed[c._id]}
                                     >
-                                      Mark as Reviewed
+                                      {markingReviewed[c._id] ? (
+                                        <span className="flex items-center gap-2">
+                                          <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                          </svg>
+                                          Processing...
+                                        </span>
+                                      ) : (
+                                        'Mark as Reviewed'
+                                      )}
                                     </CButton>
                                   )}
                                   {/* Once marked as reviewed, status cannot be reverted */}

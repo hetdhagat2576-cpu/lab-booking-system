@@ -5,18 +5,42 @@ const createTransporter = () => {
   // For development, use a test account or configure with your email service
   // In production, you should use environment variables for these credentials
   return nodemailer.createTransport({
-    service: 'gmail', // or your email service
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: process.env.EMAIL_PORT || 587,
+    secure: process.env.EMAIL_SECURE === 'true', // true for 465, false for other ports
     auth: {
       user: process.env.EMAIL_USER || 'your-email@gmail.com',
       pass: process.env.EMAIL_PASS || 'your-app-password'
-    }
+    },
+    tls: {
+      rejectUnauthorized: false // Allow self-signed certificates in development
+    },
+    connectionTimeout: 60000, // 60 seconds
+    greetingTimeout: 30000,   // 30 seconds
+    socketTimeout: 60000,     // 60 seconds
+    debug: process.env.NODE_ENV === 'development', // Show debug output
+    logger: process.env.NODE_ENV === 'development' // Log information to console
   });
 };
 
 // Send email notification when contact request is reviewed
 const sendContactReviewEmail = async (userEmail, userName, contactSubject) => {
+  console.log(`=== EMAIL SERVICE DEBUG ===`);
+  console.log(`Sending email to: ${userEmail}`);
+  console.log(`User name: ${userName}`);
+  console.log(`Contact subject: ${contactSubject}`);
+  console.log(`Email host: ${process.env.EMAIL_HOST || 'smtp.gmail.com'}`);
+  console.log(`Email port: ${process.env.EMAIL_PORT || 587}`);
+  console.log(`Email user configured: ${!!process.env.EMAIL_USER}`);
+  console.log(`Email pass configured: ${!!process.env.EMAIL_PASS}`);
+  
   try {
     const transporter = createTransporter();
+    
+    // Verify transporter configuration before sending
+    console.log('Verifying transporter configuration...');
+    await transporter.verify();
+    console.log('Transporter verification successful');
     
     const mailOptions = {
       from: process.env.EMAIL_USER || 'your-email@gmail.com',
@@ -62,12 +86,29 @@ const sendContactReviewEmail = async (userEmail, userName, contactSubject) => {
       `
     };
 
+    console.log('Attempting to send email...');
     const result = await transporter.sendMail(mailOptions);
     console.log('Email sent successfully:', result.messageId);
+    console.log('Email response:', result.response);
     return { success: true, messageId: result.messageId };
   } catch (error) {
-    console.error('Error sending email:', error);
-    return { success: false, error: error.message };
+    console.error('=== EMAIL ERROR DETAILS ===');
+    console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
+    console.error('Error command:', error.command);
+    console.error('Full error object:', JSON.stringify(error, null, 2));
+    
+    // Specific error handling for common issues
+    if (error.code === 'EAUTH') {
+      console.error('Authentication failed - Check EMAIL_USER and EMAIL_PASS');
+      console.error('For Gmail, make sure to use an App Password, not your regular password');
+    } else if (error.code === 'ECONNECTION') {
+      console.error('Connection failed - Check EMAIL_HOST and EMAIL_PORT');
+    } else if (error.code === 'ESOCKET') {
+      console.error('Socket error - Network connectivity issue');
+    }
+    
+    return { success: false, error: error.message, code: error.code };
   }
 };
 
