@@ -19,70 +19,9 @@ const FAQ_CATEGORIES = [
   }
 ];
 
-// Default home content data
-const DEFAULT_WHY_BOOK_DATA = [
-  {
-    id: 1,
-    iconKey: "Home",
-    title: "Home Sample Collection",
-    desc: "Free and timely sample pickup by certified professionals."
-  },
-  {
-    id: 2,
-    iconKey: "CheckCircle", 
-    title: "Certified Labs",
-    desc: "ISO & NABL certified laboratories for accurate results."
-  },
-  {
-    id: 3,
-    iconKey: "Users",
-    title: "Best Prices", 
-    desc: "Compare labs and save up to 70% on test bookings."
-  },
-  {
-    id: 4,
-    iconKey: "FileText",
-    title: "Digital Reports",
-    desc: "Get your test reports delivered digitally within 24-48 hours."
-  }
-];
-
-const DEFAULT_HOW_IT_WORKS_DATA = [
-  {
-    id: 1,
-    stepNumber: 1,
-    iconKey: "Search",
-    title: "Search & Select",
-    desc: "Search for tests and labs, compare prices, and select what you need."
-  },
-  {
-    id: 2,
-    stepNumber: 2,
-    iconKey: "CreditCard",
-    title: "Book & Pay",
-    desc: "Book your test and pay securely online or choose cash on collection."
-  },
-  {
-    id: 3,
-    stepNumber: 3,
-    iconKey: "Home",
-    title: "Sample Collection",
-    desc: "Get your sample collected at home or visit the lab."
-  },
-  {
-    id: 4,
-    stepNumber: 4,
-    iconKey: "FileText",
-    title: "Get Reports",
-    desc: "Receive your test reports digitally within 24-48 hours."
-  }
-];
-
-// In-memory storage for home content (in production, use a database)
-let homeWhyBookData = [...DEFAULT_WHY_BOOK_DATA];
-let homeHowItWorksData = [...DEFAULT_HOW_IT_WORKS_DATA];
-let nextWhyBookId = DEFAULT_WHY_BOOK_DATA.length + 1;
-let nextHowItWorksId = DEFAULT_HOW_IT_WORKS_DATA.length + 1;
+// Import models
+const HomeWhyBook = require('../models/homeWhyBook');
+const HomeHowItWorks = require('../models/homeHowItWorks');
 
 const TERMS_SECTIONS = [
   {
@@ -374,38 +313,12 @@ const deleteHomeWhyBookItem = (req, res) => {
 };
 
 // Home How It Works Content Functions
-const getHomeHowItWorks = (req, res) => {
-  res.status(200).json({
-    success: true,
-    data: homeHowItWorksData
-  });
-};
-
-const createHomeHowItWorksItem = (req, res) => {
+const getHomeHowItWorks = async (req, res) => {
   try {
-    const { stepNumber, iconKey, title, desc } = req.body;
-    
-    if (!stepNumber || !iconKey || !title || !desc) {
-      return res.status(400).json({
-        success: false,
-        message: 'stepNumber, iconKey, title, and desc are required'
-      });
-    }
-
-    const newItem = {
-      id: nextHowItWorksId++,
-      stepNumber,
-      iconKey,
-      title,
-      desc
-    };
-
-    homeHowItWorksData.push(newItem);
-
-    res.status(201).json({
+    const howItWorksData = await HomeHowItWorks.find({ isActive: true }).sort({ order: 1, stepNumber: 1 });
+    res.status(200).json({
       success: true,
-      message: 'How It Works item created successfully',
-      data: newItem
+      data: howItWorksData
     });
   } catch (error) {
     res.status(500).json({
@@ -416,28 +329,65 @@ const createHomeHowItWorksItem = (req, res) => {
   }
 };
 
-const updateHomeHowItWorksItem = (req, res) => {
+const createHomeHowItWorksItem = async (req, res) => {
+  try {
+    const { stepNumber, iconKey, title, desc, order } = req.body;
+    
+    if (!stepNumber || !iconKey || !title || !desc) {
+      return res.status(400).json({
+        success: false,
+        message: 'stepNumber, iconKey, title, and desc are required'
+      });
+    }
+
+    const newItem = new HomeHowItWorks({
+      stepNumber,
+      iconKey,
+      title,
+      description: desc,
+      order: order || stepNumber
+    });
+
+    const savedItem = await newItem.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'How It Works item created successfully',
+      data: savedItem
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+const updateHomeHowItWorksItem = async (req, res) => {
   try {
     const { id } = req.params;
-    const { stepNumber, title, desc } = req.body;
+    const { stepNumber, title, desc, iconKey, order } = req.body;
 
-    const itemIndex = homeHowItWorksData.findIndex(item => item.id === parseInt(id));
+    const updateData = {};
+    if (stepNumber !== undefined) updateData.stepNumber = stepNumber;
+    if (title) updateData.title = title;
+    if (desc) updateData.description = desc;
+    if (iconKey) updateData.iconKey = iconKey;
+    if (order !== undefined) updateData.order = order;
+
+    const updatedItem = await HomeHowItWorks.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
     
-    if (itemIndex === -1) {
+    if (!updatedItem) {
       return res.status(404).json({
         success: false,
         message: 'How It Works item not found'
       });
     }
-
-    const updatedItem = {
-      ...homeHowItWorksData[itemIndex],
-      stepNumber: stepNumber !== undefined ? stepNumber : homeHowItWorksData[itemIndex].stepNumber,
-      title: title || homeHowItWorksData[itemIndex].title,
-      desc: desc || homeHowItWorksData[itemIndex].desc
-    };
-
-    homeHowItWorksData[itemIndex] = updatedItem;
 
     res.status(200).json({
       success: true,
@@ -453,20 +403,18 @@ const updateHomeHowItWorksItem = (req, res) => {
   }
 };
 
-const deleteHomeHowItWorksItem = (req, res) => {
+const deleteHomeHowItWorksItem = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const itemIndex = homeHowItWorksData.findIndex(item => item.id === parseInt(id));
+    const deletedItem = await HomeHowItWorks.findByIdAndDelete(id);
     
-    if (itemIndex === -1) {
+    if (!deletedItem) {
       return res.status(404).json({
         success: false,
         message: 'How It Works item not found'
       });
     }
-
-    homeHowItWorksData.splice(itemIndex, 1);
 
     res.status(200).json({
       success: true,

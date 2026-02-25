@@ -26,7 +26,7 @@ const StarRating = ({ rating, maxRating = 5, size = 'small', showValue = false, 
   const starSize = sizeClasses[size] || sizeClasses.small;
 
   return (
-    <div className={`flex items-center gap-1 ${className}`}>
+    <div className={`flex flex-col items-center gap-1 ${className}`}>
       {[...Array(maxRating)].map((_, i) => (
         <svg
           key={i}
@@ -38,7 +38,7 @@ const StarRating = ({ rating, maxRating = 5, size = 'small', showValue = false, 
         </svg>
       ))}
       {showValue && (
-        <span className="ml-2 text-sm font-medium text-gray-700">
+        <span className="mt-1 text-sm font-medium text-gray-700">
           {rating}/{maxRating}
         </span>
       )}
@@ -94,7 +94,7 @@ export default function AdminDashboardIndex() {
     iconKey: 'FlaskConical',
     description: '',
     isActive: true,
-    order: 0
+    order: ''
   });
   
   // Health Concern Details state for side panel
@@ -1146,13 +1146,24 @@ export default function AdminDashboardIndex() {
         ? `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns/${editingHealthConcern._id}`
         : `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns`;
       
+      // Convert order to number, default to 0 if empty
+      const processedFormData = {
+        ...formData,
+        order: formData.order === '' ? 0 : parseInt(formData.order) || 0
+      };
+      
+      // Add unique ID for new health concerns
+      if (!editingHealthConcern) {
+        processedFormData.id = `health_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      }
+      
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${user.token}`
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(processedFormData)
       });
 
       if (response.ok) {
@@ -1209,7 +1220,7 @@ export default function AdminDashboardIndex() {
       iconKey: 'FlaskConical',
       description: '',
       isActive: true,
-      order: 0
+      order: ''
     });
   };
 
@@ -1337,7 +1348,7 @@ export default function AdminDashboardIndex() {
       iconKey: concern.iconKey,
       description: concern.description,
       isActive: concern.isActive !== undefined ? concern.isActive : true,
-      order: concern.order || 0
+      order: concern.order !== undefined && concern.order !== null ? concern.order.toString() : ''
     });
     setShowHealthConcernForm(true);
   };
@@ -4301,42 +4312,39 @@ export default function AdminDashboardIndex() {
                               </div>
                             </td>
                             <td className="p-4">
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs font-medium text-gray-600 w-24">Booking:</span>
+                              <div className="flex items-start gap-3">
+                                <div className="flex flex-col items-center">
+                                  <span className="text-xs font-medium text-gray-600 mb-1">B:</span>
                                   <StarRating rating={f.bookingEaseRating || 0} size="small" />
-                                  <span className="text-xs font-medium text-gray-700 ml-1">{f.bookingEaseRating || 0}/5</span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs font-medium text-gray-600 w-24">Staff:</span>
+                                <div className="flex flex-col items-center">
+                                  <span className="text-xs font-medium text-gray-600 mb-1">S:</span>
                                   <StarRating rating={f.staffFriendlinessRating || 0} size="small" />
-                                  <span className="text-xs font-medium text-gray-700 ml-1">{f.staffFriendlinessRating || 0}/5</span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs font-medium text-gray-600 w-24">Wait Time:</span>
+                                <div className="flex flex-col items-center">
+                                  <span className="text-xs font-medium text-gray-600 mb-1">W:</span>
                                   <StarRating rating={f.waitTimeSatisfactionRating || 0} size="small" />
-                                  <span className="text-xs font-medium text-gray-700 ml-1">{f.waitTimeSatisfactionRating || 0}/5</span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs font-medium text-gray-600 w-24">Turnaround:</span>
+                                <div className="flex flex-col items-center">
+                                  <span className="text-xs font-medium text-gray-600 mb-1">T:</span>
                                   <StarRating rating={f.turnaroundSatisfactionRating || 0} size="small" />
-                                  <span className="text-xs font-medium text-gray-700 ml-1">{f.turnaroundSatisfactionRating || 0}/5</span>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs font-medium text-gray-600 w-24">Portal:</span>
+                                <div className="flex flex-col items-center">
+                                  <span className="text-xs font-medium text-gray-600 mb-1">P:</span>
                                   <StarRating rating={f.portalEaseRating || 0} size="small" />
-                                  <span className="text-xs font-medium text-gray-700 ml-1">{f.portalEaseRating || 0}/5</span>
                                 </div>
                               </div>
                             </td>
                             <td className="p-4">
                               <div className="max-w-xs">
-                                {f.subject && (
-                                  <div className="font-medium text-sm mb-1">{f.subject}</div>
+                                {f.comment && (
+                                  <div className="text-xs text-gray-600 line-clamp-3" title={f.comment}>
+                                    {f.comment}
+                                  </div>
                                 )}
-                                {f.message && (
-                                  <div className="text-xs text-gray-600 line-clamp-3" title={f.message}>
-                                    {f.message}
+                                {!f.comment && (
+                                  <div className="text-xs text-gray-400 italic">
+                                    No feedback provided
                                   </div>
                                 )}
                               </div>
@@ -4915,7 +4923,7 @@ export default function AdminDashboardIndex() {
                             <input
                               type="number"
                               value={healthConcernFormData.order}
-                              onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, order: parseInt(e.target.value) || 0 }))}
+                              onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, order: e.target.value }))}
                               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                               placeholder="Display order"
                               min="0"

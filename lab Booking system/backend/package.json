@@ -14,12 +14,12 @@
     "seed-reports": "node scripts/seedReports.js",
     "seed-home-content": "node scripts/seedHomeContent.js",
     "seed-service-content": "node scripts/seedServiceContent.js",
-    "seed-terms": "node scripts/seedTermsContent.js",
+    "seed-terms": "node scripts/seedTerms.js",
     "seed-privacy": "node scripts/seedPrivacyContent.js",
     "seed-faq": "node scripts/seedFAQ.js",
     "seed-about": "node scripts/seedAboutContent.js",
     "seed-health-concerns": "node scripts/seedHealthConcerns.js",
-    "seed-all": "node seedUsers.js && node scripts/seedTests.js && node scripts/seedPackages.js && node scripts/seedReports.js && node scripts/seedHomeContent.js && node scripts/seedServiceContent.js && node scripts/seedTermsContent.js && node scripts/seedPrivacyContent.js && node scripts/seedFAQ.js && node scripts/seedAboutContent.js"
+    "seed-all": "node seedUsers.js && node scripts/seedTests.js && node scripts/seedPackages.js && node scripts/seedReports.js && node scripts/seedHomeContent.js && node scripts/seedServiceContent.js && node scripts/seedTerms.js && node scripts/seedPrivacyContent.js && node scripts/seedFAQ.js && node scripts/seedAboutContent.js"
   },
   "dependencies": {
     "axios": "^1.13.2",

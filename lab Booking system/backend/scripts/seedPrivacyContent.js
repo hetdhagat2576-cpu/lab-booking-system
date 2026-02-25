@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const PrivacyContent = require('../models/privacyContent');
+const PrivacyContent = require('../models/privacyPolicy');
 require('dotenv').config();
 
 const seedPrivacyContent = async () => {

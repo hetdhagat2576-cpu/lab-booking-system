@@ -9,8 +9,8 @@ const createTransporter = () => {
     port: process.env.EMAIL_PORT || 587,
     secure: process.env.EMAIL_SECURE === 'true', // true for 465, false for other ports
     auth: {
-      user: process.env.EMAIL_USER || 'your-email@gmail.com',
-      pass: process.env.EMAIL_PASS || 'your-app-password'
+      user: process.env.EMAIL_USER || 'hetdhagat2576@gmail.com',
+      pass: process.env.EMAIL_PASS || 'klqtosidazgxxqj'
     },
     tls: {
       rejectUnauthorized: false // Allow self-signed certificates in development

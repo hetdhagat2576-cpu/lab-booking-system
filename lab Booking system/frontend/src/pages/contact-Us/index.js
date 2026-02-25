@@ -31,7 +31,6 @@ export default function ContactUsIndex() {
     name: "",
     email: "",
     phone: "",
-    subject: "",
     message: ""
   });
   const [errors, setErrors] = useState({});
@@ -43,10 +42,39 @@ export default function ContactUsIndex() {
     if (name === 'phone') {
       const digitsOnly = value.replace(/\D/g, '');
       setFormData({ ...formData, [name]: digitsOnly });
-      if (errors[name]) setErrors({ ...errors, [name]: "" });
     } else {
       setFormData({ ...formData, [name]: value });
-      if (errors[name]) setErrors({ ...errors, [name]: "" });
+    }
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: '' });
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    
+    // Validate field on blur if it's empty
+    if (!value.trim()) {
+      const newErrors = { ...errors };
+      switch (name) {
+        case 'name':
+          newErrors.name = 'Name is required';
+          break;
+        case 'email':
+          newErrors.email = 'Email is required';
+          break;
+        case 'phone':
+          newErrors.phone = 'Phone number is required';
+          break;
+        case 'message':
+          newErrors.message = 'Message is required';
+          break;
+        default:
+          break;
+      }
+      setErrors(newErrors);
     }
   };
 
@@ -63,7 +91,6 @@ export default function ContactUsIndex() {
     } else if (!/^\d{10}$/.test(formData.phone.replace(/\D/g, ''))) {
       newErrors.phone = "Phone number must be 10 digits";
     }
-    if (!formData.subject.trim()) newErrors.subject = "Subject is required";
     if (!formData.message.trim()) newErrors.message = "Message is required";
     
     setErrors(newErrors);
@@ -97,7 +124,6 @@ export default function ContactUsIndex() {
           name: "",
           email: "",
           phone: "",
-          subject: "",
           message: ""
         });
       } else {
@@ -143,42 +169,44 @@ export default function ContactUsIndex() {
         <section className="bg-white py-16">
           <div className="container mx-auto px-4 max-w-3xl">
             <h2 className="text-3xl font-bold text-center mb-10 text-gray-800">Send Us a Message</h2>
-            <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-2xl p-8 border border-secondary/30">
+            <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-2xl p-8 border border-secondary/30" novalidate>
               <div className="grid md:grid-cols-2 gap-6 mb-6">
                 <div>
-                  <CInput name="name" label="Full Name" value={formData.name} onChange={handleChange} error={errors.name} required />
+                  <CInput name="name" label="Full Name" value={formData.name} onChange={handleChange} onBlur={handleBlur} error={errors.name} />
                 </div>
                 <div>
-                  <CInput name="email" type="email" label="Email Address" value={formData.email} onChange={handleChange} error={errors.email} required />
+                  <CInput name="email" type="email" label="Email Address" value={formData.email} onChange={handleChange} onBlur={handleBlur} error={errors.email} />
                 </div>
               </div>
               <div className="mb-6">
-                <CInput name="phone" type="tel" label="Phone Number" value={formData.phone} onChange={handleChange} error={errors.phone} required />
-              </div>
-              <div className="mb-6">
-                <CInput name="subject" label="Subject" value={formData.subject} onChange={handleChange} error={errors.subject} required />
+                <CInput name="phone" type="tel" label="Phone Number" value={formData.phone} onChange={handleChange} onBlur={handleBlur} error={errors.phone} />
               </div>
               <div className="mb-8">
-                <label className="block font-semibold mb-2 text-gray-700">Message *</label>
+                <label htmlFor="message" className="block font-semibold mb-2 text-gray-700">
+                  Message *
+                </label>
                 <textarea
+                  id="message"
                   name="message"
                   rows={6}
                   value={formData.message}
                   onChange={handleChange}
-                  required
+                  onBlur={handleBlur}
                   placeholder="How can we help you?"
-                  className={`w-full border rounded-lg p-3 focus:ring-2 focus:ring-secondary focus:border-primary outline-none transition-all ${
-                    errors.message ? 'border-red-500 focus:ring-red-500 focus:border-red-500 bg-red-50' : 'border-gray-300'
+                  aria-invalid={errors.message ? 'true' : 'false'}
+                  aria-describedby={errors.message ? 'message-error' : undefined}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary focus:border-primary transition-all duration-200 ${
+                    errors.message ? 'border-red-500 focus:ring-red-500 focus:border-red-500 bg-red-50' : 'border-gray-300 bg-white'
                   }`}
                 />
                 {errors.message && (
-                  <p className="mt-1 text-sm font-medium text-red-600 flex items-center gap-1">
+                  <p id="message-error" className="mt-1 text-sm font-medium text-red-600 flex items-center gap-1">
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                     </svg>
                     {errors.message}
                   </p>
-                  )}
+                )}
               </div>
 
               <div className="text-center flex justify-center">

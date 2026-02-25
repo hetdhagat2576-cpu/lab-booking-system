@@ -8,68 +8,52 @@ import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
 
 const style = document.createElement('style');
 style.textContent = `
-  @keyframes scroll-x {
+  @keyframes marquee {
     0% {
       transform: translateX(0);
     }
     100% {
-      transform: translateX(-50%);
+      transform: translateX(-33.333%);
     }
   }
   
-  @keyframes infinite-scroll {
-    0% {
-      transform: translateX(0);
-    }
-    100% {
-      transform: translateX(calc(-1 * (var(--card-width) + var(--gap)) * var(--total-cards)));
-    }
+  .marquee-container {
+    overflow: hidden;
+    position: relative;
+    width: 100%;
   }
   
-  .animate-scroll-x {
-    animation: scroll-x 40s linear infinite;
-  }
-  
-  .animate-infinite-scroll {
-    animation: infinite-scroll 30s linear infinite;
-  }
-  
-  .animate-scroll-x:hover {
-    animation-play-state: paused;
-  }
-  
-  .animate-infinite-scroll:hover {
-    animation-play-state: paused;
-  }
-
-  .carousel-container {
-    mask-image: linear-gradient(
-      to right,
-      transparent 0%,
-      black 10%,
-      black 90%,
-      transparent 100%
-    );
-    -webkit-mask-image: linear-gradient(
-      to right,
-      transparent 0%,
-      black 10%,
-      black 90%,
-      transparent 100%
-    );
-  }
-
-  .testimonials-scroll {
+  .marquee-track {
     display: flex;
-    gap: 1.5rem;
+    animation: marquee 30s linear infinite;
+    width: fit-content;
   }
-
+  
+  .marquee-track:hover {
+    animation-play-state: paused;
+  }
+  
+  .testimonial-card {
+    flex-shrink: 0;
+    width: 320px;
+    margin-right: 24px;
+  }
+  
   @media (max-width: 640px) {
-    .animate-scroll-x {
-      animation: scroll-x 30s linear infinite;
+    .marquee-track {
+      animation: marquee 25s linear infinite;
     }
-    .animate-infinite-scroll {
-      animation: infinite-scroll 25s linear infinite;
+    
+    .testimonial-card {
+      width: 280px;
+      margin-right: 16px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .testimonial-card {
+      width: 260px;
+      margin-right: 12px;
     }
   }
 `;
@@ -77,14 +61,12 @@ document.head.appendChild(style);
 
 export default function HomeIndex() {
   const navigate = useNavigate(); 
-  const { CheckCircle, ArrowRight, Home, Users, FileText, Clock, MessageSquare, Star, ChevronLeft, ChevronRight, Pause, Play } = IconConfig;
+  const { CheckCircle, ArrowRight, Home, Users, FileText, Clock, MessageSquare, Star } = IconConfig;
 
   const [whyBookData, setWhyBookData] = useState([]);
   const [howItWorksData, setHowItWorksData] = useState([]);
   const [userFeedbacks, setUserFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isPaused, setIsPaused] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
 
   // Fetch home content from API
   useEffect(() => {
@@ -166,18 +148,6 @@ export default function HomeIndex() {
     fetchHomeContent();
   }, []);
 
-  // Manual navigation controls
-  const handlePrevious = () => {
-    setCurrentIndex((prev) => (prev - 1 + userFeedbacks.length) % userFeedbacks.length);
-  };
-
-  const handleNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % userFeedbacks.length);
-  };
-
-  const togglePause = () => {
-    setIsPaused(!isPaused);
-  };
 
   return (
     <div className="min-h-screen flex flex-col bg-slate50 text-gray800 font-sans">
@@ -337,10 +307,10 @@ export default function HomeIndex() {
         </section>
       </main>
 
-      {/* WHAT OUR USERS SAY SECTION - HIDDEN */}
+      {/* WHAT OUR USERS SAY SECTION */}
       
       {userFeedbacks.length > 0 && (
-        <section className="bg-gradient-to-br from-secondary/20 to-primary/10 py-8 sm:py-12 md:py-16 overflow-hidden">
+        <section className="bg-gradient-to-br from-secondary/20 to-primary/10 py-8 sm:py-12 md:py-16">
           <div className="container mx-auto px-4">
             <div className="text-center mb-8 sm:mb-12">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray900 mb-4">
@@ -352,54 +322,45 @@ export default function HomeIndex() {
               <div className="w-16 sm:w-24 h-1 bg-primary mx-auto mt-4 sm:mt-6 rounded-full" />
             </div>
             
-            <div className="carousel-container">
-              <div className="overflow-hidden">
-                <div 
-                  className={`testimonials-scroll ${isPaused ? '' : 'animate-infinite-scroll'}`}
-                  style={{
-                    '--card-width': '320px',
-                    '--gap': '24px',
-                    '--total-cards': userFeedbacks.length
-                  }}
-                >
-                  {/* Create 3 sets of cards for seamless infinite scroll */}
-                  {[...Array(3)].flatMap((_, setIndex) => 
-                    userFeedbacks.map((feedback, index) => (
-                      <div 
-                        key={`${feedback._id || index}-set-${setIndex}`} 
-                        className="flex-shrink-0 w-80"
-                      >
-                        <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray100 h-full flex flex-col">
-                          <div className="flex items-center gap-3 mb-4">
-                            <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                              <MessageSquare className="text-primary" size={16} />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <h4 className="font-semibold text-gray800 truncate text-base">{feedback.userName || "Anonymous User"}</h4>
-                              <div className="flex items-center gap-1">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star 
-                                    key={i} 
-                                    className={`w-4 h-4 flex-shrink-0 ${i < (feedback.bookingEaseRating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
-                                  />
-                                ))}
-                              </div>
-                            </div>
+            <div className="marquee-container">
+              <div className="marquee-track">
+                {/* Create 3 sets of cards for seamless infinite scroll */}
+                {[...Array(3)].flatMap((_, setIndex) => 
+                  userFeedbacks.map((feedback, index) => (
+                    <div 
+                      key={`${feedback._id || index}-set-${setIndex}`} 
+                      className="testimonial-card"
+                    >
+                      <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray100 h-full flex flex-col">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
+                            <MessageSquare className="text-primary" size={16} />
                           </div>
-                          
-                          <p className="text-gray600 leading-relaxed mb-4 line-clamp-3 flex-grow text-base">
-                            "{feedback.comment || 'Great experience with the platform!'}"
-                          </p>
-                          
-                          <div className="flex items-center justify-between text-sm text-gray500 mt-auto">
-                            <span className="truncate">Overall Experience</span>
-                            <span className="font-medium text-primary flex-shrink-0">{feedback.bookingEaseRating || 5}/5</span>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-semibold text-gray800 truncate text-base">{feedback.userName || "Anonymous User"}</h4>
+                            <div className="flex items-center gap-1">
+                              {[...Array(5)].map((_, i) => (
+                                <Star 
+                                  key={i} 
+                                  className={`w-4 h-4 flex-shrink-0 ${i < (feedback.bookingEaseRating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                                />
+                              ))}
+                            </div>
                           </div>
                         </div>
+                        
+                        <p className="text-gray600 leading-relaxed mb-4 line-clamp-3 flex-grow text-base">
+                          "{feedback.comment || 'Great experience with the platform!'}"
+                        </p>
+                        
+                        <div className="flex items-center justify-between text-sm text-gray500 mt-auto">
+                          <span className="truncate">Overall Experience</span>
+                          <span className="font-medium text-primary flex-shrink-0">{feedback.bookingEaseRating || 5}/5</span>
+                        </div>
                       </div>
-                    ))
-                  )}
-                </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const HomeWhyBook = require('../models/homeWhyBook');
+const HomeHowItWorks = require('../models/homeHowItWorks');
 require('dotenv').config();
 
 const seedHomeContent = async () => {
@@ -9,6 +10,7 @@ const seedHomeContent = async () => {
 
     // Clear existing home content
     await HomeWhyBook.deleteMany({});
+    await HomeHowItWorks.deleteMany({});
     console.log('Cleared existing home content');
 
     const whyBookItems = [
@@ -42,7 +44,43 @@ const seedHomeContent = async () => {
       }
     ];
 
+    const howItWorksItems = [
+      {
+        stepNumber: 1,
+        iconKey: 'Search',
+        title: 'Search & Select',
+        description: 'Search for tests and labs, compare prices, and select what you need.',
+        order: 1,
+        isActive: true
+      },
+      {
+        stepNumber: 2,
+        iconKey: 'CreditCard',
+        title: 'Book & Pay',
+        description: 'Book your test and pay securely online or choose cash on collection.',
+        order: 2,
+        isActive: true
+      },
+      {
+        stepNumber: 3,
+        iconKey: 'Home',
+        title: 'Sample Collection',
+        description: 'Get your sample collected at home or visit the lab.',
+        order: 3,
+        isActive: true
+      },
+      {
+        stepNumber: 4,
+        iconKey: 'FileText',
+        title: 'Get Reports',
+        description: 'Receive your test reports digitally within 24-48 hours.',
+        order: 4,
+        isActive: true
+      }
+    ];
+
     await HomeWhyBook.insertMany(whyBookItems);
+    await HomeHowItWorks.insertMany(howItWorksItems);
     
     console.log('Home content seeded successfully');
     process.exit(0);
