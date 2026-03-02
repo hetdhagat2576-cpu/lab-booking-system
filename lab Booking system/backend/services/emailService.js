@@ -101,12 +101,18 @@ const sendContactReplyEmail = async (userEmail, userName, contactSubject, replyM
   console.log(`Email user configured: ${!!process.env.EMAIL_USER}`);
   console.log(`Email pass configured: ${!!process.env.EMAIL_PASS}`);
   
+  // Check if email credentials are configured
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    const errorMsg = 'Email credentials not configured. Please set EMAIL_USER and EMAIL_PASS environment variables.';
+    console.error(errorMsg);
+    return { 
+      success: false, 
+      error: errorMsg,
+      code: 'NO_EMAIL_CONFIG'
+    };
+  }
+  
   try {
-    // Check if email credentials are configured
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      throw new Error('Email credentials not configured. Please set EMAIL_USER and EMAIL_PASS environment variables.');
-    }
-    
     const transporter = createTransporter();
     
     // Verify transporter configuration before sending

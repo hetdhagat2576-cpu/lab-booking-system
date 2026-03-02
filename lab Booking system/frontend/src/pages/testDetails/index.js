@@ -38,13 +38,21 @@ export default function TestDetails() {
         
         if (id) {
           try {
+            console.log(`Fetching test details for ID: ${id}`);
             const response = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests/${id}`);
+            console.log(`API response status: ${response.status}`);
+            
             if (response.ok) {
               const json = await response.json();
               testData = json.data || json;
+              console.log('Successfully fetched test data:', testData?.name);
+            } else {
+              console.error(`API returned error status: ${response.status}`);
+              const errorText = await response.text();
+              console.error('Error response:', errorText);
             }
           } catch (e) {
-            console.log("API fetch failed, using fallback data", e);
+            console.error("API fetch failed, using fallback data", e);
           }
 
           // Fallback to static data if API fails
@@ -56,6 +64,23 @@ export default function TestDetails() {
                 testData = { ...found, _category: category };
                 break;
               }
+            }
+          }
+
+          // If still no test data, try to fetch a valid test as fallback
+          if (!testData && id) {
+            try {
+              console.log('Attempting to fetch a valid test as fallback...');
+              const fallbackResponse = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests?isActive=true&limit=1`);
+              if (fallbackResponse.ok) {
+                const fallbackData = await fallbackResponse.json();
+                if (fallbackData.data && fallbackData.data.length > 0) {
+                  testData = fallbackData.data[0];
+                  console.log('Using fallback test:', testData.name);
+                }
+              }
+            } catch (e) {
+              console.error('Failed to fetch fallback test:', e);
             }
           }
         }
@@ -135,27 +160,28 @@ export default function TestDetails() {
   }
 
   if (!test) {
-    return (
-      <div className={Theme.layout.standardPage}>
-        <Header />
-        <main className="flex-grow container mx-auto px-4 py-8 mt-20">
-          <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
-            <h2 className="text-2xl font-bold text-slate-800 mb-4">Test Not Found</h2>
-            <p className="text-slate-600 mb-6">The test you're looking for is not available in our database.</p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <CButton variant="primary" onClick={() => navigate("/dashboard")}>
-                Go to Dashboard
-              </CButton>
-              <CButton variant="outline" onClick={() => navigate(-1)}>
-                Go Back
-              </CButton>
+          return (
+            <div className={Theme.layout.standardPage}>
+              <Header />
+              <main className="flex-grow container mx-auto px-4 py-8 mt-20">
+                <div className="bg-white rounded-2xl border border-slate-200 p-8 text-center">
+                  <h2 className="text-2xl font-bold text-slate-800 mb-4">Test Not Found</h2>
+                  <p className="text-slate-600 mb-6">The test you're looking for is not available in our database.</p>
+                  <p className="text-slate-500 text-sm mb-6">This might happen if the test was removed or the link is outdated.</p>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <CButton variant="primary" onClick={() => navigate("/tests")}>
+                      View All Tests
+                    </CButton>
+                    <CButton variant="outline" onClick={() => navigate("/dashboard")}>
+                      Go to Dashboard
+                    </CButton>
+                  </div>
+                </div>
+              </main>
+              <Footer />
             </div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
-  }
+          );
+        }
 
   // Helper functions for display
   const getSampleType = () => {
@@ -233,6 +259,12 @@ export default function TestDetails() {
                   </div>
                 )}
 
+                {test.longDescription && (
+                  <div className="mb-6">
+                    <p className="text-slate-600 leading-relaxed">{test.longDescription}</p>
+                  </div>
+                )}
+
                 <div className="flex flex-col sm:flex-row gap-4">
                   <CButton
                     fullWidth={false}
@@ -280,6 +312,56 @@ export default function TestDetails() {
                 </div>
 
               </div>
+
+              {/* Card 3: Benefits and Suitable For - Side by Side */}
+              <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
+                <div className="flex flex-col md:flex-row gap-8">
+                  {/* Benefits Section */}
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold text-slate-900 mb-6">Benefits</h2>
+                    
+                    <div className="space-y-3">
+                      {test.benefits?.map((benefit, index) => (
+                        <div key={index} className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                          <span className="text-slate-700">{benefit}</span>
+                        </div>
+                      )) || <div className="text-slate-500">No benefits listed</div>}
+                    </div>
+                  </div>
+
+                  {/* Suitable For Section */}
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold text-slate-900 mb-6">Suitable For</h2>
+                    
+                    <div className="space-y-3">
+                      {test.suitableFor?.map((group, index) => (
+                        <div key={`suitable-${index}`} className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                          <span className="text-slate-700">{group}</span>
+                        </div>
+                      )) || <div className="text-slate-500">No suitability information available</div>}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              
+              {/* Card 5: What's Included */}
+              {test.includes && test.includes.length > 0 && (
+                <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
+                  <h2 className="text-xl font-bold text-slate-900 mb-6">What's Included</h2>
+                  
+                  <div className="space-y-3">
+                    {test.includes.map((item, index) => (
+                      <div key={index} className="flex items-center gap-3">
+                        <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0"></div>
+                        <span className="text-slate-700">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
             </div>
 

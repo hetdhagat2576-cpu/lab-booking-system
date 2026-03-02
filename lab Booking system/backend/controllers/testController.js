@@ -113,13 +113,34 @@ const createTest = async (req, res) => {
       });
     }
     
-    if (!testData.price || testData.price < 0) {
+    // Enhanced price validation for manual input - allow any positive number
+    if (testData.price === undefined || testData.price === null || testData.price === '') {
       return res.status(400).json({
         success: false,
-        message: 'Valid test price is required',
+        message: 'Test price is required',
+        error: 'MISSING_PRICE'
+      });
+    }
+    
+    // Parse price from various input formats (500, 500.00, ₹500, $500, 1,250.50)
+    let parsedPrice = testData.price;
+    if (typeof parsedPrice === 'string') {
+      // Remove currency symbols, commas, and whitespace, then convert to number
+      const cleanPrice = parsedPrice.replace(/[₹$\s]/g, '').replace(/,/g, '');
+      parsedPrice = parseFloat(cleanPrice);
+    }
+    
+    // Validate the parsed price - allow any positive number including decimals
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid test price is required (must be a positive number)',
         error: 'INVALID_PRICE'
       });
     }
+    
+    // Round to 2 decimal places for currency precision but allow higher precision if needed
+    testData.price = Math.round(parsedPrice * 100) / 100;
     
     if (!testData.description || !testData.description.trim()) {
       return res.status(400).json({

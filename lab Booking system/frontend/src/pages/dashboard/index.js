@@ -9,6 +9,7 @@ import Theme from "../../config/theam/index.js";
 import IconConfig from "../../components/icon/index.js";
 import CButton from "../../components/cButton";
 import { safeFetch } from "../../config/api";
+import Swal from 'sweetalert2';
 import {
   DASHBOARD_HEALTH_CONCERNS,
 } from "../../config/staticData";
@@ -182,7 +183,12 @@ export default function DashboardIndex() {
       }
     } catch (error) {
       console.error('Error downloading report:', error);
-      alert('Failed to download report');
+      Swal.fire({
+        icon: 'error',
+        title: 'Download Failed',
+        text: 'Failed to download report',
+        confirmButtonColor: Theme.colors.primary
+      });
     }
   };
   useEffect(() => {

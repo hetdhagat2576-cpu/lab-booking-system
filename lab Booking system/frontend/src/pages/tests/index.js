@@ -197,7 +197,12 @@ export default function AllTests() {
                           // For individual tests, go to test details
                           if (!test._id && !test.id) {
                             console.error('Test has no ID!', test);
-                            alert('Test ID is missing. Please refresh the page.');
+                            Swal.fire({
+                              icon: 'error',
+                              title: 'Missing Test ID',
+                              text: 'Test ID is missing. Please refresh the page.',
+                              confirmButtonColor: Theme.colors.primary
+                            });
                             return;
                           }
                           navigate(`/test-details?id=${test._id || test.id}`);

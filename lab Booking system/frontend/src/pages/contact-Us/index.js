@@ -127,10 +127,20 @@ export default function ContactUsIndex() {
           message: ""
         });
       } else {
-        alert(data.message || "Failed to submit. Please try again.");
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: data.message || "Failed to submit. Please try again.",
+          confirmButtonColor: Theme.colors.primary
+        });
       }
     } catch {
-      alert('Unable to connect to server');
+      Swal.fire({
+        icon: 'error',
+        title: 'Connection Error',
+        text: 'Unable to connect to server',
+        confirmButtonColor: Theme.colors.primary
+      });
     }
   };
 

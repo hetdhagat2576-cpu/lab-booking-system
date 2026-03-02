@@ -105,6 +105,34 @@ const testSchema = new mongoose.Schema({
     trim: true,
     enum: ['Once', 'Monthly', 'Quarterly', 'Half-yearly', 'Yearly', 'As needed'],
   },
+  longDescription: {
+    type: String,
+    trim: true,
+  },
+  includes: [{
+    type: String,
+    trim: true,
+  }],
+  benefits: [{
+    type: String,
+    trim: true,
+  }],
+  suitableFor: [{
+    type: String,
+    trim: true,
+  }],
+  clinicalSignificance: {
+    type: String,
+    trim: true,
+  },
+  normalRange: {
+    type: String,
+    trim: true,
+  },
+  abnormalIndicates: {
+    type: String,
+    trim: true,
+  },
 }, {
   timestamps: true,
 });

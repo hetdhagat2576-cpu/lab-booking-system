@@ -33,19 +33,43 @@ export default function PackageDetails() {
       
       if (packageResponse.ok) {
         const packageResult = await packageResponse.json();
+        console.log('Package basic data:', packageResult.data);
         setPackageData(packageResult.data);
       } else {
-        console.error('Failed to fetch package data');
+        console.error('Failed to fetch package data:', packageResponse.status);
       }
 
-      // Fetch package details
+      // Fetch package details with populated tests
       const detailsResponse = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/package-details/${packageId}`);
       
       if (detailsResponse.ok) {
         const detailsResult = await detailsResponse.json();
+        console.log('Package details data:', detailsResult.data);
         setPackageDetails(detailsResult.data);
       } else {
-        console.error('Failed to fetch package details');
+        console.error('Failed to fetch package details:', detailsResponse.status);
+        
+        // Fallback: try to get package data with populated tests from packages endpoint
+        try {
+          const fallbackResponse = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages/${packageId}?populate=tests`);
+          if (fallbackResponse.ok) {
+            const fallbackResult = await fallbackResponse.json();
+            console.log('Fallback package data:', fallbackResult.data);
+            // Create a mock packageDetails structure if needed
+            if (fallbackResult.data && !packageDetails) {
+              setPackageDetails({
+                includedTests: fallbackResult.data.testsIncluded || [],
+                includedTestNames: fallbackResult.data.testsIncluded?.map(test => test.name) || [],
+                reportingTime: fallbackResult.data.duration,
+                requiredSamples: fallbackResult.data.sampleTypes || ['Blood'],
+                benefits: fallbackResult.data.benefits || [],
+                suitableFor: fallbackResult.data.suitableFor || []
+              });
+            }
+          }
+        } catch (fallbackError) {
+          console.error('Fallback fetch also failed:', fallbackError);
+        }
       }
     } catch (error) {
       console.error('Error fetching package data:', error);
@@ -271,21 +295,61 @@ export default function PackageDetails() {
               <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
                 <h2 className="text-xl font-bold text-slate-900 mb-6">Tests Included</h2>
                 
+                                
                 <div className="space-y-2">
-                  {safeMap(packageDetails?.includedTests || packageDetails?.includedTestNames || packageData?.includes || packageData?.testsIncluded || [], (test, index) => (
-                    <div key={test?._id || `test-${index}`} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                      <TestTube2 className="w-4 h-4 text-primary" />
-                      <span className="text-sm text-slate-700">
-                        {safeTestName(test)}
-                      </span>
-                    </div>
-                  ))}
+                  {(() => {
+                    // Try multiple sources for included tests
+                    const includedTests = packageDetails?.includedTests || 
+                                       packageData?.testsIncluded || 
+                                       packageData?.includes || 
+                                       [];
+                    
+                    console.log('Package Details - Included Tests:', {
+                      packageDetailsIncluded: packageDetails?.includedTests,
+                      packageDataTestsIncluded: packageData?.testsIncluded,
+                      packageDataIncludes: packageData?.includes,
+                      finalArray: includedTests
+                    });
+                    
+                    if (includedTests.length === 0) {
+                      return (
+                        <p className="text-slate-500 text-sm italic">No tests included in this package</p>
+                      );
+                    }
+                    
+                    return includedTests.map((test, index) => {
+                      // Handle different test data formats
+                      let testName = '';
+                      let testId = test?._id || `test-${index}`;
+                      
+                      if (typeof test === 'string') {
+                        testName = test;
+                      } else if (test?.name) {
+                        testName = test.name;
+                      } else if (test?.testName) {
+                        testName = test.testName;
+                      } else {
+                        testName = JSON.stringify(test);
+                      }
+                      
+                      return (
+                        <div key={testId} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+                          <TestTube2 className="w-4 h-4 text-primary flex-shrink-0" />
+                          <span className="text-sm text-slate-700 font-medium">
+                            {safeTestName(testName)}
+                          </span>
+                          {test?.description && (
+                            <span className="text-xs text-slate-500 ml-auto">
+                              {test.description.substring(0, 50)}{test.description.length > 50 ? '...' : ''}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
                 
-                {safeLength(packageDetails?.includedTests || packageDetails?.includedTestNames || packageData?.includes || packageData?.testsIncluded || []) === 0 && (
-                  <p className="text-slate-500 text-sm italic">No tests included in this package</p>
-                )}
-              </div>
+                              </div>
 
               
               {/* Card 3: Details (Report Time, Sample Type) */}

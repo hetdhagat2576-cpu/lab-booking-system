@@ -111,13 +111,34 @@ const createPackage = async (req, res) => {
       });
     }
     
-    if (!packageData.price || packageData.price < 0) {
+    // Enhanced price validation for manual input - allow any positive number
+    if (packageData.price === undefined || packageData.price === null || packageData.price === '') {
       return res.status(400).json({
         success: false,
-        message: 'Valid package price is required',
+        message: 'Package price is required',
+        error: 'MISSING_PRICE'
+      });
+    }
+    
+    // Parse price from various input formats (500, 500.00, ₹500, $500, 1,250.50)
+    let parsedPrice = packageData.price;
+    if (typeof parsedPrice === 'string') {
+      // Remove currency symbols, commas, and whitespace, then convert to number
+      const cleanPrice = parsedPrice.replace(/[₹$\s]/g, '').replace(/,/g, '');
+      parsedPrice = parseFloat(cleanPrice);
+    }
+    
+    // Validate the parsed price - allow any positive number including decimals
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid package price is required (must be a positive number)',
         error: 'INVALID_PRICE'
       });
     }
+    
+    // Round to 2 decimal places for currency precision but allow higher precision if needed
+    packageData.price = Math.round(parsedPrice * 100) / 100;
     
     if (!packageData.description || !packageData.description.trim()) {
       return res.status(400).json({

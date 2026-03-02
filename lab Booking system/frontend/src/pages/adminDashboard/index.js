@@ -145,7 +145,13 @@ export default function AdminDashboardIndex() {
   const [testDetailsFormData, setTestDetailsFormData] = useState({
     testName: '',
     requiredSamples: [],
-    reportingTime: ''
+    reportingTime: '',
+    includes: [],
+    benefits: [],
+    suitableFor: [],
+    clinicalSignificance: '',
+    normalRange: '',
+    abnormalIndicates: ''
   });
   const [packageDetailsFormData, setPackageDetailsFormData] = useState({
     packageName: '',
@@ -894,11 +900,21 @@ export default function AdminDashboardIndex() {
       } else {
         const errorData = await response.json();
         console.error('Failed to save test:', errorData);
-        alert(`Failed to save test: ${errorData.message || 'Unknown error'}`);
+        Swal.fire({
+          icon: 'error',
+          title: 'Failed to save test',
+          text: errorData.message || 'Unknown error',
+          confirmButtonColor: Theme.colors.primary
+        });
       }
     } catch (error) {
       console.error('Error saving test:', error);
-      alert(`Error saving test: ${error.message}`);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error saving test',
+        text: error.message,
+        confirmButtonColor: Theme.colors.primary
+      });
     }
   };
 
@@ -915,13 +931,23 @@ export default function AdminDashboardIndex() {
     
     // Validate required samples
     if (!packageFormData.requiredSamples || packageFormData.requiredSamples.length === 0) {
-      alert('Please select at least one required sample type');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Validation Error',
+        text: 'Please select at least one required sample type',
+        confirmButtonColor: Theme.colors.primary
+      });
       return;
     }
     
     // Check if user is authenticated
     if (!user?.token) {
-      alert('You must be logged in to create packages');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Authentication Required',
+        text: 'You must be logged in to create packages',
+        confirmButtonColor: Theme.colors.primary
+      });
       return;
     }
     
@@ -986,29 +1012,59 @@ export default function AdminDashboardIndex() {
       
       // Additional validation: if we had tests but all were filtered out, warn the user
       if (packageFormData.includedTests && packageFormData.includedTests.length > 0 && finalTestIds.length === 0) {
-        alert('Warning: All selected tests were invalid. Please select tests from the current list.');
+        Swal.fire({
+          icon: 'warning',
+          title: 'Invalid Tests',
+          text: 'Warning: All selected tests were invalid. Please select tests from the current list.',
+          confirmButtonColor: Theme.colors.primary
+        });
         return;
       }
       
       // Validate that all required fields are present and not empty
       if (!packageData.name || !packageData.name.trim()) {
-        alert('Package name is required');
+        Swal.fire({
+          icon: 'warning',
+          title: 'Validation Error',
+          text: 'Package name is required',
+          confirmButtonColor: Theme.colors.primary
+        });
         return;
       }
       if (!packageData.description || !packageData.description.trim()) {
-        alert('Package description is required');
+        Swal.fire({
+          icon: 'warning',
+          title: 'Validation Error',
+          text: 'Package description is required',
+          confirmButtonColor: Theme.colors.primary
+        });
         return;
       }
       if (!packageData.category) {
-        alert('Package category is required');
+        Swal.fire({
+          icon: 'warning',
+          title: 'Validation Error',
+          text: 'Package category is required',
+          confirmButtonColor: Theme.colors.primary
+        });
         return;
       }
       if (!packageData.price || packageData.price <= 0) {
-        alert('Valid package price is required');
+        Swal.fire({
+          icon: 'warning',
+          title: 'Validation Error',
+          text: 'Valid package price is required',
+          confirmButtonColor: Theme.colors.primary
+        });
         return;
       }
       if (!packageData.duration || !packageData.duration.trim()) {
-        alert('Package duration is required');
+        Swal.fire({
+          icon: 'warning',
+          title: 'Validation Error',
+          text: 'Package duration is required',
+          confirmButtonColor: Theme.colors.primary
+        });
         return;
       }
 
@@ -1093,11 +1149,22 @@ export default function AdminDashboardIndex() {
           errorMessage = errorData.message;
         }
         
-        alert(`${errorMessage}\n\nError Code: ${errorData.error || 'UNKNOWN'}\n\nFull Error: ${JSON.stringify(errorData, null, 2)}`);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          html: `${errorMessage}<br><br><strong>Error Code:</strong> ${errorData.error || 'UNKNOWN'}<br><br><strong>Full Error:</strong> <pre>${JSON.stringify(errorData, null, 2)}</pre>`,
+          confirmButtonColor: Theme.colors.primary,
+          width: '600px'
+        });
       }
     } catch (error) {
       console.error('Error saving package:', error);
-      alert(`Error saving package: ${error.message}`);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error saving package',
+        text: error.message,
+        confirmButtonColor: Theme.colors.primary
+      });
     }
   };
 
@@ -6410,10 +6477,17 @@ export default function AdminDashboardIndex() {
                     type="text"
                     required
                     value={testFormData.price}
-                    onChange={(e) => setTestFormData({...testFormData, price: e.target.value})}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Allow empty string, numbers, decimals, currency symbols, and commas
+                      if (value === '' || /^[₹$]?\s?\d{1,3}(,\d{3})*(\.\d+)?$/.test(value) || /^\d*\.?\d*$/.test(value)) {
+                        setTestFormData({...testFormData, price: value});
+                      }
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
-                    placeholder="Enter price (e.g., 500, 500.00, ₹500)"
+                    placeholder="Enter any price (e.g., 500, ₹1,250, $2,500.75)"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Enter any price amount in rupees (₹)</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -6612,12 +6686,18 @@ export default function AdminDashboardIndex() {
                     Price *
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     required
-                    step="0.01"
                     value={packageFormData.price || ''}
-                    onChange={(e) => setPackageFormData({...packageFormData, price: e.target.value})}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Allow empty string, numbers, decimals, currency symbols, and commas
+                      if (value === '' || /^[₹$]?\s?\d{1,3}(,\d{3})*(\.\d+)?$/.test(value) || /^\d*\.?\d*$/.test(value)) {
+                        setPackageFormData({...packageFormData, price: value});
+                      }
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                    placeholder="Enter any price (e.g., 1299, ₹2,499, $5,000.50)"
                   />
                 </div>
                 <div>
@@ -6803,7 +6883,13 @@ export default function AdminDashboardIndex() {
                         setTestDetailsFormData({
                           testName: details.testName || '',
                           requiredSamples: details.requiredSamples || [],
-                          reportingTime: details.reportingTime || ''
+                          reportingTime: details.reportingTime || '',
+                          includes: details.includes || [],
+                          benefits: details.benefits || [],
+                          suitableFor: details.suitableFor || [],
+                          clinicalSignificance: details.clinicalSignificance || '',
+                          normalRange: details.normalRange || '',
+                          abnormalIndicates: details.abnormalIndicates || ''
                         });
                         setEditingTestDetails(true);
                       }}
@@ -6882,6 +6968,75 @@ export default function AdminDashboardIndex() {
                           placeholder="24-48 hours"
                         />
                       </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Includes (comma-separated)</label>
+                        <textarea
+                          value={testDetailsFormData.includes?.join(', ') || ''}
+                          onChange={(e) => setTestDetailsFormData(prev => ({ 
+                            ...prev, 
+                            includes: e.target.value.split(',').map(i => i.trim()).filter(i => i) 
+                          }))}
+                          rows={3}
+                          placeholder="e.g., Blood glucose measurement, Expert interpretation, Digital report delivery"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Benefits (comma-separated)</label>
+                        <textarea
+                          value={testDetailsFormData.benefits?.join(', ') || ''}
+                          onChange={(e) => setTestDetailsFormData(prev => ({ 
+                            ...prev, 
+                            benefits: e.target.value.split(',').map(b => b.trim()).filter(b => b) 
+                          }))}
+                          rows={3}
+                          placeholder="e.g., Early detection of health issues, Complete health assessment"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Suitable For (comma-separated)</label>
+                        <textarea
+                          value={testDetailsFormData.suitableFor?.join(', ') || ''}
+                          onChange={(e) => setTestDetailsFormData(prev => ({ 
+                            ...prev, 
+                            suitableFor: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
+                          }))}
+                          rows={3}
+                          placeholder="e.g., Adults above 30 years, Annual health checkup"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Clinical Significance</label>
+                        <textarea
+                          value={testDetailsFormData.clinicalSignificance || ''}
+                          onChange={(e) => setTestDetailsFormData(prev => ({ ...prev, clinicalSignificance: e.target.value }))}
+                          rows={2}
+                          placeholder="e.g., Primary screening test for diabetes and prediabetes"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Normal Range</label>
+                        <input
+                          type="text"
+                          value={testDetailsFormData.normalRange || ''}
+                          onChange={(e) => setTestDetailsFormData(prev => ({ ...prev, normalRange: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                          placeholder="e.g., < 100 mg/dL (normal)"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Abnormal Indicates</label>
+                        <input
+                          type="text"
+                          value={testDetailsFormData.abnormalIndicates || ''}
+                          onChange={(e) => setTestDetailsFormData(prev => ({ ...prev, abnormalIndicates: e.target.value }))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                          placeholder="e.g., Diabetes, impaired fasting glucose"
+                        />
+                      </div>
                       <div className="flex gap-2">
                         <CButton type="submit" variant="primary">
                           Update
@@ -6916,6 +7071,69 @@ export default function AdminDashboardIndex() {
                       <h4 className="font-medium text-gray-900">Reporting Time</h4>
                       <p className="text-gray-600">{details.reportingTime}</p>
                     </div>
+                    {/* Includes Section */}
+                    {details.includes && details.includes.length > 0 && (
+                      <div>
+                        <h4 className="font-medium text-gray-900">Includes</h4>
+                        <div className="mt-2 space-y-2">
+                          {details.includes.map((item, index) => (
+                            <div key={index} className="flex items-center gap-2 text-sm">
+                              <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0"></div>
+                              <span className="text-gray-700">{item}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* Benefits Section */}
+                    {details.benefits && details.benefits.length > 0 && (
+                      <div>
+                        <h4 className="font-medium text-gray-900">Benefits</h4>
+                        <div className="mt-2 space-y-2">
+                          {details.benefits.map((benefit, index) => (
+                            <div key={index} className="flex items-center gap-2 text-sm">
+                              <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                              <span className="text-gray-700">{benefit}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* Suitable For Section */}
+                    {details.suitableFor && details.suitableFor.length > 0 && (
+                      <div>
+                        <h4 className="font-medium text-gray-900">Suitable For</h4>
+                        <div className="mt-2 space-y-2">
+                          {details.suitableFor.map((item, index) => (
+                            <div key={index} className="flex items-center gap-2 text-sm">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                              <span className="text-gray-700">{item}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* Clinical Significance */}
+                    {details.clinicalSignificance && (
+                      <div>
+                        <h4 className="font-medium text-gray-900">Clinical Significance</h4>
+                        <p className="text-gray-600 mt-1">{details.clinicalSignificance}</p>
+                      </div>
+                    )}
+                    {/* Normal Range */}
+                    {details.normalRange && (
+                      <div>
+                        <h4 className="font-medium text-gray-900">Normal Range</h4>
+                        <p className="text-gray-600 mt-1">{details.normalRange}</p>
+                      </div>
+                    )}
+                    {/* Abnormal Indicates */}
+                    {details.abnormalIndicates && (
+                      <div>
+                        <h4 className="font-medium text-gray-900">Abnormal Indicates</h4>
+                        <p className="text-gray-600 mt-1">{details.abnormalIndicates}</p>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
