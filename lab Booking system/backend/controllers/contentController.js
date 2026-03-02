@@ -206,11 +206,20 @@ const getLegal = (req, res) => {
 };
 
 // Home Why Book Content Functions
-const getHomeWhyBook = (req, res) => {
-  res.status(200).json({
-    success: true,
-    data: homeWhyBookData
-  });
+const getHomeWhyBook = async (req, res) => {
+  try {
+    const whyBookData = await HomeWhyBook.find({ isActive: true }).sort({ order: 1 });
+    res.status(200).json({
+      success: true,
+      data: whyBookData
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
 };
 
 const createHomeWhyBookItem = (req, res) => {

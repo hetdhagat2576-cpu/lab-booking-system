@@ -114,8 +114,10 @@ export default function AdminDashboardIndex() {
   const [loading, setLoading] = useState(true);
   const [feedbacks, setFeedbacks] = useState([]);
   const [contacts, setContacts] = useState([]);
-  const [contactFilter, setContactFilter] = useState('all');
-  const [markingReviewed, setMarkingReviewed] = useState({});
+  const [showReplyModal, setShowReplyModal] = useState(false);
+  const [selectedContact, setSelectedContact] = useState(null);
+  const [replyMessage, setReplyMessage] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
   const [feedbackFilter, setFeedbackFilter] = useState('all');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
@@ -3354,60 +3356,6 @@ export default function AdminDashboardIndex() {
     }
   };
 
-  const markAsReviewed = async (id) => {
-    setMarkingReviewed(prev => ({ ...prev, [id]: true }));
-    
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/contact/${id}/mark-reviewed`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${user.token}`
-        }
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        
-        if (result.success) {
-          await Swal.fire({
-            icon: 'success',
-            title: 'Success!',
-            html: `
-              <div class="text-left">
-                <p class="mb-2">Contact request marked as reviewed!</p>
-                ${result.emailSent ? 
-                  '<p class="text-green-600"><i class="fas fa-check-circle"></i> Email notification sent successfully</p>' : 
-                  '<p class="text-orange-600"><i class="fas fa-exclamation-triangle"></i> Email delivery failed</p>'
-                }
-              </div>
-            `,
-            confirmButtonColor: Theme.colors.primary,
-            timer: 3000,
-            timerProgressBar: true
-          });
-          
-          fetchContactsAdmin();
-        } else {
-          throw new Error(result.message || 'Failed to mark as reviewed');
-        }
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP ${response.status}: Failed to mark as reviewed`);
-      }
-    } catch (error) {
-      console.error('Error marking contact as reviewed:', error);
-      
-      await Swal.fire({
-        icon: 'error',
-        title: 'Error!',
-        text: error.message || 'Failed to mark contact as reviewed. Please try again.',
-        confirmButtonColor: Theme.colors.primary
-      });
-    } finally {
-      setMarkingReviewed(prev => ({ ...prev, [id]: false }));
-    }
-  };
-
   const updateContactStatus = async (id, newStatus) => {
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/contact/${id}/status`, {
@@ -3425,6 +3373,108 @@ export default function AdminDashboardIndex() {
       }
     } catch (error) {
       console.error('Error updating contact status:', error);
+    }
+  };
+
+  const openReplyModal = (contact) => {
+    setSelectedContact(contact);
+    setReplyMessage('');
+    setShowReplyModal(true);
+  };
+
+  const closeReplyModal = () => {
+    setShowReplyModal(false);
+    setSelectedContact(null);
+    setReplyMessage('');
+  };
+
+  const sendReply = async () => {
+    if (!selectedContact || !replyMessage.trim()) {
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: 'Please enter a reply message',
+        confirmButtonColor: Theme.colors.primary
+      });
+      return;
+    }
+
+    setSendingReply(true);
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/admin/contact-reply/${selectedContact._id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify({ replyMessage: replyMessage.trim() })
+      });
+
+      const result = await response.json();
+      
+      if (response.ok && result.success) {
+        await Swal.fire({
+          icon: 'success',
+          title: 'Reply Sent!',
+          html: `
+            <div class="text-left">
+              <p class="mb-2">Your reply has been sent successfully!</p>
+              ${result.emailSent ? 
+                '<p class="text-green-600"><i class="fas fa-check-circle"></i> Email delivered successfully</p>' : 
+                `<p class="text-orange-600"><i class="fas fa-exclamation-triangle"></i> Email delivery failed</p>
+                 ${result.emailError ? `<p class="text-sm text-gray-600 mt-1">Error: ${result.emailError.message}</p>` : ''}`
+              }
+            </div>
+          `,
+          confirmButtonColor: Theme.colors.primary,
+          timer: 3000,
+          timerProgressBar: true
+        });
+        
+        fetchContactsAdmin();
+        closeReplyModal();
+      } else {
+        throw new Error(result.message || 'Failed to send reply');
+      }
+    } catch (error) {
+      console.error('Error sending reply:', error);
+      
+      // Try to parse error details if available
+      let errorMessage = error.message || 'Failed to send reply. Please try again.';
+      let errorDetails = null;
+      
+      if (error.response) {
+        try {
+          const errorData = await error.response.json();
+          if (errorData.debug) {
+            errorDetails = errorData.debug;
+            errorMessage = errorData.error || errorMessage;
+          }
+        } catch (parseError) {
+          console.log('Could not parse error response:', parseError);
+        }
+      }
+      
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        html: `
+          <div class="text-left">
+            <p class="mb-2">${errorMessage}</p>
+            ${errorDetails ? `
+              <details class="mt-2">
+                <summary class="cursor-pointer text-sm text-gray-600">Technical Details</summary>
+                <pre class="text-xs bg-gray-100 p-2 mt-1 rounded overflow-auto max-h-32">${JSON.stringify(errorDetails, null, 2)}</pre>
+              </details>
+            ` : ''}
+          </div>
+        `,
+        confirmButtonColor: Theme.colors.primary,
+        width: errorDetails ? '600px' : '400px'
+      });
+    } finally {
+      setSendingReply(false);
     }
   };
 
@@ -4436,49 +4486,17 @@ export default function AdminDashboardIndex() {
                           borderColor: Theme.colors.emerald100
                         }}
                       >
-                        <div className="text-2xl font-bold" style={{ color: Theme.colors.emerald600 }}>{contacts.filter(c => c.status === 'reviewed').length}</div>
-                        <div className="text-sm" style={{ color: Theme.colors.emerald600 }}>Reviewed</div>
+                        <div className="text-2xl font-bold" style={{ color: Theme.colors.emerald600 }}>{contacts.filter(c => c.status === 'pending').length}</div>
+                        <div className="text-sm" style={{ color: Theme.colors.emerald600 }}>Pending</div>
                       </div>
                     </div>
                     
-                    {/* Toggle between All Contacts and Reviewed Contacts */}
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="flex items-center gap-4">
-                        <span className="font-semibold text-gray-700">Filter:</span>
-                        <div className="flex bg-gray-100 rounded-lg p-1">
-                          <button
-                            onClick={() => setContactFilter('all')}
-                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                              contactFilter === 'all'
-                                ? 'bg-white text-gray-900 shadow-sm'
-                                : 'text-gray-600 hover:text-gray-900'
-                            }`}
-                          >
-                            All Contacts
-                          </button>
-                          <button
-                            onClick={() => setContactFilter('reviewed')}
-                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                              contactFilter === 'reviewed'
-                                ? 'bg-white text-gray-900 shadow-sm'
-                                : 'text-gray-600 hover:text-gray-900'
-                            }`}
-                          >
-                            Reviewed Contacts
-                          </button>
-                        </div>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        Showing {contacts.filter(c => contactFilter === 'all' ? true : c.status === 'reviewed').length} of {contacts.length} contacts
-                      </div>
-                    </div>
                     
                     <div className="overflow-x-auto">
                       <table className="w-full text-left text-sm">
                         <thead className="bg-gray-50">
                           <tr>
                             <th className="p-4">Contact Info</th>
-                            <th className="p-4">Subject</th>
                             <th className="p-4">Message</th>
                             <th className="p-4">Status</th>
                             <th className="p-4">Date</th>
@@ -4487,7 +4505,6 @@ export default function AdminDashboardIndex() {
                         </thead>
                         <tbody>
                           {contacts
-                            .filter(c => contactFilter === 'all' ? true : c.status === 'reviewed')
                             .map((c) => (
                             <tr key={c._id} className="border-b">
                               <td className="p-4">
@@ -4496,52 +4513,39 @@ export default function AdminDashboardIndex() {
                                 {c.phone && <div className="text-xs text-gray-400">{c.phone}</div>}
                               </td>
                               <td className="p-4">
-                                <div className="font-semibold" style={{ color: Theme.colors.primary }}>{c.subject}</div>
-                              </td>
-                              <td className="p-4">
                                 <div className="text-xs max-w-xs truncate" title={c.message}>{c.message}</div>
                               </td>
                               <td className="p-4">
                                 <span className={`px-2 py-1 text-xs rounded-full capitalize`}
                                   style={{
-                                    backgroundColor: c.status === 'new' ? `${Theme.colors.secondary}20` :
-                                                   c.status === 'reviewed' ? Theme.colors.emerald50 : `${Theme.colors.secondary}20`,
-                                    color: c.status === 'new' ? Theme.colors.primary :
-                                           c.status === 'reviewed' ? Theme.colors.emerald600 : Theme.colors.primary,
-                                    borderColor: c.status === 'reviewed' ? Theme.colors.emerald600 : 'transparent'
+                                    backgroundColor: c.status === 'pending' ? `${Theme.colors.secondary}20` :
+                                                   c.status === 'reviewed' ? Theme.colors.emerald50 : 
+                                                   c.status === 'replied' ? `${Theme.colors.primary}20` : `${Theme.colors.secondary}20`,
+                                    color: c.status === 'pending' ? Theme.colors.primary :
+                                           c.status === 'reviewed' ? Theme.colors.emerald600 : 
+                                           c.status === 'replied' ? Theme.colors.primary : Theme.colors.primary,
+                                    borderColor: c.status === 'reviewed' ? Theme.colors.emerald600 : 
+                                                   c.status === 'replied' ? Theme.colors.primary : 'transparent'
                                   }}
                                 >
-                                  {c.status || 'new'}
+                                  {c.status || 'pending'}
                                 </span>
                               </td>
                               <td className="p-4 text-xs text-gray-500">{new Date(c.createdAt || Date.now()).toLocaleDateString()}</td>
                               <td className="p-4 text-right">
                                 <div className="flex gap-2 justify-end">
-                                  {c.status === 'new' && (
-                                    <CButton 
-                                      variant="primary" 
-                                      className="py-1 px-3 text-xs text-white border relative"
-                                      style={{
-                                        backgroundColor: Theme.colors.emerald600,
-                                        borderColor: Theme.colors.emerald600
-                                      }}
-                                      onClick={() => markAsReviewed(c._id)}
-                                      disabled={markingReviewed[c._id]}
-                                    >
-                                      {markingReviewed[c._id] ? (
-                                        <span className="flex items-center gap-2">
-                                          <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                          </svg>
-                                          Processing...
-                                        </span>
-                                      ) : (
-                                        'Mark as Reviewed'
-                                      )}
-                                    </CButton>
-                                  )}
-                                  {/* Once marked as reviewed, status cannot be reverted */}
+                                  <CButton 
+                                    variant="primary" 
+                                    className="py-1 px-3 text-xs text-white border relative"
+                                    style={{
+                                      backgroundColor: Theme.colors.primary,
+                                      borderColor: Theme.colors.primary
+                                    }}
+                                    onClick={() => openReplyModal(c)}
+                                  >
+                                    <Mail size={14} className="mr-1" />
+                                    View/Reply
+                                  </CButton>
                                   <CButton 
                                     variant="danger" 
                                     className="py-1 px-3 text-xs" 
@@ -6403,12 +6407,12 @@ export default function AdminDashboardIndex() {
                     Price *
                   </label>
                   <input
-                    type="number"
+                    type="text"
                     required
-                    step="0.01"
                     value={testFormData.price}
                     onChange={(e) => setTestFormData({...testFormData, price: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                    placeholder="Enter price (e.g., 500, 500.00, ₹500)"
                   />
                 </div>
                 <div>
@@ -6435,8 +6439,137 @@ export default function AdminDashboardIndex() {
                     <option value="Other">Other</option>
                   </select>
                 </div>
+                <div className="flex gap-3 pt-4">
+                  <CButton type="submit" variant="primary">
+                    {editingTest ? 'Update Test' : 'Create Test'}
+                  </CButton>
+                  <CButton 
+                    type="button" 
+                    variant="secondary" 
+                    onClick={() => {
+                      setShowTestForm(false);
+                      setEditingTest(null);
+                      setTestFormData({
+                        name: '',
+                        description: '',
+                        price: '',
+                        category: ''
+                      });
+                    }}
+                  >
+                    Cancel
+                  </CButton>
+                </div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      
+      {/* Contact Reply Modal */}
+      {showReplyModal && selectedContact && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Reply to Contact Request</h3>
+              <button
+                onClick={closeReplyModal}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            {/* Contact Information */}
+            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                <div>
+                  <span className="font-medium text-gray-700">Name:</span>
+                  <p className="text-gray-900">{selectedContact.name}</p>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-700">Email:</span>
+                  <p className="text-gray-900">{selectedContact.email}</p>
+                </div>
+                {selectedContact.phone && (
+                  <div>
+                    <span className="font-medium text-gray-700">Phone:</span>
+                    <p className="text-gray-900">{selectedContact.phone}</p>
+                  </div>
+                )}
+                <div>
+                  <span className="font-medium text-gray-700">Status:</span>
+                  <span className={`inline-block px-2 py-1 text-xs rounded-full capitalize ${
+                    selectedContact.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    selectedContact.status === 'reviewed' ? 'bg-green-100 text-green-800' :
+                    selectedContact.status === 'replied' ? 'bg-blue-100 text-blue-800' :
+                    'bg-gray-100 text-gray-800'
+                  }`}>
+                    {selectedContact.status || 'pending'}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="mt-4">
+                <span className="font-medium text-gray-700">Subject:</span>
+                <p className="text-gray-900 mt-1">{selectedContact.subject}</p>
+              </div>
+              
+              <div className="mt-4">
+                <span className="font-medium text-gray-700">Original Message:</span>
+                <div className="bg-white border border-gray-200 rounded p-3 mt-1">
+                  <p className="text-gray-900 whitespace-pre-wrap">{selectedContact.message}</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Reply Form */}
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Your Reply *
+                </label>
+                <textarea
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                  rows={6}
+                  placeholder="Type your reply here..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  disabled={sendingReply}
+                />
+              </div>
+              
+              <div className="flex gap-3 pt-4">
+                <CButton 
+                  variant="primary" 
+                  onClick={sendReply}
+                  disabled={sendingReply || !replyMessage.trim()}
+                  className="flex items-center gap-2"
+                >
+                  {sendingReply ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Mail size={16} />
+                      Send Reply
+                    </>
+                  )}
+                </CButton>
+                <CButton 
+                  variant="secondary" 
+                  onClick={closeReplyModal}
+                  disabled={sendingReply}
+                >
+                  Cancel
+                </CButton>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -62,7 +62,7 @@ const updateContactStatus = async (req, res) => {
     }
     const { contactId } = req.params;
     const { status } = req.body;
-    const allowed = ['new', 'reviewed', 'resolved'];
+    const allowed = ['pending', 'reviewed', 'replied', 'resolved'];
     if (!allowed.includes(status)) {
       return res.status(400).json({
         success: false,
@@ -91,7 +91,7 @@ const updateContactStatus = async (req, res) => {
         );
         
         if (emailResult.success) {
-          console.log(`Email notification sent to ${contact.email} for contact request: ${contact.subject}`);
+          console.log(`Email notification sent to ${contact.email} for contact message`);
         } else {
           console.error(`Failed to send email notification: ${emailResult.error}`);
         }
@@ -166,78 +166,6 @@ const deleteContact = async (req, res) => {
   }
 };
 
-const markAsReviewed = async (req, res) => {
-  try {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. Admins only.',
-      });
-    }
-    
-    const { contactId } = req.params;
-    const contact = await ContactMessage.findById(contactId);
-    
-    if (!contact) {
-      return res.status(404).json({
-        success: false,
-        message: 'Contact message not found',
-      });
-    }
-    
-    if (contact.status === 'reviewed') {
-      return res.status(400).json({
-        success: false,
-        message: 'Contact request is already marked as reviewed',
-      });
-    }
-    
-    const oldStatus = contact.status;
-    contact.status = 'reviewed';
-    await contact.save();
-    
-    let emailSent = false;
-    let emailError = null;
-    
-    // Send email notification
-    try {
-      console.log(`Attempting to send email to: ${contact.email} for user: ${contact.name}`); // Added for debugging
-      const emailResult = await sendContactReviewEmail(
-        contact.email,
-        contact.name,
-        contact.subject
-      );
-      
-      if (emailResult.success) {
-        emailSent = true;
-        console.log(`Email notification sent to ${contact.email} for contact request: ${contact.subject}`);
-      } else {
-        emailError = emailResult.error;
-        console.error(`Failed to send email notification: ${emailResult.error}`);
-      }
-    } catch (error) {
-      emailError = error.message;
-      console.error('Error sending email notification:', error);
-    }
-    
-    return res.status(200).json({
-      success: true,
-      message: emailSent 
-        ? 'Contact request marked as reviewed and email sent successfully'
-        : 'Contact request marked as reviewed (email delivery failed)',
-      data: contact,
-      emailSent,
-      emailError: emailError || null,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: 'Error marking contact as reviewed',
-      error: error.message,
-    });
-  }
-};
-
 const getContactsForUser = async (req, res) => {
   try {
     const contacts = await ContactMessage.find({ email: req.user.email })
@@ -256,12 +184,159 @@ const getContactsForUser = async (req, res) => {
   }
 };
 
+const replyToContact = async (req, res) => {
+  try {
+    console.log('=== REPLY TO CONTACT DEBUG ===');
+    console.log('User:', req.user ? { id: req.user._id, email: req.user.email, role: req.user.role } : 'No user');
+    console.log('Params:', req.params);
+    console.log('Body:', { replyMessage: req.body.replyMessage ? req.body.replyMessage.substring(0, 100) + '...' : 'MISSING' });
+    
+    if (req.user.role !== 'admin') {
+      console.log('Access denied - user role:', req.user.role);
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Admins only.',
+        debug: { userRole: req.user.role, requiredRole: 'admin' }
+      });
+    }
+    
+    const { contactId } = req.params;
+    const { replyMessage } = req.body;
+    
+    if (!contactId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Contact ID is required',
+        debug: { params: req.params }
+      });
+    }
+    
+    if (!replyMessage || !replyMessage.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Reply message is required',
+        debug: { replyMessageLength: replyMessage ? replyMessage.length : 0 }
+      });
+    }
+    
+    console.log('Finding contact with ID:', contactId);
+    const contact = await ContactMessage.findById(contactId);
+    
+    if (!contact) {
+      console.log('Contact not found for ID:', contactId);
+      return res.status(404).json({
+        success: false,
+        message: 'Contact message not found',
+        debug: { contactId, searchedIn: 'ContactMessage collection' }
+      });
+    }
+    
+    console.log('Contact found:', { id: contact._id, email: contact.email, name: contact.name });
+    
+    // Send email reply
+    const { sendContactReplyEmail } = require('../services/emailService');
+    let emailResult = { success: false, error: 'Email service not available' };
+    
+    try {
+      console.log('Attempting to send email reply...');
+      emailResult = await sendContactReplyEmail(
+        contact.email,
+        contact.name,
+        contact.subject,
+        replyMessage
+      );
+      console.log('Email service result:', emailResult);
+    } catch (emailError) {
+      console.error('=== EMAIL SERVICE ERROR ===');
+      console.error('Error type:', emailError.constructor.name);
+      console.error('Error message:', emailError.message);
+      console.error('Error code:', emailError.code);
+      console.error('Error stack:', emailError.stack);
+      
+      emailResult = { 
+        success: false, 
+        error: emailError.message,
+        code: emailError.code || 'EMAIL_ERROR',
+        type: emailError.constructor.name,
+        stack: process.env.NODE_ENV === 'development' ? emailError.stack : undefined
+      };
+    }
+    
+    // Always update the status to 'replied' regardless of email success
+    try {
+      console.log('Updating contact status to replied...');
+      contact.status = 'replied';
+      await contact.save();
+      console.log('Contact status updated successfully');
+      
+      return res.status(200).json({
+        success: true,
+        message: emailResult.success ? 
+          'Reply sent successfully and status updated' : 
+          'Reply processed (email delivery failed, but status updated)',
+        data: {
+          id: contact._id,
+          email: contact.email,
+          status: contact.status,
+          originalSubject: contact.subject
+        },
+        emailSent: emailResult.success,
+        emailError: emailResult.success ? null : {
+          message: emailResult.error,
+          code: emailResult.code,
+          type: emailResult.type,
+          stack: emailResult.stack
+        }
+      });
+    } catch (saveError) {
+      console.error('=== CONTACT SAVE ERROR ===');
+      console.error('Save error:', saveError.message);
+      console.error('Save error stack:', saveError.stack);
+      
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to update contact status',
+        error: saveError.message,
+        debug: {
+          contactId: contact._id,
+          attemptedStatus: 'replied',
+          emailResult: emailResult
+        }
+      });
+    }
+  } catch (error) {
+    console.error('=== REPLY TO CONTACT CRITICAL ERROR ===');
+    console.error('Error type:', error.constructor.name);
+    console.error('Error message:', error.message);
+    console.error('Error code:', error.code);
+    console.error('Error stack:', error.stack);
+    console.error('Request info:', {
+      method: req.method,
+      url: req.url,
+      headers: req.headers,
+      user: req.user ? { id: req.user._id, email: req.user.email, role: req.user.role } : null
+    });
+    
+    return res.status(500).json({
+      success: false,
+      message: 'Error processing reply',
+      error: error.message,
+      debug: {
+        errorType: error.constructor.name,
+        errorCode: error.code,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+        timestamp: new Date().toISOString()
+      }
+    });
+  }
+};
+
 module.exports = { 
   createContactMessage, 
   getContacts, 
   updateContactStatus, 
-  markAsReviewed,
   deleteContact, 
   clearContactsForUser,
-  getContactsForUser 
+  getContactsForUser,
+  replyToContact 
 };

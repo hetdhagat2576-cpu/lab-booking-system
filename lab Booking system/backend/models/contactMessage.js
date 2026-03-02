@@ -7,7 +7,7 @@ const contactMessageSchema = new mongoose.Schema(
     phone: { type: String, trim: true },
     subject: { type: String, required: true, trim: true },
     message: { type: String, required: true, trim: true },
-    status: { type: String, enum: ['new', 'reviewed', 'resolved'], default: 'new' },
+    status: { type: String, enum: ['pending', 'reviewed', 'replied', 'resolved'], default: 'pending' },
   },
   { timestamps: true }
 );

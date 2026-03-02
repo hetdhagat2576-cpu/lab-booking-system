@@ -15,7 +15,7 @@ const testSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Test category is required'],
     trim: true,
-    enum: ['Diabetes', 'Liver', 'Kidney', 'Thyroid', 'Fever', 'Lungs', 'General', 'Heart', 'Women Health', 'Senior Citizen'],
+    enum: ['Diabetes', 'Liver', 'Kidney', 'Thyroid', 'Fever', 'Lungs', 'General', 'Heart', 'Women Health', 'Senior Citizen', 'Other'],
   },
   subcategory: {
     type: String,
