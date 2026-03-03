@@ -273,7 +273,18 @@ export default function LabTechnicianLogin() {
         login(data.data);
         navigate("/lab-technician-dashboard");
       } else {
-        setError(data.message || "Login failed");
+        if (data.requiresEmailVerification) {
+          // Show error for lab technician requiring email verification
+          await Swal.fire({
+            icon: 'error',
+            title: 'Email Verification Required',
+            text: 'Lab technician accounts must verify their email before accessing the dashboard. Please check your inbox for the OTP verification email.',
+            confirmButtonColor: Theme.colors.primary,
+            confirmButtonText: 'OK'
+          });
+        } else {
+          setError(data.message || "Login failed");
+        }
       }
     } catch (err) {
       console.error('Login error:', err);

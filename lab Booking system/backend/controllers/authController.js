@@ -21,7 +21,7 @@ const sendPasswordResetEmail = async (email, resetToken, name = 'User') => {
   const host = process.env.EMAIL_HOST;
   const port = parseInt(process.env.EMAIL_PORT || '0', 10);
   const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASSWORD;
+  const pass = process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD;
   const from = process.env.EMAIL_FROM || 'no-reply@labbooking.local';
   
   if (!host || !port || !user || !pass) {
@@ -41,10 +41,32 @@ const sendPasswordResetEmail = async (email, resetToken, name = 'User') => {
     secure: port === 465,
     auth: { user, pass },
   });
+  
   try {
     await transporter.verify();
   } catch (err) {
     console.error('SMTP transporter verify failed:', err);
+    
+    // Development fallback: log reset link to console when email fails
+    const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
+    console.log('=================================');
+    console.log('EMAIL FAILED - PASSWORD RESET LINK:', resetLink);
+    console.log('Email:', email);
+    console.log('Name:', name);
+    console.log('Error:', err.message);
+    console.log('=================================');
+    
+    // Provide Gmail setup instructions if it's a Gmail auth error
+    if (err.code === 'EAUTH' && host.includes('gmail.com')) {
+      console.log('\n=== GMAIL SETUP REQUIRED ===');
+      console.log('1. Enable 2-Factor Authentication on your Gmail account');
+      console.log('2. Go to: https://myaccount.google.com/apppasswords');
+      console.log('3. Generate an App Password for "Mail"');
+      console.log('4. Update EMAIL_PASS in .env with the 16-character app password');
+      console.log('5. Restart the backend server');
+      console.log('=============================\n');
+    }
+    
     return { sent: false, message: `SMTP verify failed: ${err.message}` };
   }
 
@@ -90,7 +112,7 @@ const sendOtpEmail = async (email, code, name = 'User') => {
   const host = process.env.EMAIL_HOST;
   const port = parseInt(process.env.EMAIL_PORT || '0', 10);
   const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASSWORD;
+  const pass = process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD;
   const from = process.env.EMAIL_FROM || 'no-reply@labbooking.local';
   
   if (!host || !port || !user || !pass) {
@@ -109,10 +131,31 @@ const sendOtpEmail = async (email, code, name = 'User') => {
     secure: port === 465,
     auth: { user, pass },
   });
+  
   try {
     await transporter.verify();
   } catch (err) {
     console.error('SMTP transporter verify failed:', err);
+    
+    // Development fallback: log OTP to console when email fails
+    console.log('=================================');
+    console.log('EMAIL FAILED - OTP CODE:', code);
+    console.log('Email:', email);
+    console.log('Name:', name);
+    console.log('Error:', err.message);
+    console.log('=================================');
+    
+    // Provide Gmail setup instructions if it's a Gmail auth error
+    if (err.code === 'EAUTH' && host.includes('gmail.com')) {
+      console.log('\n=== GMAIL SETUP REQUIRED ===');
+      console.log('1. Enable 2-Factor Authentication on your Gmail account');
+      console.log('2. Go to: https://myaccount.google.com/apppasswords');
+      console.log('3. Generate an App Password for "Mail"');
+      console.log('4. Update EMAIL_PASS in .env with the 16-character app password');
+      console.log('5. Restart the backend server');
+      console.log('=============================\n');
+    }
+    
     return { sent: false, message: `SMTP verify failed: ${err.message}` };
   }
 
@@ -140,7 +183,7 @@ const sendOtpEmail = async (email, code, name = 'User') => {
     await transporter.sendMail({
       from,
       to: email,
-      subject: 'Verify Your Lab Booking Account',
+      subject: 'Your OTP Code',
       text: `Your OTP is ${code}. It expires in 10 minutes.`,
       html,
     });
@@ -244,10 +287,24 @@ const registerUser = async (req, res) => {
       otpSent = !!result.sent;
       if (!result.sent) {
         emailMessage = result.message;
+        // Log OTP to console when email fails
+        console.log('=================================');
+        console.log('EMAIL FAILED - REGISTRATION OTP CODE:', code);
+        console.log('Email:', user.email);
+        console.log('Name:', user.name);
+        console.log('Error:', result.message);
+        console.log('=================================');
       }
     } catch (error) {
       console.error('Email sending error:', error);
       emailMessage = 'Failed to send OTP email';
+      // Log OTP to console when email fails
+      console.log('=================================');
+      console.log('EMAIL FAILED - REGISTRATION OTP CODE:', code);
+      console.log('Email:', user.email);
+      console.log('Name:', user.name);
+      console.log('Error:', error.message);
+      console.log('=================================');
     }
 
     const userResponse = {
@@ -306,7 +363,7 @@ const loginUser = async (req, res) => {
       console.log('❌ User not found:', email);
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password',
+        message: 'User not found. Please register first.',
       });
     }
 
@@ -318,8 +375,17 @@ const loginUser = async (req, res) => {
       passwordLength: user.password ? user.password.length : 0
     });
     
-    // IMPORTANT: No email verification check - users can login regardless of verification status
-    console.log('⏭️  BYPASSING EMAIL VERIFICATION - allowing login for all users');
+    // Check if user's email is verified
+    if (!user.emailVerified) {
+      console.log('❌ Email not verified for:', email);
+      return res.status(403).json({
+        success: false,
+        message: 'Please verify your email before logging in. Check your inbox for the OTP verification email.',
+        requiresEmailVerification: true,
+      });
+    }
+
+    console.log('✅ Email verified for:', email);
 
     // Check role if specified (more flexible matching)
     if (role && user.role !== role) {
@@ -738,10 +804,24 @@ async function resendOtp(req, res) {
       otpSent = !!result.sent;
       if (!result.sent) {
         emailMessage = result.message;
+        // Log OTP to console when email fails
+        console.log('=================================');
+        console.log('EMAIL FAILED - RESEND OTP CODE:', code);
+        console.log('Email:', user.email);
+        console.log('Name:', user.name);
+        console.log('Error:', result.message);
+        console.log('=================================');
       }
     } catch (error) {
       console.error('Email sending error:', error);
       emailMessage = 'Failed to send OTP email';
+      // Log OTP to console when email fails
+      console.log('=================================');
+      console.log('EMAIL FAILED - RESEND OTP CODE:', code);
+      console.log('Email:', user.email);
+      console.log('Name:', user.name);
+      console.log('Error:', error.message);
+      console.log('=================================');
     }
     
     res.status(200).json({

@@ -3,12 +3,12 @@ const { sendContactReviewEmail } = require('../services/emailService');
 
 const createContactMessage = async (req, res) => {
   try {
-    const { name, email, phone, subject, message } = req.body;
+    const { name, email, phone, message } = req.body;
 
-    if (!name || !email || !subject || !message) {
+    if (!name || !email || !message) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide name, email, subject and message',
+        message: 'Please provide name, email and message',
       });
     }
 
@@ -16,7 +16,6 @@ const createContactMessage = async (req, res) => {
       name,
       email,
       phone,
-      subject,
       message,
     });
 
@@ -87,7 +86,7 @@ const updateContactStatus = async (req, res) => {
         const emailResult = await sendContactReviewEmail(
           contact.email,
           contact.name,
-          contact.subject
+          'Contact Message'
         );
         
         if (emailResult.success) {
@@ -244,7 +243,7 @@ const replyToContact = async (req, res) => {
         emailResult = await sendContactReplyEmail(
           contact.email,
           contact.name,
-          contact.subject,
+          'Contact Message',
           replyMessage
         );
         console.log('Email service result:', emailResult);
@@ -286,7 +285,7 @@ const replyToContact = async (req, res) => {
           id: contact._id,
           email: contact.email,
           status: contact.status,
-          originalSubject: contact.subject
+          originalSubject: 'Contact Message'
         },
         emailSent: emailResult.success,
         emailError: emailResult.success ? null : {

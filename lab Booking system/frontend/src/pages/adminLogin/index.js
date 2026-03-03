@@ -263,7 +263,18 @@ export default function AdminLogin() {
         login(data.data);
         navigate("/admin-dashboard");
       } else {
-        setError(data.message || "Login failed");
+        if (data.requiresEmailVerification) {
+          // Show error for admin requiring email verification
+          await Swal.fire({
+            icon: 'error',
+            title: 'Email Verification Required',
+            text: 'Admin accounts must verify their email before accessing the dashboard. Please check your inbox for the OTP verification email.',
+            confirmButtonColor: Theme.colors.primary,
+            confirmButtonText: 'OK'
+          });
+        } else {
+          setError(data.message || "Login failed");
+        }
       }
     } catch (err) {
       console.error(err);

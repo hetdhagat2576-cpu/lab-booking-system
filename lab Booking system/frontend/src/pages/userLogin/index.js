@@ -169,13 +169,28 @@ export default function UserLogin() {
         login(data.data);
         navigate("/dashboard");
       } else {
-        if (data.requiresVerification) {
+        if (data.requiresEmailVerification) {
           // Redirect to OTP verification for unverified email
-          navigate("/otp-verification", {
-            state: {
-              email: formData.email,
-              redirectPath: "/dashboard",
-              isLoginFlow: true
+          await Swal.fire({
+            icon: 'warning',
+            title: 'Email Verification Required',
+            text: 'Please verify your email before logging in. Check your inbox for the OTP verification email.',
+            confirmButtonColor: Theme.colors.primary,
+            confirmButtonText: 'Verify Email',
+            showCancelButton: true,
+            cancelButtonText: 'Cancel',
+            customClass: {
+              popup: 'swal2-visible-buttons'
+            }
+          }).then((result) => {
+            if (result.isConfirmed) {
+              navigate("/otp-verification", {
+                state: {
+                  email: formData.email,
+                  redirectPath: "/dashboard",
+                  isLoginFlow: true
+                }
+              });
             }
           });
         } else {

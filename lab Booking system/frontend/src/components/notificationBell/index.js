@@ -71,12 +71,22 @@ export default function NotificationBell() {
   }, []);
 
   const fetchNotifications = async () => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      console.log('🔒 User not authenticated - skipping notification fetch');
+      return;
+    }
     
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      console.log('🔔 Fetching notifications...');
+      
+      // Check if token exists
+      if (!token) {
+        console.log('� No token found - user may need to login again');
+        return;
+      }
+      
+      console.log('�🔔 Fetching notifications...');
       
       const response = await fetch('/api/notifications', {
         headers: {
@@ -93,8 +103,9 @@ export default function NotificationBell() {
         setUnreadCount(data.unreadCount || 0);
       } else if (response.status === 401) {
         console.log('🔒 Not authorized - user may need to login again');
-        // Clear invalid token
+        // Clear invalid token and redirect to login
         localStorage.removeItem('token');
+        window.location.href = '/login';
       } else {
         console.error('❌ API error:', response.status, response.statusText);
       }

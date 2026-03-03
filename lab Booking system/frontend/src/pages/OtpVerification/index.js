@@ -261,8 +261,23 @@ export default function OtpVerification() {
       const data = await response.json();
 
       if (data.success) {
-        // Direct navigation to login without success message
-        navigate('/user-login');
+        // Wait 5 seconds then show SweetAlert success message
+        setTimeout(async () => {
+          await Swal.fire({
+            icon: 'success',
+            title: 'Registration Successful',
+            text: 'Your account has been verified successfully!',
+            confirmButtonColor: Theme.colors.primary,
+            confirmButtonText: 'OK',
+            showConfirmButton: true,
+            showCancelButton: false,
+            allowOutsideClick: false,
+            allowEscapeKey: false
+          }).then((result) => {
+            // Redirect to login after user clicks OK or alert closes
+            navigate('/user-login');
+          });
+        }, 5000); // Wait exactly 5 seconds
       } else {
         setError(data.message || 'Invalid OTP. Please try again.');
       }
