@@ -161,6 +161,16 @@ export default function App() {
             <ReportView />
           </ProtectedRoute>
         } />
+        <Route path="/test-booking" element={
+          <ProtectedRoute requiredRole="user">
+            <NewBooking />
+          </ProtectedRoute>
+        } />
+        <Route path="/booking/:packageId" element={
+          <ProtectedRoute requiredRole="user">
+            <NewBooking />
+          </ProtectedRoute>
+        } />
       </Routes>
         </Router>
     </AuthProvider>

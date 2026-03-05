@@ -11,6 +11,7 @@ import {
   RECOMMENDED_TESTS,
   getTestCount,
 } from "../../config/staticData";
+import Swal from "sweetalert2";
 
 export default function TestDetails() {
   const navigate = useNavigate();
@@ -24,7 +25,40 @@ export default function TestDetails() {
   // State for tests accordion
   const [isTestsOpen, setIsTestsOpen] = useState(true);
 
-  // State for fetched data
+  // Check if user is logged in before booking
+  const handleBookNow = () => {
+    // Get user data from localStorage
+    const storedUser = localStorage.getItem('lab_user');
+    const user = storedUser ? JSON.parse(storedUser) : null;
+    
+    // Check if user is authenticated and email is verified
+    if (user && (user.emailVerified || user.isEmailVerified)) {
+      // User is authenticated, navigate to booking page
+      navigate('/test-booking', { 
+        state: { 
+          testName: safeTestName(test),
+          price: test.price || 500
+        } 
+      });
+    } else {
+      // User is not authenticated, show SweetAlert prompt
+      Swal.fire({
+        title: 'Login Required',
+        text: 'Please log in to your account to book this test.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: Theme.colors.primary,
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Yes, Book Now!',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Redirect to login page
+          navigate('/user-login');
+        }
+      });
+    }
+  };
   const [test, setTest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -270,14 +304,7 @@ export default function TestDetails() {
                     fullWidth={false}
                     variant="primary"
                     className="flex-1 justify-center text-lg"
-                    onClick={() => {
-                      navigate('/test-booking', { 
-                        state: { 
-                          testName: safeTestName(test),
-                          price: test.price || 500
-                        } 
-                      });
-                    }}
+                    onClick={handleBookNow}
                   >
                     Book Now at ₹{test.price || 500}
                   </CButton>

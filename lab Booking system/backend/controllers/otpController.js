@@ -6,7 +6,7 @@ const sendOtpEmail = async (email, code, name) => {
   const host = process.env.EMAIL_HOST;
   const port = parseInt(process.env.EMAIL_PORT || '0', 10);
   const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASSWORD;
+  const pass = process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD;
   const from = process.env.EMAIL_FROM || 'no-reply@labbooking.local';
   
   if (!host || !port || !user || !pass) {

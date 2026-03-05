@@ -195,7 +195,7 @@ export default function RazorpayPaymentPage() {
           }
         },
         theme: {
-          color: "#2563eb",
+          color: "#2a7a8e",
         },
       };
 

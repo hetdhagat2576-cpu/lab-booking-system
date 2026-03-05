@@ -952,30 +952,38 @@ export default function AdminDashboardIndex() {
     }
     
     try {
-      // Create minimal package data for testing
+      // Create package data with proper structure
       const packageData = {
         name: packageFormData.name,
         description: packageFormData.description,
         category: packageFormData.category,
         price: parseFloat(packageFormData.price),
         duration: packageFormData.duration || '30 mins',
-        testsIncluded: packageFormData.includedTests || [],
+        testsIncluded: finalTestIds, // Use filtered test IDs
         sampleTypes: packageFormData.requiredSamples && packageFormData.requiredSamples.length > 0 
           ? packageFormData.requiredSamples 
           : ['Blood'],
         benefits: packageFormData.benefits || [],
-        suitableFor: packageFormData.suitableFor || []
+        suitableFor: packageFormData.suitableFor || [],
+        preparation: packageFormData.preparation || 'No special preparation required',
+        isActive: packageFormData.isActive !== undefined ? packageFormData.isActive : true,
+        isPopular: packageFormData.isPopular !== undefined ? packageFormData.isPopular : false,
+        isRecommended: packageFormData.isRecommended !== undefined ? packageFormData.isRecommended : false,
+        tags: packageFormData.tags || []
       };
 
       // Add optional fields only if they have values
-      if (packageFormData.originalPrice) {
+      if (packageFormData.originalPrice && packageFormData.originalPrice > 0) {
         packageData.originalPrice = parseFloat(packageFormData.originalPrice);
       }
-      if (packageFormData.discount) {
+      if (packageFormData.discount && packageFormData.discount > 0) {
         packageData.discount = parseFloat(packageFormData.discount);
       }
       if (packageFormData.icon) {
         packageData.imageUrl = packageFormData.icon;
+      }
+      if (packageFormData.includes && packageFormData.includes.length > 0) {
+        packageData.includes = packageFormData.includes;
       }
 
       console.log('Minimal package data:', JSON.stringify(packageData, null, 2));
@@ -1109,6 +1117,17 @@ export default function AdminDashboardIndex() {
       console.log('Response headers:', response.headers);
 
       if (response.ok) {
+        const responseData = await response.json();
+        console.log('Package saved successfully:', responseData);
+        
+        // Show success message
+        Swal.fire({
+          icon: 'success',
+          title: editingPackage ? 'Package Updated' : 'Package Created',
+          text: editingPackage ? 'Package has been updated successfully!' : 'Package has been created successfully!',
+          confirmButtonColor: Theme.colors.primary
+        });
+        
         fetchPackages();
         setShowPackageForm(false);
         setEditingPackage(null);
@@ -1152,7 +1171,7 @@ export default function AdminDashboardIndex() {
         Swal.fire({
           icon: 'error',
           title: 'Error',
-          html: `${errorMessage}<br><br><strong>Error Code:</strong> ${errorData.error || 'UNKNOWN'}<br><br><strong>Full Error:</strong> <pre>${JSON.stringify(errorData, null, 2)}</pre>`,
+          html: `${errorMessage}<br><br><strong>Status:</strong> ${response.status}<br><strong>Error Code:</strong> ${errorData.error || 'UNKNOWN'}`,
           confirmButtonColor: Theme.colors.primary,
           width: '600px'
         });
@@ -4848,8 +4867,10 @@ export default function AdminDashboardIndex() {
                                     <CButton 
                                       className="p-1"
                                       onClick={async () => {
+                                        console.log('=== EDIT PACKAGE DEBUG START ===');
                                         console.log('Editing package clicked:', JSON.stringify(pkg, null, 2));
                                         console.log('Current tests before fetch:', tests.map(t => t._id));
+                                        
                                         setEditingPackage(pkg);
                                         
                                         // Refresh tests data to ensure we have latest valid test IDs
@@ -4879,20 +4900,32 @@ export default function AdminDashboardIndex() {
                                           console.warn(`Filtered out ${originalTestIds.length - filteredTestIds.length} invalid test IDs`);
                                         }
                                           
-                                          setPackageFormData({
-                                            name: pkg.name || pkg.title || '',
-                                            description: pkg.description || '',
-                                            icon: pkg.icon || '',
-                                            includedTests: filteredTestIds,
-                                            price: pkg.price?.toString() || '',
-                                            requiredSamples: pkg.sampleTypes || ['Blood'],
-                                            category: pkg.category || 'general',
-                                            duration: pkg.duration || '',
-                                            fastingRequired: pkg.fastingRequired || false,
-                                            benefits: pkg.benefits || [],
-                                            suitableFor: pkg.suitableFor || []
-                                          });
-                                          setShowPackageForm(true);
+                                        const formData = {
+                                          name: pkg.name || pkg.title || '',
+                                          description: pkg.description || '',
+                                          icon: pkg.icon || pkg.imageUrl || '',
+                                          includedTests: filteredTestIds,
+                                          price: pkg.price?.toString() || '',
+                                          requiredSamples: pkg.sampleTypes || ['Blood'],
+                                          category: pkg.category || 'general',
+                                          duration: pkg.duration || '',
+                                          fastingRequired: pkg.fastingRequired || false,
+                                          benefits: pkg.benefits || [],
+                                          suitableFor: pkg.suitableFor || [],
+                                          isActive: pkg.isActive !== undefined ? pkg.isActive : true,
+                                          isPopular: pkg.isPopular !== undefined ? pkg.isPopular : false,
+                                          isRecommended: pkg.isRecommended !== undefined ? pkg.isRecommended : false,
+                                          tags: pkg.tags || [],
+                                          originalPrice: pkg.originalPrice?.toString() || '',
+                                          discount: pkg.discount?.toString() || '',
+                                          includes: pkg.includes || [],
+                                          preparation: pkg.preparation || ''
+                                        };
+                                        
+                                        console.log('Setting form data:', JSON.stringify(formData, null, 2));
+                                        setPackageFormData(formData);
+                                        setShowPackageForm(true);
+                                        console.log('=== EDIT PACKAGE DEBUG END ===');
                                       }}
                                       variant="outline"
                                       title="Edit Package"

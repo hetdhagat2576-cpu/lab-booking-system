@@ -237,10 +237,27 @@ const updatePackage = async (req, res) => {
     const { id } = req.params;
     const updateData = req.body;
     
+    console.log('=== PACKAGE UPDATE DEBUG START ===');
+    console.log('Package ID:', id);
+    console.log('Update data:', JSON.stringify(updateData, null, 2));
+    console.log('User making update:', req.user ? req.user.email : 'Unknown');
+    console.log('=== PACKAGE UPDATE DEBUG END ===');
+    
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid package ID'
+        message: 'Invalid package ID',
+        error: 'INVALID_ID'
+      });
+    }
+    
+    // Check if package exists first
+    const existingPackage = await Package.findById(id);
+    if (!existingPackage) {
+      return res.status(404).json({
+        success: false,
+        message: 'Package not found',
+        error: 'PACKAGE_NOT_FOUND'
       });
     }
     
@@ -268,6 +285,47 @@ const updatePackage = async (req, res) => {
       }
     }
     
+    // Validate price if provided
+    if (updateData.price !== undefined) {
+      let parsedPrice = updateData.price;
+      if (typeof parsedPrice === 'string') {
+        // Remove currency symbols, commas, and whitespace, then convert to number
+        const cleanPrice = parsedPrice.replace(/[₹$\s]/g, '').replace(/,/g, '');
+        parsedPrice = parseFloat(cleanPrice);
+      }
+      
+      if (isNaN(parsedPrice) || parsedPrice < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Valid package price is required (must be a positive number)',
+          error: 'INVALID_PRICE'
+        });
+      }
+      
+      updateData.price = Math.round(parsedPrice * 100) / 100;
+    }
+    
+    // Validate original price if provided
+    if (updateData.originalPrice !== undefined && updateData.originalPrice !== null) {
+      let parsedOriginalPrice = updateData.originalPrice;
+      if (typeof parsedOriginalPrice === 'string') {
+        const cleanPrice = parsedOriginalPrice.replace(/[₹$\s]/g, '').replace(/,/g, '');
+        parsedOriginalPrice = parseFloat(cleanPrice);
+      }
+      
+      if (isNaN(parsedOriginalPrice) || parsedOriginalPrice < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Valid original price is required (must be a positive number)',
+          error: 'INVALID_ORIGINAL_PRICE'
+        });
+      }
+      
+      updateData.originalPrice = Math.round(parsedOriginalPrice * 100) / 100;
+    }
+    
+    console.log('Final update data:', JSON.stringify(updateData, null, 2));
+    
     const package = await Package.findByIdAndUpdate(
       id,
       updateData,
@@ -277,9 +335,12 @@ const updatePackage = async (req, res) => {
     if (!package) {
       return res.status(404).json({
         success: false,
-        message: 'Package not found'
+        message: 'Package not found after update',
+        error: 'UPDATE_FAILED'
       });
     }
+    
+    console.log('Package updated successfully:', package._id);
     
     res.status(200).json({
       success: true,
@@ -288,10 +349,27 @@ const updatePackage = async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating package:', error);
+    
+    // Handle specific error types
+    let errorMessage = 'Error updating package';
+    let errorCode = 'UPDATE_ERROR';
+    
+    if (error.name === 'ValidationError') {
+      errorMessage = 'Validation failed: ' + error.message;
+      errorCode = 'VALIDATION_ERROR';
+    } else if (error.name === 'MongoServerError') {
+      errorMessage = 'Database error: ' + error.message;
+      errorCode = 'DATABASE_ERROR';
+    } else if (error.code === 11000) {
+      errorMessage = 'Duplicate entry detected';
+      errorCode = 'DUPLICATE_ERROR';
+    }
+    
     res.status(500).json({
       success: false,
-      message: 'Error updating package',
-      error: error.message
+      message: errorMessage,
+      error: error.message,
+      code: errorCode
     });
   }
 };

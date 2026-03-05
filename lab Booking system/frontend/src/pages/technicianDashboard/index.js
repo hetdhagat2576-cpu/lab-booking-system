@@ -97,8 +97,8 @@ const TechnicianDashboard = () => {
 
   // Initialize WebSocket connection
   useEffect(() => {
-    if (user?.token) {
-      const websocketUrl = `${process.env.REACT_APP_WS_URL || 'ws://localhost:5001'}`;
+    if (user?.token && user?.id) {
+      const websocketUrl = `${process.env.REACT_APP_WS_URL || 'ws://localhost:5001'}?userId=${user.id}&token=${user.token}`;
       const websocket = new WebSocket(websocketUrl);
       
       websocket.onopen = () => {
@@ -130,10 +130,19 @@ const TechnicianDashboard = () => {
       
       websocket.onerror = (error) => {
         console.error('Technician WebSocket error:', error);
+        // Attempt to reconnect after 3 seconds
+        setTimeout(() => {
+          if (user?.token && user?.id) {
+            console.log('Attempting to reconnect WebSocket...');
+            const reconnectUrl = `${process.env.REACT_APP_WS_URL || 'ws://localhost:5001'}?userId=${user.id}&token=${user.token}`;
+            const reconnectWs = new WebSocket(reconnectUrl);
+            setWs(reconnectWs);
+          }
+        }, 3000);
       };
       
-      websocket.onclose = () => {
-        console.log('Technician WebSocket disconnected');
+      websocket.onclose = (event) => {
+        console.log('Technician WebSocket disconnected, code:', event.code, 'reason:', event.reason);
         setWs(null);
       };
       

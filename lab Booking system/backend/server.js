@@ -137,14 +137,23 @@ bookingController.setWebSocketServer(wss);
 wss.on('connection', (ws, req) => {
   console.log('New WebSocket connection established');
   
-  // Extract user ID from query parameters or headers
+  // Extract user ID and token from query parameters
   const url = new URL(req.url, `http://${req.headers.host}`);
   const userId = url.searchParams.get('userId');
+  const token = url.searchParams.get('token');
   
-  if (userId) {
-    ws.userId = userId;
-    console.log(`WebSocket connection associated with user: ${userId}`);
+  // Validate authentication
+  if (!userId || !token) {
+    console.log('WebSocket connection rejected: missing userId or token');
+    ws.close(1008, 'Authentication required');
+    return;
   }
+  
+  // Here you could add additional token validation logic
+  // For now, we'll accept the token and associate the connection
+  ws.userId = userId;
+  ws.token = token;
+  console.log(`WebSocket connection associated with user: ${userId}`);
   
   ws.on('message', (message) => {
     console.log('Received:', message);
@@ -155,7 +164,7 @@ wss.on('connection', (ws, req) => {
       // Handle user identification
       if (parsedMessage.type === 'authenticate' && parsedMessage.userId) {
         ws.userId = parsedMessage.userId;
-        console.log(`WebSocket authenticated for user: ${parsedMessage.userId}`);
+        console.log(`WebSocket re-authenticated for user: ${parsedMessage.userId}`);
         return;
       }
       
@@ -170,12 +179,12 @@ wss.on('connection', (ws, req) => {
     }
   });
 
-  ws.on('close', () => {
-    console.log('WebSocket connection closed');
+  ws.on('close', (code, reason) => {
+    console.log(`WebSocket connection closed for user ${userId}, code: ${code}, reason: ${reason}`);
   });
 
   ws.on('error', (error) => {
-    console.error('WebSocket error:', error);
+    console.error(`WebSocket error for user ${userId}:`, error);
   });
 });
 

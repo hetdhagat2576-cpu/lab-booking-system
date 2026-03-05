@@ -29,7 +29,18 @@ export default function ForgotPassword() {
       ...prev,
       [name]: value
     }));
-    setError(''); // Clear error when user types
+    // Clear error when user starts typing
+    if (error && value.trim()) {
+      setError('');
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    // Show error if field is empty on blur
+    if (!value.trim()) {
+      setError('Please enter your email address');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -148,8 +159,8 @@ export default function ForgotPassword() {
                           type="email"
                           value={formData.email}
                           onChange={handleChange}
+                          onBlur={handleBlur}
                           variant="outlined"
-                          required
                           disabled={loading}
                           placeholder="Enter your registered email"
                           error={!!error}

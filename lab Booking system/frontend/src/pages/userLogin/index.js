@@ -141,33 +141,43 @@ export default function UserLogin() {
       }
       
       if (data.success) {
-        // Show SweetAlert success message
-        await Swal.fire({
+        // Show SweetAlert success message and wait for user confirmation
+        const result = await Swal.fire({
           icon: 'success',
           title: 'Login Successful!',
           text: 'Welcome back! You are now logged in.',
           confirmButtonColor: Theme.colors.primary,
           confirmButtonText: 'Continue',
-          showConfirmButton: true,
-          showCancelButton: false,
+          showCancelButton: true,
+          cancelButtonText: 'Cancel',
           customClass: {
             popup: 'swal2-visible-buttons'
           },
           didOpen: () => {
             setTimeout(() => {
               const confirmBtn = document.querySelector('.swal2-confirm');
+              const cancelBtn = document.querySelector('.swal2-cancel');
               if (confirmBtn) {
                 confirmBtn.style.backgroundColor = '#3085d6';
                 confirmBtn.style.color = 'white';
                 confirmBtn.style.display = 'block';
                 confirmBtn.style.visibility = 'visible';
               }
+              if (cancelBtn) {
+                cancelBtn.style.backgroundColor = '#6c757d';
+                cancelBtn.style.color = 'white';
+                cancelBtn.style.display = 'block';
+                cancelBtn.style.visibility = 'visible';
+              }
             }, 100);
           }
         });
         
-        login(data.data);
-        navigate("/dashboard");
+        // Only login and navigate if user clicks "Continue"
+        if (result.isConfirmed) {
+          login(data.data);
+          navigate("/dashboard");
+        }
       } else {
         if (data.requiresEmailVerification) {
           // Redirect to OTP verification for unverified email
