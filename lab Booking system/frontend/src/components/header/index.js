@@ -126,7 +126,7 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
 
   return (
     <header className="bg-gradient-to-r from-primary to-secondary shadow-lg sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+      <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3 flex items-center justify-between">
         
         {/* LOGO */}
         <div className="flex-1">
@@ -144,16 +144,16 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                 navigate("/");
               }
             }} 
-            className="flex items-center gap-3 group"
+            className="flex items-center gap-2 sm:gap-3 group"
           >
-            <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 group-hover:border-white/40 transition-all shadow-inner">
-              <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl flex items-center justify-center border border-white/20 group-hover:border-white/40 transition-all shadow-inner">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
               </svg>
             </div>
             <div className="flex flex-col text-left">
-              <span className="text-xl font-black text-white leading-none tracking-tight">BookMyLab</span>
-              <span className="text-[10px] text-white/50 font-bold uppercase tracking-[0.3em]"> System</span>
+              <span className="text-sm sm:text-base md:text-xl lg:text-2xl font-black text-white leading-none tracking-tight">BookMyLab</span>
+              <span className="text-[8px] sm:text-[9px] md:text-[10px] text-white/50 font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em] hidden xs:block"> System</span>
             </div>
           </button>
         </div>
@@ -162,7 +162,7 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
         {!hideNavItems && (
           <>
             {/* Desktop Navigation */}
-            <nav className={`hidden md:flex items-center ${isAuthenticated ? 'justify-center' : 'gap-10'}`}>
+            <nav className={`hidden lg:flex items-center ${isAuthenticated ? 'justify-center' : 'gap-6 xl:gap-10'}`}>
               {visibleNavLinks.map((link) => (
                 <button 
                   key={link.name} 
@@ -279,24 +279,24 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
+              className="lg:hidden text-white p-1.5 sm:p-2 rounded-lg hover:bg-white/10 transition-colors"
             >
-              {isMobileMenuOpen ? (X && <X className="w-6 h-6" />) : (Menu && <Menu className="w-6 h-6" />)}
+              {isMobileMenuOpen ? (X && <X className="w-5 h-5 sm:w-6 sm:h-6" />) : (Menu && <Menu className="w-5 h-5 sm:w-6 sm:h-6" />)}
             </button>
           </>
         )}
 
         {/* RIGHT SIDE */}
-        <div className="flex-1 flex justify-end items-center gap-4 md:gap-8">
+        <div className="flex-1 flex justify-end items-center gap-2 sm:gap-4 md:gap-6 lg:gap-8">
           {!isAuthenticated ? (
             <>
-              <button onClick={() => navigate("/login-selection")} className={`${beamUnderline} hidden md:block`}>
+              <button onClick={() => navigate("/login-selection")} className={`${beamUnderline} hidden lg:block`}>
                 Login
               </button>
               
               <button 
                 onClick={() => navigate("/register")} 
-                className="px-4 md:px-7 py-2.5 text-white rounded-full text-sm font-black transition-all active:scale-95 flex items-center gap-2"
+                className="px-3 sm:px-4 md:px-6 lg:px-7 py-2 sm:py-2.5 text-white rounded-full text-xs sm:text-sm font-black transition-all active:scale-95 flex items-center gap-1 sm:gap-2"
                 style={{ 
                   backgroundColor: Theme.colors.primary,
                   border: `1px solid ${Theme.colors.primary}20`
@@ -308,8 +308,8 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                   e.currentTarget.style.backgroundColor = Theme.colors.primary;
                 }}
               >
-                <span className="hidden md:inline">REGISTER</span>
-                <span className="md:hidden">SIGN UP</span>
+                <span className="hidden sm:inline">REGISTER</span>
+                <span className="sm:hidden">SIGN UP</span>
               </button>
             </>
           ) : (
@@ -326,16 +326,16 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                     const route = isLabTechnician ? "/lab-technician-profile" : "/user-profile";
                     navigate(route);
                   }}
-                  className="hidden md:flex items-center gap-2 text-white/90 hover:text-white font-bold transition-all"
+                  className="hidden lg:flex items-center gap-2 text-white/90 hover:text-white font-bold transition-all"
                   title={user?.name || user?.email || "Profile"}
                 >
-                  {UserCircle && <UserCircle className="w-5 h-5" />}
-                  <span>Profile</span>
+                  {UserCircle && <UserCircle className="w-4 h-4 sm:w-5 sm:h-5" />}
+                  <span className="hidden xl:inline">Profile</span>
                 </button>
               )}
               <button
                 onClick={handleLogoutClick}
-                className="px-4 md:px-6 py-2 text-white rounded-full text-sm font-black transition-all active:scale-95 flex items-center gap-2"
+                className="px-3 sm:px-4 md:px-5 lg:px-6 py-2 text-white rounded-full text-xs sm:text-sm font-black transition-all active:scale-95 flex items-center gap-1 sm:gap-2"
                 style={{ 
                   backgroundColor: Theme.colors.primary,
                   border: `1px solid ${Theme.colors.primary}20`
@@ -347,8 +347,8 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                   e.currentTarget.style.backgroundColor = Theme.colors.primary;
                 }}
               >
-                {LogOut && <LogOut className="w-4 h-4 md:w-5 md:h-5" />}
-                <span className="hidden md:inline">Logout</span>
+                {LogOut && <LogOut className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />}
+                <span className="hidden sm:inline">Logout</span>
               </button>
             </>
           )}
@@ -358,8 +358,8 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="mobile-menu-container md:hidden bg-primary/95 backdrop-blur-md border-t border-white/10">
-          <div className="container mx-auto px-4 py-4">
+        <div className="mobile-menu-container lg:hidden bg-primary/95 backdrop-blur-md border-t border-white/10">
+          <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
             <nav className={`flex flex-col space-y-3 ${isAuthenticated ? 'items-center' : ''}`}>
               {/* Show nav links for non-logged-in users */}
               {!isAuthenticated && visibleNavLinks.map((link) => (

@@ -108,92 +108,107 @@ const sendPasswordResetEmail = async (email, resetToken, name = 'User') => {
   }
 };
 
+
 const sendOtpEmail = async (email, code, name = 'User') => {
+  console.log('\n🔧 SENDING OTP EMAIL...');
+  console.log('=================================');
+  console.log('📧 Email:', email);
+  console.log('👤 Name:', name);
+  console.log('🔢 OTP Code:', code);
+  console.log('⏰ Time:', new Date().toLocaleString());
+  console.log('=================================');
+  
   const host = process.env.EMAIL_HOST;
   const port = parseInt(process.env.EMAIL_PORT || '0', 10);
   const user = process.env.EMAIL_USER;
   const pass = process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD;
-  const from = process.env.EMAIL_FROM || 'no-reply@labbooking.local';
+  const from = process.env.EMAIL_FROM || 'Lab Booking System <hetdhagat2576@gmail.com>';
+  
+  console.log('📧 Email Configuration Status:');
+  console.log('   Host:', host || 'NOT SET');
+  console.log('   Port:', port || 'NOT SET');
+  console.log('   User:', user || 'NOT SET');
+  console.log('   Pass:', pass ? '***CONFIGURED***' : 'NOT SET');
+  
+  // ALWAYS show OTP in console for development/testing
+  console.log('\n🎯 OTP FOR TESTING (ALWAYS VISIBLE):');
+  console.log('=====================================');
+  console.log('🔢 USE THIS OTP:', code);
+  console.log('📧 For email:', email);
+  console.log('👤 User name:', name);
+  console.log('⏰ Generated at:', new Date().toLocaleString());
+  console.log('⌛ Expires in: 10 minutes');
+  console.log('=====================================\n');
   
   if (!host || !port || !user || !pass) {
-    // Development fallback: log OTP to console
-    console.log('=================================');
-    console.log('DEV MODE - OTP CODE:', code);
-    console.log('Email:', email);
-    console.log('Name:', name);
-    console.log('=================================');
+    console.log('❌ Email not configured - OTP logged to console only');
     return { sent: false, message: 'Email transport not configured - OTP logged to console' };
   }
   
-  const transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  });
-  
   try {
+    console.log('🔄 Attempting to send email...');
+    
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465,
+      auth: { user, pass },
+    });
+    
     await transporter.verify();
-  } catch (err) {
-    console.error('SMTP transporter verify failed:', err);
+    console.log('✅ Email transporter verified');
     
-    // Development fallback: log OTP to console when email fails
-    console.log('=================================');
-    console.log('EMAIL FAILED - OTP CODE:', code);
-    console.log('Email:', email);
-    console.log('Name:', name);
-    console.log('Error:', err.message);
-    console.log('=================================');
-    
-    // Provide Gmail setup instructions if it's a Gmail auth error
-    if (err.code === 'EAUTH' && host.includes('gmail.com')) {
-      console.log('\n=== GMAIL SETUP REQUIRED ===');
-      console.log('1. Enable 2-Factor Authentication on your Gmail account');
-      console.log('2. Go to: https://myaccount.google.com/apppasswords');
-      console.log('3. Generate an App Password for "Mail"');
-      console.log('4. Update EMAIL_PASS in .env with the 16-character app password');
-      console.log('5. Restart the backend server');
-      console.log('=============================\n');
-    }
-    
-    return { sent: false, message: `SMTP verify failed: ${err.message}` };
-  }
-
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; border-radius: 12px;">
-      <div style="background: white; padding: 30px; border-radius: 8px; text-align: center;">
-        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <h1 style="color: #333; margin-bottom: 10px; font-size: 28px;">Email Verification</h1>
-        <p style="color: #666; margin-bottom: 30px; font-size: 16px;">Hi ${name},</p>
-        <p style="color: #666; margin-bottom: 20px; font-size: 16px;">Use the following OTP to verify your email address:</p>
-        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 32px; font-weight: bold; letter-spacing: 8px; padding: 20px; border-radius: 8px; margin: 20px 0; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">${code}</div>
-        <p style="color: #999; font-size: 14px; margin-top: 30px;">This code expires in 10 minutes.</p>
-        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
-          <p style="color: #999; font-size: 12px;">If you didn't request this verification, please ignore this email.</p>
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; border-radius: 12px;">
+        <div style="background: white; padding: 30px; border-radius: 8px; text-align: center;">
+          <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h1 style="color: #333; margin-bottom: 10px; font-size: 28px;">Email Verification</h1>
+          <p style="color: #666; margin-bottom: 30px; font-size: 16px;">Hi ${name},</p>
+          <p style="color: #666; margin-bottom: 20px; font-size: 16px;">Use the following OTP to verify your email address:</p>
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 32px; font-weight: bold; letter-spacing: 8px; padding: 20px; border-radius: 8px; margin: 20px 0; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">${code}</div>
+          <p style="color: #999; font-size: 14px; margin-top: 30px;">This code expires in 10 minutes.</p>
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+            <p style="color: #999; font-size: 12px;">If you didn't request this verification, please ignore this email.</p>
+          </div>
         </div>
       </div>
-    </div>
-  `;
-  
-  try {
-    await transporter.sendMail({
+    `;
+    
+    const result = await transporter.sendMail({
       from,
       to: email,
-      subject: 'Your OTP Code',
+      subject: 'Verify Your Lab Booking Account',
       text: `Your OTP is ${code}. It expires in 10 minutes.`,
       html,
     });
+    
+    console.log('✅ OTP email sent successfully!');
+    console.log('📬 Message ID:', result.messageId);
+    console.log('📧 Email sent to:', email);
+    
     return { sent: true };
-  } catch (err) {
-    console.error('Error sending OTP email:', err);
-    return { sent: false, message: `SendMail failed: ${err.message}` };
+    
+  } catch (error) {
+    console.error('❌ Email sending failed:', error.message);
+    
+    if (error.code === 'EAUTH') {
+      console.log('\n🔑 Gmail Authentication Error:');
+      console.log('1. Check if 2-Factor Authentication is enabled');
+      console.log('2. Generate new App Password: https://myaccount.google.com/apppasswords');
+      console.log('3. Update EMAIL_PASS in .env file');
+    }
+    
+    console.log('\n🎯 OTP is still available in console above for testing');
+    return { sent: false, message: `Email failed: ${error.message} - OTP logged to console` };
   }
 };
 
+  
+  
 const registerUser = async (req, res) => {
   try {
     // Debug: log basic info about incoming registration request to help diagnose 400s
@@ -280,32 +295,44 @@ const registerUser = async (req, res) => {
     const code = String(Math.floor(100000 + Math.random() * 900000));
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
     await OtpCode.create({ userId: user._id, email: user.email, code, expiresAt });
+    console.log('\n🚀 USER REGISTRATION COMPLETED');
+    console.log('================================');
+    console.log('👤 User ID:', user._id);
+    console.log('📧 Email:', user.email);
+    console.log('👤 Name:', user.name);
+    console.log('🔢 OTP Generated:', code);
+    console.log('⏰ Expires at:', expiresAt.toLocaleString());
+    console.log('================================\n');
+    
     let otpSent = false;
     let emailMessage = '';
+    
     try {
+      console.log('📧 Attempting to send OTP email...');
       const result = await sendOtpEmail(user.email, code, user.name);
       otpSent = !!result.sent;
-      if (!result.sent) {
-        emailMessage = result.message;
-        // Log OTP to console when email fails
-        console.log('=================================');
-        console.log('EMAIL FAILED - REGISTRATION OTP CODE:', code);
-        console.log('Email:', user.email);
-        console.log('Name:', user.name);
-        console.log('Error:', result.message);
-        console.log('=================================');
-      }
+      emailMessage = result.message;
+      
+      console.log('📊 Email Send Result:');
+      console.log('   Sent:', otpSent);
+      console.log('   Message:', emailMessage);
+      
     } catch (error) {
-      console.error('Email sending error:', error);
+      console.error('❌ Email sending error:', error);
       emailMessage = 'Failed to send OTP email';
-      // Log OTP to console when email fails
-      console.log('=================================');
-      console.log('EMAIL FAILED - REGISTRATION OTP CODE:', code);
-      console.log('Email:', user.email);
-      console.log('Name:', user.name);
-      console.log('Error:', error.message);
-      console.log('=================================');
+      console.log('🎯 OTP is available in console for testing');
     }
+    
+    console.log('\n📋 REGISTRATION SUMMARY:');
+    console.log('========================');
+    console.log('✅ User created successfully');
+    console.log('📧 Email:', user.email);
+    console.log('🔢 OTP:', code);
+    console.log('📬 Email sent:', otpSent ? 'YES' : 'NO');
+    if (!otpSent) {
+      console.log('💡 Use OTP from console above for testing');
+    }
+    console.log('========================\n');
 
     const userResponse = {
       _id: user._id,

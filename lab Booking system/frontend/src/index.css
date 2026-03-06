@@ -17,6 +17,38 @@
   overflow: hidden;
 }
 
+/* Prevent continuous scrolling on home page */
+html, body {
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* Feedback section scroll fix */
+.feedback-section {
+  max-height: 80vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.feedback-section::-webkit-scrollbar {
+  width: 6px;
+}
+
+.feedback-section::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.feedback-section::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.feedback-section::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
 /* Enhanced responsive table styles */
 @media (max-width: 640px) {
   .table-responsive-stack {
@@ -59,15 +91,51 @@
   }
 }
 
-/* Mobile-first responsive improvements */
-@media (max-width: 480px) {
+/* iPhone SE (320px) and up */
+@media (max-width: 320px) {
   .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
   }
   
   h1 {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
+    line-height: 1.2;
+  }
+  
+  h2 {
+    font-size: 1.125rem;
+    line-height: 1.2;
+  }
+  
+  h3 {
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+  
+  .text-xs {
+    font-size: 0.625rem;
+  }
+  
+  .text-sm {
+    font-size: 0.75rem;
+  }
+  
+  .btn-responsive {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* iPhone 12 Pro (375px) */
+@media (min-width: 321px) and (max-width: 375px) {
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+  
+  h1 {
+    font-size: 1.375rem;
     line-height: 1.2;
   }
   
@@ -80,25 +148,40 @@
     font-size: 1.125rem;
     line-height: 1.2;
   }
-  
-  .text-sm {
-    font-size: 0.875rem;
+}
+
+/* iPhone 14 Pro Max (414px) */
+@media (min-width: 376px) and (max-width: 414px) {
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
   
-  .text-xs {
-    font-size: 0.75rem;
+  h1 {
+    font-size: 1.5rem;
+    line-height: 1.2;
+  }
+  
+  h2 {
+    font-size: 1.375rem;
+    line-height: 1.2;
+  }
+  
+  h3 {
+    font-size: 1.25rem;
+    line-height: 1.2;
   }
 }
 
-/* Tablet responsive improvements */
-@media (min-width: 481px) and (max-width: 768px) {
+/* iPad Mini (768px) */
+@media (min-width: 415px) and (max-width: 768px) {
   .container {
     padding-left: 1.5rem;
     padding-right: 1.5rem;
   }
   
   h1 {
-    font-size: 2rem;
+    font-size: 1.875rem;
     line-height: 1.2;
   }
   
@@ -108,7 +191,124 @@
   }
   
   h3 {
-    font-size: 1.25rem;
+    font-size: 1.375rem;
+    line-height: 1.2;
+  }
+}
+
+/* iPad Air/Pro (1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+  
+  h1 {
+    font-size: 2.25rem;
+    line-height: 1.2;
+  }
+  
+  h2 {
+    font-size: 1.875rem;
+    line-height: 1.2;
+  }
+  
+  h3 {
+    font-size: 1.5rem;
+    line-height: 1.2;
+  }
+}
+
+/* Surface Pro 7 (1280px) */
+@media (min-width: 1025px) and (max-width: 1280px) {
+  .container {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+  
+  h1 {
+    font-size: 2.5rem;
+    line-height: 1.2;
+  }
+  
+  h2 {
+    font-size: 2rem;
+    line-height: 1.2;
+  }
+  
+  h3 {
+    font-size: 1.75rem;
+    line-height: 1.2;
+  }
+}
+
+/* Surface Duo (1366px) */
+@media (min-width: 1281px) and (max-width: 1366px) {
+  .container {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+  
+  h1 {
+    font-size: 2.75rem;
+    line-height: 1.2;
+  }
+  
+  h2 {
+    font-size: 2.25rem;
+    line-height: 1.2;
+  }
+  
+  h3 {
+    font-size: 2rem;
+    line-height: 1.2;
+  }
+}
+
+/* iPad Pro 12.9" (1512px) */
+@media (min-width: 1367px) and (max-width: 1512px) {
+  .container {
+    padding-left: 4rem;
+    padding-right: 4rem;
+  }
+  
+  h1 {
+    font-size: 3rem;
+    line-height: 1.2;
+  }
+  
+  h2 {
+    font-size: 2.5rem;
+    line-height: 1.2;
+  }
+  
+  h3 {
+    font-size: 2.25rem;
+    line-height: 1.2;
+  }
+}
+
+/* Desktop (1920px and up) */
+@media (min-width: 1513px) {
+  .container {
+    padding-left: 6rem;
+    padding-right: 6rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  
+  h1 {
+    font-size: 3.5rem;
+    line-height: 1.2;
+  }
+  
+  h2 {
+    font-size: 3rem;
+    line-height: 1.2;
+  }
+  
+  h3 {
+    font-size: 2.5rem;
     line-height: 1.2;
   }
 }
@@ -234,5 +434,35 @@ html, body {
   .tap-target {
     min-height: 44px;
     min-width: 44px;
+  }
+}
+
+/* Device-specific optimizations */
+/* iPhone SE specific */
+@media (max-width: 320px) {
+  .hide-on-se {
+    display: none !important;
+  }
+  
+  .se-only {
+    display: block !important;
+  }
+}
+
+/* iPad specific */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .ipad-landscape {
+    display: flex !important;
+  }
+  
+  .ipad-portrait {
+    display: none !important;
+  }
+}
+
+/* Surface Duo specific */
+@media (min-width: 1366px) and (max-width: 1366px) {
+  .surface-duo {
+    display: block !important;
   }
 }

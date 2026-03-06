@@ -1,8 +1,7 @@
 import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import Loader from "./components/loader";
 import { useAuth, AuthProvider } from './context/authContext';
-
+import Loader from './components/loader';
 import Home from "./pages/home";
 import LoginSelection from "./pages/loginSelection";
 import AdminLogin from "./pages/adminLogin";
@@ -85,94 +84,95 @@ export default function App() {
     const location = useLocation();
     useEffect(() => {
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    }, [location.pathname]);
+    }, []);
     return null;
   }
+
   return (
     <AuthProvider>
       <Router>
-          <Loader />
-          <ScrollToTop />
-          <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login-selection" element={<LoginSelection />} />
-        <Route path="/admin-login" element={<AdminLogin />} />
-        <Route path="/lab-technician-login" element={<LabTechnicianLogin />} />
-        <Route path="/user-login" element={<UserLogin />} />
-        {/* Redirect old /login route to login selection for backward compatibility */}
-        <Route path="/login" element={<Navigate to="/login-selection" replace />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/otp-verification" element={<OtpVerification />} />
-        <Route path="/dashboard" element={
-          <ProtectedRoute requiredRole="user">
-            <Dashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/admin-dashboard" element={
-          <ProtectedRoute requiredRole="admin">
-            <AdminDashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/lab-technician-dashboard" element={
-          <ProtectedRoute requiredRole="labtechnician">
-            <LabTechnicianDashboard />
-          </ProtectedRoute>
-        } />
-        <Route path="/health-packages/full-body-checkups" element={<FullBodyCheckups />} />
-        <Route path="/health-packages/liver" element={<Liver />} />
-        <Route path="/health-packages/lungs" element={<Lungs />} />
-        <Route path="/health-packages/kidney" element={<Kidney />} />
-        <Route path="/health-packages/fever" element={<Fever />} />
-        <Route path="/health-packages/thyroid" element={<Thyroid />} />
-        <Route path="/health-packages/diabetes" element={<Diabetes />} />
-        <Route path="/package-details/:id" element={<PackageDetails />} />
-        <Route path="/recommended-detail" element={<RecommendedDetail />} />
-        <Route path="/test-details" element={<TestDetails />} />
-        <Route path="/tests" element={<AllTests />} />
-        <Route path="/health-packages/all" element={<AllHealthPackages />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/services" element={<Service />} /> 
-        <Route path="/new-booking" element={<NewBooking />} />
-        <Route path="/razorpay" element={<RazorpayPaymentPage />} />
-        <Route path="/contact" element={<ContactUs />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/user-profile" element={
-          <ProtectedRoute requiredRole="user">
-            <UserProfile />
-          </ProtectedRoute>
-        } />
-        <Route path="/user-history" element={
-          <ProtectedRoute requiredRole="user">
-            <UserHistory />
-          </ProtectedRoute>
-        } />
-        <Route path="/terms-condition" element={<TermsCondition />} />
-        <Route path="/faq" element={<FAQ />} />
-        <Route path="/feedback" element={<Feedback />} />
-        <Route path="/reports" element={
-          <ProtectedRoute>
-            <Reports />
-          </ProtectedRoute>
-        } />
-        <Route path="/reportView/:reportId" element={
-          <ProtectedRoute>
-            <ReportView />
-          </ProtectedRoute>
-        } />
-        <Route path="/test-booking" element={
-          <ProtectedRoute requiredRole="user">
-            <NewBooking />
-          </ProtectedRoute>
-        } />
-        <Route path="/booking/:packageId" element={
-          <ProtectedRoute requiredRole="user">
-            <NewBooking />
-          </ProtectedRoute>
-        } />
-      </Routes>
-        </Router>
+        <Loader />
+        <ScrollToTop />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login-selection" element={<LoginSelection />} />
+          <Route path="/admin-login" element={<AdminLogin />} />
+          <Route path="/lab-technician-login" element={<LabTechnicianLogin />} />
+          <Route path="/user-login" element={<UserLogin />} />
+          {/* Redirect old /login route to login selection for backward compatibility */}
+          <Route path="/login" element={<Navigate to="/login-selection" replace />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/otp-verification" element={<OtpVerification />} />
+          <Route path="/dashboard" element={
+            <ProtectedRoute requiredRole="user">
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/admin-dashboard" element={
+            <ProtectedRoute requiredRole="admin">
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/lab-technician-dashboard" element={
+            <ProtectedRoute requiredRole="labtechnician">
+              <LabTechnicianDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/health-packages/full-body-checkups" element={<FullBodyCheckups />} />
+          <Route path="/health-packages/liver" element={<Liver />} />
+          <Route path="/health-packages/lungs" element={<Lungs />} />
+          <Route path="/health-packages/kidney" element={<Kidney />} />
+          <Route path="/health-packages/fever" element={<Fever />} />
+          <Route path="/health-packages/thyroid" element={<Thyroid />} />
+          <Route path="/health-packages/diabetes" element={<Diabetes />} />
+          <Route path="/package-details/:id" element={<PackageDetails />} />
+          <Route path="/recommended-detail" element={<RecommendedDetail />} />
+          <Route path="/test-details" element={<TestDetails />} />
+          <Route path="/tests" element={<AllTests />} />
+          <Route path="/health-packages/all" element={<AllHealthPackages />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/services" element={<Service />} /> 
+          <Route path="/new-booking" element={<NewBooking />} />
+          <Route path="/razorpay" element={<RazorpayPaymentPage />} />
+          <Route path="/contact" element={<ContactUs />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/user-profile" element={
+            <ProtectedRoute requiredRole="user">
+              <UserProfile />
+            </ProtectedRoute>
+          } />
+          <Route path="/user-history" element={
+            <ProtectedRoute requiredRole="user">
+              <UserHistory />
+            </ProtectedRoute>
+          } />
+          <Route path="/terms-condition" element={<TermsCondition />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/feedback" element={<Feedback />} />
+          <Route path="/reports" element={
+            <ProtectedRoute requiredRole="user">
+              <Reports />
+            </ProtectedRoute>
+          } />
+          <Route path="/reportView/:reportId" element={
+            <ProtectedRoute requiredRole="user">
+              <ReportView />
+            </ProtectedRoute>
+          } />
+          <Route path="/test-booking" element={
+            <ProtectedRoute requiredRole="user">
+              <NewBooking />
+            </ProtectedRoute>
+          } />
+          <Route path="/booking/:packageId" element={
+            <ProtectedRoute requiredRole="user">
+              <NewBooking />
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </Router>
     </AuthProvider>
   );
 }

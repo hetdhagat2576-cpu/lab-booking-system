@@ -338,11 +338,6 @@ export default function PackageDetails() {
                           <span className="text-sm text-slate-700 font-medium">
                             {safeTestName(testName)}
                           </span>
-                          {test?.description && (
-                            <span className="text-xs text-slate-500 ml-auto">
-                              {test.description.substring(0, 50)}{test.description.length > 50 ? '...' : ''}
-                            </span>
-                          )}
                         </div>
                       );
                     });

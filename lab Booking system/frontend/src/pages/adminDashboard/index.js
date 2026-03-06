@@ -47,33 +47,38 @@ const StarRating = ({ rating, maxRating = 5, size = 'small', showValue = false, 
 };
 
 
-const SidebarItem = ({ id, label, icon: Icon, activeTab, setActiveTab, ChevronRight }) => (
+const SidebarItem = ({ id, label, icon: Icon, activeTab, setActiveTab, ChevronRight, onItemClick }) => (
   <button
-    onClick={() => setActiveTab(id)}
-    className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl transition-all duration-300 group ${
-      activeTab === id 
-        ? "text-white shadow-lg shadow-blue-100/50" 
-        : "text-gray-600 hover:bg-gray-50/80 hover:shadow-md hover:translate-x-1"
-    }`}
-    style={{
-      backgroundColor: activeTab === id ? Theme.colors.primary : 'transparent'
+    onClick={() => {
+      setActiveTab(id);
+      if (onItemClick) {
+        onItemClick(id);
+      }
     }}
+    data-mobile-menu-item={id}
+    className={`w-full flex items-center gap-3 px-4 py-3 md:px-5 md:py-4 rounded-xl transition-all duration-300 group ${activeTab === id
+      ? "text-white shadow-lg shadow-primary/20 bg-gradient-to-r from-primary to-primaryHover"
+      : "text-gray-600 hover:bg-gray-50/80 hover:shadow-md hover:translate-x-1 active:scale-95"
+      }`}
   >
-    <div className={`flex items-center justify-center w-11 h-11 rounded-xl transition-all duration-300 ${
-      activeTab === id ? 'bg-white/20 backdrop-blur-sm' : 'bg-gray-100 group-hover:bg-gray-200'
-    }`}>
-      <Icon size={22} className={activeTab === id ? 'text-white' : 'text-gray-600 group-hover:text-gray-800'} />
+    <div className={`flex items-center justify-center w-10 h-10 md:w-11 md:h-11 rounded-xl transition-all duration-300 ${activeTab === id
+      ? 'bg-white/20 backdrop-blur-sm'
+      : 'bg-gray-100 group-hover:bg-gray-200 group-active:scale-95'
+      }`}>
+      <Icon size={20} className={`${activeTab === id ? 'text-white' : 'text-gray-600 group-hover:text-gray-800'} transition-colors duration-200`} />
     </div>
-    <span className="font-semibold flex-1 text-left text-sm">{label}</span>
-    {activeTab === id && <ChevronRight size={18} className="text-white animate-pulse" />}
+    <span className="font-semibold flex-1 text-left text-sm md:text-base">{label}</span>
+    {activeTab === id && (
+      <ChevronRight size={16} className="text-white animate-pulse hidden md:block" />
+    )}
   </button>
 );
 
 export default function AdminDashboardIndex() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { 
-    CheckCircle2, XCircle, LayoutDashboard, 
+  const {
+    CheckCircle2, XCircle, LayoutDashboard,
     ClipboardList, MessageSquare, PhoneCall, ChevronRight, Menu, X, Trash2, LogOut,
     FileText, Settings, HelpCircle, ShieldCheck, Globe, Home, TestTube, Package, Plus, Edit2, Calendar, Zap, Cloud, Eye, Lock, Clock, TrendingUp, Mail, Phone, Stethoscope
   } = IconConfig;
@@ -84,7 +89,7 @@ export default function AdminDashboardIndex() {
   const [bookingFilter, setBookingFilter] = useState('all');
   const [stats, setStats] = useState({ totalBookings: 0, pendingBookings: 0, approvedBookings: 0, rejectedBookings: 0, totalUsers: 0, adminUsers: 0, labtechUsers: 0, regularUsers: 0 });
   const [feedbackStats, setFeedbackStats] = useState({ totalFeedbacks: 0, pendingFeedbacks: 0, reviewedFeedbacks: 0, resolvedFeedbacks: 0 });
-  
+
   // User Dashboard Management State
   const [healthConcerns, setHealthConcerns] = useState([]);
   const [editingHealthConcern, setEditingHealthConcern] = useState(null);
@@ -96,7 +101,7 @@ export default function AdminDashboardIndex() {
     isActive: true,
     order: ''
   });
-  
+
   // Health Concern Details state for side panel
   const [healthConcernDetails, setHealthConcernDetails] = useState({});
   const [showHealthConcernDetails, setShowHealthConcernDetails] = useState(false);
@@ -110,7 +115,7 @@ export default function AdminDashboardIndex() {
     order: 0,
     tests: []
   });
-  
+
   const [loading, setLoading] = useState(true);
   const [feedbacks, setFeedbacks] = useState([]);
   const [contacts, setContacts] = useState([]);
@@ -120,25 +125,25 @@ export default function AdminDashboardIndex() {
   const [sendingReply, setSendingReply] = useState(false);
   const [feedbackFilter, setFeedbackFilter] = useState('all');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
+
   // User Management State
   const [users, setUsers] = useState([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [userFilter, setUserFilter] = useState('all');
   const [userSearchTerm, setUserSearchTerm] = useState('');
-  
+
   // Tests and Packages state
   const [tests, setTests] = useState([]);
   const [packages, setPackages] = useState([]);
   const [testLoading, setTestLoading] = useState(false);
   const [packageLoading, setPackageLoading] = useState(false);
-  
+
   // Test Details and Package Details state
   const [testDetails, setTestDetails] = useState({});
   const [packageDetails, setPackageDetails] = useState({});
   const [testDetailsLoading, setTestDetailsLoading] = useState(false);
   const [packageDetailsLoading, setPackageDetailsLoading] = useState(false);
-  
+
   // Test Details and Package Details editing states
   const [editingTestDetails, setEditingTestDetails] = useState(false);
   const [editingPackageDetails, setEditingPackageDetails] = useState(false);
@@ -161,10 +166,10 @@ export default function AdminDashboardIndex() {
     benefits: [],
     suitableFor: []
   });
-  
-  const [homeContent, setHomeContent] = useState({ 
-    whyBook: [], 
-    howItWorks: [] 
+
+  const [homeContent, setHomeContent] = useState({
+    whyBook: [],
+    howItWorks: []
   });
   const [homeContentSubTab, setHomeContentSubTab] = useState('why-book');
   const [serviceContentSubTab, setServiceContentSubTab] = useState('features');
@@ -186,7 +191,7 @@ export default function AdminDashboardIndex() {
   const [showTermsForm, setShowTermsForm] = useState(false);
   const [showPrivacyForm, setShowPrivacyForm] = useState(false);
   const [showAboutForm, setShowAboutForm] = useState(false);
-  
+
   const [editingServiceItem, setEditingServiceItem] = useState(null);
   const [editingHighlightItem, setEditingHighlightItem] = useState(null);
   const [editingFAQItem, setEditingFAQItem] = useState(null);
@@ -199,31 +204,31 @@ export default function AdminDashboardIndex() {
     description: '',
     iconKey: 'FlaskConical'
   });
-  
+
   const [highlightFormData, setHighlightFormData] = useState({
     title: '',
     description: '',
     iconKey: 'Zap'
   });
-  
+
   const [faqFormData, setFaqFormData] = useState({
     question: '',
     answer: ''
   });
-  
+
   const [termsFormData, setTermsFormData] = useState({
     title: '',
     content: '',
     sectionNumber: 1,
     order: 0
   });
-  
+
   const [privacyFormData, setPrivacyFormData] = useState({
     title: '',
     content: '',
     sectionNumber: 1
   });
-  
+
   const [aboutFormData, setAboutFormData] = useState({
     icon: 'bolt',
     title: '',
@@ -278,13 +283,13 @@ export default function AdminDashboardIndex() {
     if (showTestForm || showPackageForm) {
       // Save current scroll position
       const scrollY = window.scrollY;
-      
+
       // Disable scrolling
       document.body.style.position = 'fixed';
       document.body.style.top = `-${scrollY}px`;
       document.body.style.width = '100%';
       document.body.style.overflow = 'hidden';
-      
+
       return () => {
         // Re-enable scrolling and restore position
         document.body.style.position = '';
@@ -299,15 +304,15 @@ export default function AdminDashboardIndex() {
   const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Don't make API calls if user or token is not available
       if (!user?.token) {
         console.log('No user token available, using mock data');
         return;
       }
-      
+
       // User management removed - no user fetching needed
-      
+
     } catch (error) {
       console.error("Fetch error:", error);
     } finally {
@@ -431,33 +436,33 @@ export default function AdminDashboardIndex() {
   // User Management API Functions
   const fetchUsers = useCallback(async () => {
     if (!user?.token) return;
-    
+
     try {
       setUsersLoading(true);
       const token = user.token;
       console.log('Fetching users with token:', token.substring(0, 20) + '...');
       console.log('Token length:', token.length);
-      
+
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/admin/users`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       console.log('Users API response status:', response.status);
       console.log('Users API response headers:', response.headers);
-      
+
       if (response.ok) {
         const result = await response.json();
         const usersData = result.data || [];
         setUsers(usersData);
-        
+
         // Update user stats
         const totalUsers = usersData.length;
         const adminUsers = usersData.filter(u => u.role === 'admin').length;
         const labtechUsers = usersData.filter(u => u.role === 'labtechnician').length;
         const regularUsers = usersData.filter(u => u.role === 'user').length;
-        
+
         setStats(prev => ({
           ...prev,
           totalUsers,
@@ -469,7 +474,7 @@ export default function AdminDashboardIndex() {
         console.error('Failed to fetch users - Status:', response.status);
         const errorText = await response.text();
         console.error('Error response:', errorText);
-        
+
         // If 401 Unauthorized, redirect to login
         if (response.status === 401) {
           console.log('Authentication failed - redirecting to login');
@@ -477,7 +482,7 @@ export default function AdminDashboardIndex() {
           navigate('/admin-login');
           return;
         }
-        
+
         setUsers([]);
       }
     } catch (error) {
@@ -499,11 +504,11 @@ export default function AdminDashboardIndex() {
       confirmButtonText: 'Delete',
       cancelButtonText: 'Cancel'
     });
-    
+
     if (!result.isConfirmed) {
       return;
     }
-    
+
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/admin/users/${userId}`, {
         method: 'DELETE',
@@ -511,7 +516,7 @@ export default function AdminDashboardIndex() {
           'Authorization': `Bearer ${user.token}`
         }
       });
-      
+
       if (response.ok) {
         // Refresh users list
         fetchUsers();
@@ -543,29 +548,29 @@ export default function AdminDashboardIndex() {
   // Filter users based on role and search term
   const getFilteredUsers = () => {
     let filteredUsers = users;
-    
+
     // Filter by role
     if (userFilter !== 'all') {
       filteredUsers = filteredUsers.filter(user => user.role === userFilter);
     }
-    
+
     // Filter by search term
     if (userSearchTerm) {
       const searchLower = userSearchTerm.toLowerCase();
-      filteredUsers = filteredUsers.filter(user => 
+      filteredUsers = filteredUsers.filter(user =>
         user.name?.toLowerCase().includes(searchLower) ||
         user.email?.toLowerCase().includes(searchLower) ||
         user.role?.toLowerCase().includes(searchLower)
       );
     }
-    
+
     return filteredUsers;
   };
 
   // Content Management API Functions
   const fetchContentData = useCallback(async () => {
     if (!user?.token) return;
-    
+
     try {
       setContentLoading(true);
       // Fetch real data from APIs
@@ -783,17 +788,17 @@ export default function AdminDashboardIndex() {
         whyBook: whyBookData,
         howItWorks: howItWorksData
       });
-      setServiceContent({ 
+      setServiceContent({
         features: serviceFeaturesData,
         highlights: serviceHighlightsData
       });
       console.log('Service content set:', { features: serviceFeaturesData, highlights: serviceHighlightsData });
       setAboutContent(aboutData);
-      setTermsContent({ 
+      setTermsContent({
         sections: termsData
       });
       console.log('Terms content set:', termsData);
-      setPrivacyContent({ 
+      setPrivacyContent({
         sections: privacyData
       });
       setFaqs(faqData);
@@ -807,7 +812,7 @@ export default function AdminDashboardIndex() {
   // Test Management Functions
   const fetchTests = useCallback(async () => {
     if (!user?.token) return;
-    
+
     try {
       setTestLoading(true);
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests`, {
@@ -815,7 +820,7 @@ export default function AdminDashboardIndex() {
           'Authorization': `Bearer ${user.token}`
         }
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         const testsData = result.data || [];
@@ -832,7 +837,7 @@ export default function AdminDashboardIndex() {
     }
   }, [user]);
 
-  
+
 
   const handleDeleteTest = async (id) => {
     const result = await Swal.fire({
@@ -845,7 +850,7 @@ export default function AdminDashboardIndex() {
       confirmButtonText: 'Delete',
       cancelButtonText: 'Cancel'
     });
-    
+
     if (result.isConfirmed) {
       try {
         const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests/${id}`, {
@@ -854,7 +859,7 @@ export default function AdminDashboardIndex() {
             'Authorization': `Bearer ${user.token}`
           }
         });
-        
+
         if (response.ok) {
           fetchTests();
         } else {
@@ -877,10 +882,10 @@ export default function AdminDashboardIndex() {
         preTestRequirements: undefined
       };
 
-      const url = editingTest 
+      const url = editingTest
         ? `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests/${editingTest._id}`
         : `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests`;
-      
+
       const method = editingTest ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -920,15 +925,16 @@ export default function AdminDashboardIndex() {
 
   const handlePackageSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validate required fields
+
+    // Validate required samples
     console.log('=== PACKAGE SUBMIT DEBUG START ===');
     console.log('Package form data before validation:', JSON.stringify(packageFormData, null, 2));
     console.log('Editing package state:', editingPackage ? JSON.stringify(editingPackage, null, 2) : 'null');
     console.log('Current tests in state:', tests.length, 'tests');
     console.log('Current test IDs:', tests.map(t => t._id));
+    console.log('Included tests from form:', packageFormData.includedTests);
     console.log('=== PACKAGE SUBMIT DEBUG END ===');
-    
+
     // Validate required samples
     if (!packageFormData.requiredSamples || packageFormData.requiredSamples.length === 0) {
       Swal.fire({
@@ -939,7 +945,7 @@ export default function AdminDashboardIndex() {
       });
       return;
     }
-    
+
     // Check if user is authenticated
     if (!user?.token) {
       Swal.fire({
@@ -950,7 +956,44 @@ export default function AdminDashboardIndex() {
       });
       return;
     }
-    
+
+    // Always fetch fresh test data before submitting to ensure we have latest valid IDs
+    console.log('Fetching fresh test data before package submission...');
+    await fetchTests();
+
+    // Wait a moment for state to update
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Filter out invalid test IDs before sending
+    const validTestIds = tests.map(test => test._id);
+    console.log('Valid test IDs from backend:', validTestIds);
+    console.log('Included test IDs from form:', packageFormData.includedTests);
+
+    // Always filter test IDs, even for editing packages
+    let finalTestIds = [];
+    if (packageFormData.includedTests && packageFormData.includedTests.length > 0) {
+      const filteredTestIds = packageFormData.includedTests.filter(id => {
+        const isValid = validTestIds.includes(id);
+        if (!isValid) {
+          console.warn(`Invalid test ID filtered out: ${id}`);
+        }
+        return isValid;
+      });
+      console.log('Filtered test IDs (valid ones):', filteredTestIds);
+      finalTestIds = filteredTestIds;
+    }
+
+    // Additional validation: if we had tests but all were filtered out, warn the user
+    if (packageFormData.includedTests && packageFormData.includedTests.length > 0 && finalTestIds.length === 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Invalid Tests',
+        text: 'Warning: All selected tests were invalid. Please select tests from the current list.',
+        confirmButtonColor: Theme.colors.primary
+      });
+      return;
+    }
+
     try {
       // Create package data with proper structure
       const packageData = {
@@ -960,8 +1003,8 @@ export default function AdminDashboardIndex() {
         price: parseFloat(packageFormData.price),
         duration: packageFormData.duration || '30 mins',
         testsIncluded: finalTestIds, // Use filtered test IDs
-        sampleTypes: packageFormData.requiredSamples && packageFormData.requiredSamples.length > 0 
-          ? packageFormData.requiredSamples 
+        sampleTypes: packageFormData.requiredSamples && packageFormData.requiredSamples.length > 0
+          ? packageFormData.requiredSamples
           : ['Blood'],
         benefits: packageFormData.benefits || [],
         suitableFor: packageFormData.suitableFor || [],
@@ -971,6 +1014,8 @@ export default function AdminDashboardIndex() {
         isRecommended: packageFormData.isRecommended !== undefined ? packageFormData.isRecommended : false,
         tags: packageFormData.tags || []
       };
+
+      console.log('Final test IDs being sent:', finalTestIds);
 
       // Add optional fields only if they have values
       if (packageFormData.originalPrice && packageFormData.originalPrice > 0) {
@@ -986,49 +1031,8 @@ export default function AdminDashboardIndex() {
         packageData.includes = packageFormData.includes;
       }
 
-      console.log('Minimal package data:', JSON.stringify(packageData, null, 2));
+      console.log('Complete package data:', JSON.stringify(packageData, null, 2));
 
-      // Always fetch fresh test data before submitting to ensure we have latest valid IDs
-      console.log('Fetching fresh test data before package submission...');
-      await fetchTests();
-      
-      // Wait a moment for state to update
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      // Filter out invalid test IDs before sending
-      const validTestIds = tests.map(test => test._id);
-      console.log('Valid test IDs from backend:', validTestIds);
-      console.log('Included test IDs from form:', packageFormData.includedTests);
-      
-      // Always filter test IDs, even for editing packages
-      let finalTestIds = [];
-      if (packageFormData.includedTests && packageFormData.includedTests.length > 0) {
-        const filteredTestIds = packageFormData.includedTests.filter(id => {
-          const isValid = validTestIds.includes(id);
-          if (!isValid) {
-            console.warn(`Invalid test ID filtered out: ${id}`);
-          }
-          return isValid;
-        });
-        console.log('Filtered test IDs (valid ones):', filteredTestIds);
-        finalTestIds = filteredTestIds;
-      }
-      
-      // Always use the filtered test IDs
-      packageData.testsIncluded = finalTestIds;
-      console.log('Final test IDs being sent:', finalTestIds);
-      
-      // Additional validation: if we had tests but all were filtered out, warn the user
-      if (packageFormData.includedTests && packageFormData.includedTests.length > 0 && finalTestIds.length === 0) {
-        Swal.fire({
-          icon: 'warning',
-          title: 'Invalid Tests',
-          text: 'Warning: All selected tests were invalid. Please select tests from the current list.',
-          confirmButtonColor: Theme.colors.primary
-        });
-        return;
-      }
-      
       // Validate that all required fields are present and not empty
       if (!packageData.name || !packageData.name.trim()) {
         Swal.fire({
@@ -1083,15 +1087,15 @@ export default function AdminDashboardIndex() {
       console.log('Current tests array length:', tests.length);
       console.log('Current tests IDs:', tests.map(t => t._id));
 
-      const url = editingPackage 
+      const url = editingPackage
         ? `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages/${editingPackage._id}`
         : `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages`;
-      
+
       const method = editingPackage ? 'PUT' : 'POST';
-      
+
       console.log('Request URL:', url);
       console.log('Request method:', method);
-      
+
       // Final validation - ensure no invalid test IDs are being sent
       if (packageData.testsIncluded && packageData.testsIncluded.length > 0) {
         const finalValidIds = tests.map(test => test._id);
@@ -1119,7 +1123,7 @@ export default function AdminDashboardIndex() {
       if (response.ok) {
         const responseData = await response.json();
         console.log('Package saved successfully:', responseData);
-        
+
         // Show success message
         Swal.fire({
           icon: 'success',
@@ -1127,7 +1131,7 @@ export default function AdminDashboardIndex() {
           text: editingPackage ? 'Package has been updated successfully!' : 'Package has been created successfully!',
           confirmButtonColor: Theme.colors.primary
         });
-        
+
         fetchPackages();
         setShowPackageForm(false);
         setEditingPackage(null);
@@ -1148,7 +1152,7 @@ export default function AdminDashboardIndex() {
         const errorData = await response.json();
         console.error('Failed to save package:', errorData);
         console.error('Error details:', JSON.stringify(errorData, null, 2));
-        
+
         // Show specific error based on backend response
         let errorMessage = 'Failed to save package';
         if (errorData.error === 'MISSING_NAME') {
@@ -1167,7 +1171,7 @@ export default function AdminDashboardIndex() {
         } else if (errorData.message) {
           errorMessage = errorData.message;
         }
-        
+
         Swal.fire({
           icon: 'error',
           title: 'Error',
@@ -1196,21 +1200,21 @@ export default function AdminDashboardIndex() {
           'Authorization': `Bearer ${user.token}`
         }
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         const healthConcernsData = result.data || [];
-        
+
         // Process health concerns to ensure recommendedTests is always an array of strings
         const processedHealthConcerns = healthConcernsData.map(concern => ({
           ...concern,
-          recommendedTests: Array.isArray(concern.recommendedTests) 
-            ? concern.recommendedTests.map(test => 
-                typeof test === 'string' ? test : (test.name || 'Test')
-              )
+          recommendedTests: Array.isArray(concern.recommendedTests)
+            ? concern.recommendedTests.map(test =>
+              typeof test === 'string' ? test : (test.name || 'Test')
+            )
             : []
         }));
-        
+
         setHealthConcerns(processedHealthConcerns);
         console.log('Health concerns fetched:', processedHealthConcerns);
       } else {
@@ -1230,21 +1234,21 @@ export default function AdminDashboardIndex() {
   const saveHealthConcern = async (formData) => {
     try {
       const method = editingHealthConcern ? 'PUT' : 'POST';
-      const url = editingHealthConcern 
+      const url = editingHealthConcern
         ? `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns/${editingHealthConcern._id}`
         : `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns`;
-      
+
       // Convert order to number, default to 0 if empty
       const processedFormData = {
         ...formData,
         order: formData.order === '' ? 0 : parseInt(formData.order) || 0
       };
-      
+
       // Add unique ID for new health concerns
       if (!editingHealthConcern) {
         processedFormData.id = `health_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       }
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -1315,17 +1319,17 @@ export default function AdminDashboardIndex() {
   // Health Concern Details Functions for side panel
   const fetchHealthConcernDetails = useCallback(async (concernId) => {
     if (!user?.token || !concernId) return;
-    
+
     try {
       setHealthConcernDetailsLoading(true);
       // For now, we'll use the existing health concern data since there's no separate details API
       const concern = healthConcerns.find(c => c._id === concernId);
       if (concern) {
         // Ensure recommendedTests includes all available tests
-        const recommendedTests = tests.map(test => 
+        const recommendedTests = tests.map(test =>
           typeof test === 'string' ? test : (test.name || 'Test')
         );
-        
+
         setHealthConcernDetails({
           [concernId]: {
             ...concern,
@@ -1350,7 +1354,7 @@ export default function AdminDashboardIndex() {
 
   const updateHealthConcernDetails = async (concernId, detailsData) => {
     if (!user?.token || !concernId) return false;
-    
+
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns/${concernId}`, {
         method: 'PUT',
@@ -1360,7 +1364,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(detailsData)
       });
-      
+
       if (response.ok) {
         // Refresh the health concern details and health concerns list
         await fetchHealthConcernDetails(concernId);
@@ -1395,7 +1399,7 @@ export default function AdminDashboardIndex() {
             'Authorization': `Bearer ${user.token}`
           }
         });
-        
+
         if (response.ok) {
           // Clear health concern details and refresh health concerns list
           setHealthConcernDetails(prev => {
@@ -1444,7 +1448,7 @@ export default function AdminDashboardIndex() {
   // Package Management Functions
   const fetchPackages = useCallback(async () => {
     if (!user?.token) return;
-    
+
     try {
       setPackageLoading(true);
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages`, {
@@ -1452,7 +1456,7 @@ export default function AdminDashboardIndex() {
           'Authorization': `Bearer ${user.token}`
         }
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         const packagesData = result.data || [];
@@ -1472,7 +1476,7 @@ export default function AdminDashboardIndex() {
   // Test Details and Package Details Functions
   const fetchTestDetails = useCallback(async (testId) => {
     if (!user?.token || !testId) return;
-    
+
     try {
       setTestDetailsLoading(true);
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/test-details/${testId}/details`, {
@@ -1480,7 +1484,7 @@ export default function AdminDashboardIndex() {
           'Authorization': `Bearer ${user.token}`
         }
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         setTestDetails(prev => ({
@@ -1502,7 +1506,7 @@ export default function AdminDashboardIndex() {
 
   const fetchPackageDetails = useCallback(async (packageId) => {
     if (!user?.token || !packageId) return;
-    
+
     try {
       setPackageDetailsLoading(true);
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/package-details/${packageId}`, {
@@ -1510,7 +1514,7 @@ export default function AdminDashboardIndex() {
           'Authorization': `Bearer ${user.token}`
         }
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         setPackageDetails(prev => ({
@@ -1533,7 +1537,7 @@ export default function AdminDashboardIndex() {
   // Update Test Details Function
   const updateTestDetails = async (testId, detailsData) => {
     if (!user?.token || !testId) return false;
-    
+
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/test-details/${testId}/details`, {
         method: 'PUT',
@@ -1543,7 +1547,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(detailsData)
       });
-      
+
       if (response.ok) {
         // Refresh the test details and tests list
         await fetchTestDetails(testId);
@@ -1562,7 +1566,7 @@ export default function AdminDashboardIndex() {
   // Delete Test Details Function
   const deleteTestDetails = async (testId) => {
     if (!user?.token || !testId) return false;
-    
+
     const result = await Swal.fire({
       title: 'Are you sure?',
       text: 'Are you sure you want to delete these test details? This action cannot be undone.',
@@ -1573,9 +1577,9 @@ export default function AdminDashboardIndex() {
       confirmButtonText: 'Delete',
       cancelButtonText: 'Cancel'
     });
-    
+
     if (!result.isConfirmed) return false;
-    
+
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/test-details/${testId}/details`, {
         method: 'DELETE',
@@ -1583,7 +1587,7 @@ export default function AdminDashboardIndex() {
           'Authorization': `Bearer ${user.token}`
         }
       });
-      
+
       if (response.ok) {
         // Clear test details and refresh tests list
         setTestDetails(prev => {
@@ -1606,7 +1610,7 @@ export default function AdminDashboardIndex() {
   // Update Package Details Function
   const updatePackageDetails = async (packageId, detailsData) => {
     if (!user?.token || !packageId) return false;
-    
+
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/package-details/${packageId}/details`, {
         method: 'PUT',
@@ -1616,7 +1620,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(detailsData)
       });
-      
+
       if (response.ok) {
         // Refresh the package details and packages list
         await fetchPackageDetails(packageId);
@@ -1635,7 +1639,7 @@ export default function AdminDashboardIndex() {
   // Delete Package Details Function
   const deletePackageDetails = async (packageId) => {
     if (!user?.token || !packageId) return false;
-    
+
     const result = await Swal.fire({
       title: 'Are you sure?',
       text: 'Are you sure you want to delete these package details? This action cannot be undone.',
@@ -1646,9 +1650,9 @@ export default function AdminDashboardIndex() {
       confirmButtonText: 'Delete',
       cancelButtonText: 'Cancel'
     });
-    
+
     if (!result.isConfirmed) return false;
-    
+
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/package-details/${packageId}/details`, {
         method: 'DELETE',
@@ -1656,7 +1660,7 @@ export default function AdminDashboardIndex() {
           'Authorization': `Bearer ${user.token}`
         }
       });
-      
+
       if (response.ok) {
         // Clear package details and refresh packages list
         setPackageDetails(prev => {
@@ -1687,7 +1691,7 @@ export default function AdminDashboardIndex() {
       confirmButtonText: 'Delete',
       cancelButtonText: 'Cancel'
     });
-    
+
     if (result.isConfirmed) {
       try {
         const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages/${id}`, {
@@ -1696,7 +1700,7 @@ export default function AdminDashboardIndex() {
             'Authorization': `Bearer ${user.token}`
           }
         });
-        
+
         if (response.ok) {
           fetchPackages();
         } else {
@@ -1719,7 +1723,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(formData)
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -1743,7 +1747,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(formData)
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -1768,9 +1772,9 @@ export default function AdminDashboardIndex() {
       confirmButtonText: 'Delete',
       cancelButtonText: 'Cancel'
     });
-    
+
     if (!result.isConfirmed) return false;
-    
+
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/features/${id}`, {
         method: 'DELETE',
@@ -1778,7 +1782,7 @@ export default function AdminDashboardIndex() {
           'Authorization': `Bearer ${user.token}`
         }
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -1803,7 +1807,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(formData)
       });
-      
+
       if (response.ok) {
         const result = await response.json();
         const newHighlight = result.data;
@@ -1832,16 +1836,16 @@ export default function AdminDashboardIndex() {
     console.log('ID value:', id);
     console.log('FormData:', formData);
     console.log('ID stringified:', JSON.stringify(id));
-    
+
     // Check if the ID exists in current highlights
-    console.log('Current highlights in state:', serviceContent.highlights.map(h => ({ 
-      _id: h._id, 
-      id: h.id, 
+    console.log('Current highlights in state:', serviceContent.highlights.map(h => ({
+      _id: h._id,
+      id: h.id,
       title: h.title,
       _idType: typeof h._id,
       idType: typeof h.id
     })));
-    
+
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/highlights/${id}`, {
         method: 'PUT',
@@ -1851,16 +1855,16 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(formData)
       });
-      
+
       console.log('Update response status:', response.status);
-      
+
       if (response.ok) {
         const result = await response.json();
         console.log('Update response data:', result);
         const updatedHighlight = result.data;
         setServiceContent(prev => ({
           ...prev,
-          highlights: prev.highlights.map(highlight => 
+          highlights: prev.highlights.map(highlight =>
             highlight._id === id || highlight.id === id ? updatedHighlight : highlight
           )
         }));
@@ -1887,11 +1891,11 @@ export default function AdminDashboardIndex() {
       confirmButtonText: 'Delete',
       cancelButtonText: 'Cancel'
     });
-    
+
     if (!result.isConfirmed) return false;
-    
+
     console.log('Deleting highlight with ID:', id);
-    
+
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/highlights/${id}`, {
         method: 'DELETE',
@@ -1899,13 +1903,13 @@ export default function AdminDashboardIndex() {
           'Authorization': `Bearer ${user.token}`
         }
       });
-      
+
       console.log('Delete response status:', response.status);
-      
+
       if (response.ok) {
         setServiceContent(prev => ({
           ...prev,
-          highlights: prev.highlights.filter(highlight => 
+          highlights: prev.highlights.filter(highlight =>
             highlight._id !== id && highlight.id !== id
           )
         }));
@@ -1932,7 +1936,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(formData)
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -1956,7 +1960,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(formData)
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -1981,9 +1985,9 @@ export default function AdminDashboardIndex() {
       confirmButtonText: 'Delete',
       cancelButtonText: 'Cancel'
     });
-    
+
     if (!result.isConfirmed) return false;
-    
+
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/about/section/${id}`, {
         method: 'DELETE',
@@ -1991,7 +1995,7 @@ export default function AdminDashboardIndex() {
           'Authorization': `Bearer ${user.token}`
         }
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -2015,7 +2019,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(formData)
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -2070,7 +2074,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(formData)
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -2094,7 +2098,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(formData)
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -2119,7 +2123,7 @@ export default function AdminDashboardIndex() {
       confirmButtonText: 'Delete',
       cancelButtonText: 'Cancel'
     });
-    
+
     if (!result.isConfirmed) return false;
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq/${id}`, {
@@ -2173,7 +2177,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(formData)
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -2193,14 +2197,14 @@ export default function AdminDashboardIndex() {
       console.log('User object:', user);
       console.log('User token:', user?.token);
       console.log('User role:', user?.role);
-      
+
       // Get next available section number - always generate a new one
       let nextSectionNumber = 1;
       if (termsContent.sections && termsContent.sections.length > 0) {
         const existingNumbers = termsContent.sections.map(s => s.sectionNumber || 1);
         nextSectionNumber = Math.max(...existingNumbers) + 1;
       }
-      
+
       // Always use the generated section number, ignore the form value
       const dataToSend = {
         sectionNumber: nextSectionNumber,
@@ -2220,7 +2224,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(dataToSend)
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -2246,7 +2250,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(formData)
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -2271,9 +2275,9 @@ export default function AdminDashboardIndex() {
       confirmButtonText: 'Delete',
       cancelButtonText: 'Cancel'
     });
-    
+
     if (!result.isConfirmed) return false;
-    
+
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/terms/sections/${id}`, {
         method: 'DELETE',
@@ -2281,7 +2285,7 @@ export default function AdminDashboardIndex() {
           'Authorization': `Bearer ${user.token}`
         }
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -2306,7 +2310,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(formData)
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -2330,7 +2334,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(formData)
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -2355,9 +2359,9 @@ export default function AdminDashboardIndex() {
       confirmButtonText: 'Delete',
       cancelButtonText: 'Cancel'
     });
-    
+
     if (!result.isConfirmed) return false;
-    
+
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/privacy/sections/${id}`, {
         method: 'DELETE',
@@ -2365,7 +2369,7 @@ export default function AdminDashboardIndex() {
           'Authorization': `Bearer ${user.token}`
         }
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -2381,669 +2385,669 @@ export default function AdminDashboardIndex() {
 
   const storeSeedData = useCallback(async () => {
     if (!user?.token) return;
-    
+
     try {
-        // Store seed packages data
-        const seedPackagesData = [
-          {
-            name: "Complete Health Checkup Package",
-            description: "Comprehensive health screening package including all major organ function tests, complete blood count, and vital health markers.",
-            category: "Full Body Checkup",
-            price: 2499,
-            originalPrice: 3500,
-            discount: 29,
-            duration: "3 hours",
-            preparation: "10-12 hours fasting required. Drink plenty of water.",
-            sampleTypes: ["Blood", "Urine"],
-            isActive: true,
-            isPopular: true,
-            isRecommended: true,
-            tags: ["comprehensive", "full-body", "screening", "preventive"],
-            includes: [
-              "Complete Blood Count (CBC)",
-              "Liver Function Test (LFT)",
-              "Kidney Function Test (KFT)",
-              "Lipid Profile",
-              "Blood Sugar Fasting",
-              "Thyroid Profile",
-              "Urine Routine & Microscopy",
-              "Doctor Consultation",
-              "Report Analysis"
-            ],
-            benefits: [
-              "Early detection of health issues",
-              "Complete health assessment",
-              "Preventive health screening",
-              "Expert doctor consultation",
-              "Comprehensive report analysis"
-            ],
-            suitableFor: [
-              "Adults above 30 years",
-              "Annual health checkup",
-              "Preventive health screening",
-              "Family health monitoring"
-            ]
-          },
-          {
-            name: "Diabetes Care Package",
-            description: "Specialized package for diabetes monitoring and management including blood sugar tests, HbA1c, and related complications screening.",
-            category: "Diabetes",
-            price: 1299,
-            originalPrice: 1800,
-            discount: 28,
-            duration: "2 hours",
-            preparation: "8-12 hours fasting required for blood sugar test.",
-            sampleTypes: ["Blood"],
-            isActive: true,
-            isPopular: true,
-            isRecommended: false,
-            tags: ["diabetes", "blood-sugar", "hba1c", "monitoring"],
-            includes: [
-              "Blood Sugar Fasting",
-              "HbA1c (Glycated Hemoglobin)",
-              "Lipid Profile",
-              "Kidney Function Test",
-              "Complete Blood Count",
-              "Diabetes Consultation"
-            ],
-            benefits: [
-              "Complete diabetes monitoring",
-              "Long-term sugar control assessment",
-              "Complication screening",
-              "Specialized consultation"
-            ],
-            suitableFor: [
-              "Known diabetes patients",
-              "Pre-diabetes individuals",
-              "Family history of diabetes",
-              "Obese individuals"
-            ]
-          },
-          {
-            name: "Liver Health Package",
-            description: "Comprehensive liver health assessment including liver function tests, hepatitis screening, and liver damage markers.",
-            category: "Liver Health",
-            price: 999,
-            originalPrice: 1400,
-            discount: 29,
-            duration: "2 hours",
-            preparation: "10-12 hours fasting required. Avoid alcohol for 24 hours.",
-            sampleTypes: ["Blood"],
-            isActive: true,
-            isPopular: false,
-            isRecommended: false,
-            tags: ["liver", "hepatitis", "function", "detox"],
-            includes: [
-              "Liver Function Test (LFT)",
-              "Complete Blood Count (CBC)",
-              "Blood Sugar Fasting",
-              "Liver Specialist Consultation"
-            ],
-            benefits: [
-              "Complete liver function assessment",
-              "Early detection of liver diseases",
-              "Hepatitis screening",
-              "Specialized consultation"
-            ],
-            suitableFor: [
-              "Alcohol consumers",
-              "Liver disease patients",
-              "Medication users",
-              "Obesity patients"
-            ]
-          },
-          {
-            name: "Kidney Health Package",
-            description: "Specialized kidney health assessment including renal function tests, urine analysis, and electrolyte balance.",
-            category: "Kidney Health",
-            price: 899,
-            originalPrice: 1200,
-            discount: 25,
-            duration: "2 hours",
-            preparation: "Drink plenty of water. Avoid heavy exercise 24 hours before.",
-            sampleTypes: ["Blood", "Urine"],
-            isActive: true,
-            isPopular: false,
-            isRecommended: false,
-            tags: ["kidney", "renal", "creatinine", "urine"],
-            includes: [
-              "Kidney Function Test (KFT)",
-              "Complete Blood Count (CBC)",
-              "Blood Sugar Fasting",
-              "Urine Routine & Microscopy",
-              "Nephrologist Consultation"
-            ],
-            benefits: [
-              "Complete kidney function assessment",
-              "Early detection of kidney diseases",
-              "Urine analysis",
-              "Specialized consultation"
-            ],
-            suitableFor: [
-              "Hypertension patients",
-              "Diabetes patients",
-              "Kidney disease family history",
-              "Elderly individuals"
-            ]
-          },
-          {
-            name: "Thyroid Care Package",
-            description: "Complete thyroid assessment including T3, T4, TSH, and related antibodies for comprehensive thyroid health evaluation.",
-            category: "Thyroid",
-            price: 799,
-            originalPrice: 1100,
-            discount: 27,
-            duration: "1 hour",
-            preparation: "No special preparation required.",
-            sampleTypes: ["Blood"],
-            isActive: true,
-            isPopular: true,
-            isRecommended: false,
-            tags: ["thyroid", "hormones", "tsh", "metabolism"],
-            includes: [
-              "Thyroid Profile (T3, T4, TSH)",
-              "Complete Blood Count (CBC)",
-              "Endocrinologist Consultation"
-            ],
-            benefits: [
-              "Complete thyroid function assessment",
-              "Hormone level evaluation",
-              "Metabolism assessment",
-              "Specialized consultation"
-            ],
-            suitableFor: [
-              "Thyroid patients",
-              "Women with hormonal issues",
-              "Obesity patients",
-              "Family history of thyroid disorders"
-            ]
-          },
-          {
-            name: "Heart Health Package",
-            description: "Cardiovascular health assessment including lipid profile, cardiac markers, and risk factor evaluation.",
-            category: "Heart Health",
-            price: 1499,
-            originalPrice: 2000,
-            discount: 25,
-            duration: "2 hours",
-            preparation: "10-12 hours fasting required. Avoid heavy meals.",
-            sampleTypes: ["Blood"],
-            isActive: true,
-            isPopular: false,
-            isRecommended: true,
-            tags: ["heart", "cardiac", "cholesterol", "lipids"],
-            includes: [
-              "Lipid Profile",
-              "Complete Blood Count (CBC)",
-              "Blood Sugar Fasting",
-              "CRP (C-Reactive Protein)",
-              "Kidney Function Test",
-              "Cardiologist Consultation"
-            ],
-            benefits: [
-              "Complete cardiac risk assessment",
-              "Cholesterol evaluation",
-              "Inflammation markers",
-              "Specialized consultation"
-            ],
-            suitableFor: [
-              "Heart disease patients",
-              "High cholesterol individuals",
-              "Hypertension patients",
-              "Family history of heart disease"
-            ]
-          },
-          {
-            name: "Women's Health Package",
-            description: "Comprehensive health screening specifically designed for women including hormonal balance, anemia screening, and vital health markers.",
-            category: "Women Health",
-            price: 1799,
-            originalPrice: 2500,
-            discount: 28,
-            duration: "3 hours",
-            preparation: "10-12 hours fasting required. Avoid hormonal medications if possible.",
-            sampleTypes: ["Blood"],
-            isActive: true,
-            isPopular: true,
-            isRecommended: false,
-            tags: ["women", "hormones", "anemia", "preventive"],
-            includes: [
-              "Complete Blood Count (CBC)",
-              "Thyroid Profile",
-              "Lipid Profile",
-              "Blood Sugar Fasting",
-              "Kidney Function Test",
-              "Vitamin D Test",
-              "Gynecologist Consultation"
-            ],
-            benefits: [
-              "Women-specific health assessment",
-              "Hormonal balance evaluation",
-              "Anemia screening",
-              "Specialized consultation"
-            ],
-            suitableFor: [
-              "Women above 25 years",
-              "Pregnancy planning",
-              "Menopausal women",
-              "Women with hormonal issues"
-            ]
-          },
-          {
-            name: "Senior Citizen Package",
-            description: "Comprehensive health package for elderly individuals focusing on age-related health concerns and preventive screening.",
-            category: "Senior Citizen",
-            price: 2999,
-            originalPrice: 4000,
-            discount: 25,
-            duration: "4 hours",
-            preparation: "10-12 hours fasting required. Bring medications list.",
-            sampleTypes: ["Blood", "Urine"],
-            isActive: true,
-            isPopular: false,
-            isRecommended: true,
-            tags: ["senior", "elderly", "comprehensive", "age-related"],
-            includes: [
-              "Complete Blood Count (CBC)",
-              "Liver Function Test (LFT)",
-              "Kidney Function Test (KFT)",
-              "Lipid Profile",
-              "Blood Sugar Fasting",
-              "Thyroid Profile",
-              "Urine Routine & Microscopy",
-              "Vitamin D Test",
-              "CRP (C-Reactive Protein)",
-              "Geriatric Specialist Consultation"
-            ],
-            benefits: [
-              "Age-appropriate health screening",
-              "Multiple organ function assessment",
-              "Inflammation markers",
-              "Specialized geriatric consultation"
-            ],
-            suitableFor: [
-              "Adults above 60 years",
-              "Elderly with chronic conditions",
-              "Preventive health screening",
-              "Medication monitoring"
-            ]
-          }
-        ];
-
-        // Store seed service content data
-        const seedServiceData = {
-          features: [
-            {
-              title: 'Laboratory Booking',
-              description: 'Reserve chemistry, physics, biology, and computer labs with real-time availability.',
-              iconKey: 'FlaskConical',
-              order: 1,
-              isActive: true
-            },
-            {
-              title: 'Smart Scheduling',
-              description: 'Avoid clashes with an intelligent calendar that respects classes, exams, and holidays.',
-              iconKey: 'CalendarCheck',
-              order: 2,
-              isActive: true
-            },
-            {
-              title: 'Role-Based Access',
-              description: 'Separate views for students, faculty, and admins with the right level of control.',
-              iconKey: 'Users2',
-              order: 3,
-              isActive: true
-            },
-            {
-              title: 'Notifications & Reminders',
-              description: 'Email or in-app reminders so you never miss an important lab session.',
-              iconKey: 'BellRing',
-              order: 4,
-              isActive: true
-            },
-            {
-              title: 'Usage Analytics',
-              description: 'Understand lab usage patterns to plan resources and maintenance better.',
-              iconKey: 'BarChart4',
-              order: 5,
-              isActive: true
-            },
-            {
-              title: 'Anywhere Access',
-              description: 'Responsive web app that works on mobile, tablet, and desktop.',
-              iconKey: 'Globe',
-              order: 6,
-              isActive: true
-            }
+      // Store seed packages data
+      const seedPackagesData = [
+        {
+          name: "Complete Health Checkup Package",
+          description: "Comprehensive health screening package including all major organ function tests, complete blood count, and vital health markers.",
+          category: "Full Body Checkup",
+          price: 2499,
+          originalPrice: 3500,
+          discount: 29,
+          duration: "3 hours",
+          preparation: "10-12 hours fasting required. Drink plenty of water.",
+          sampleTypes: ["Blood", "Urine"],
+          isActive: true,
+          isPopular: true,
+          isRecommended: true,
+          tags: ["comprehensive", "full-body", "screening", "preventive"],
+          includes: [
+            "Complete Blood Count (CBC)",
+            "Liver Function Test (LFT)",
+            "Kidney Function Test (KFT)",
+            "Lipid Profile",
+            "Blood Sugar Fasting",
+            "Thyroid Profile",
+            "Urine Routine & Microscopy",
+            "Doctor Consultation",
+            "Report Analysis"
           ],
-          highlights: [
-            {
-              title: 'Fast Booking',
-              description: 'Book a lab in just a few clicks.',
-              iconKey: 'Zap',
-              order: 1,
-              isActive: true
-            },
-            {
-              title: 'Secure Platform',
-              description: 'Protected data and controlled access.',
-              iconKey: 'ShieldCheck',
-              order: 2,
-              isActive: true
-            },
-            {
-              title: 'Clear History',
-              description: 'Track past and upcoming reservations.',
-              iconKey: 'Clock',
-              order: 3,
-              isActive: true
-            },
-            {
-              title: 'Collaboration Ready',
-              description: 'Share booking details with teams.',
-              iconKey: 'Handshake',
-              order: 4,
-              isActive: true
-            }
+          benefits: [
+            "Early detection of health issues",
+            "Complete health assessment",
+            "Preventive health screening",
+            "Expert doctor consultation",
+            "Comprehensive report analysis"
+          ],
+          suitableFor: [
+            "Adults above 30 years",
+            "Annual health checkup",
+            "Preventive health screening",
+            "Family health monitoring"
           ]
-        };
-
-        // Store packages data (only if not already exists)
-        const existingPackagesResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages`, {
-          headers: {
-            'Authorization': `Bearer ${user.token}`
-          }
-        });
-        
-        if (existingPackagesResponse.ok) {
-          const existingPackagesResult = await existingPackagesResponse.json();
-          const existingPackages = existingPackagesResult.data || [];
-          
-          // Only insert packages if database is empty
-          if (existingPackages.length === 0) {
-            for (const packageData of seedPackagesData) {
-              try {
-                const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${user.token}`
-                  },
-                  body: JSON.stringify(packageData)
-                });
-                if (!response.ok) {
-                  console.error('Failed to store package:', packageData.name);
-                }
-              } catch (error) {
-                console.error('Error storing package:', error);
-              }
-            }
-          }
+        },
+        {
+          name: "Diabetes Care Package",
+          description: "Specialized package for diabetes monitoring and management including blood sugar tests, HbA1c, and related complications screening.",
+          category: "Diabetes",
+          price: 1299,
+          originalPrice: 1800,
+          discount: 28,
+          duration: "2 hours",
+          preparation: "8-12 hours fasting required for blood sugar test.",
+          sampleTypes: ["Blood"],
+          isActive: true,
+          isPopular: true,
+          isRecommended: false,
+          tags: ["diabetes", "blood-sugar", "hba1c", "monitoring"],
+          includes: [
+            "Blood Sugar Fasting",
+            "HbA1c (Glycated Hemoglobin)",
+            "Lipid Profile",
+            "Kidney Function Test",
+            "Complete Blood Count",
+            "Diabetes Consultation"
+          ],
+          benefits: [
+            "Complete diabetes monitoring",
+            "Long-term sugar control assessment",
+            "Complication screening",
+            "Specialized consultation"
+          ],
+          suitableFor: [
+            "Known diabetes patients",
+            "Pre-diabetes individuals",
+            "Family history of diabetes",
+            "Obese individuals"
+          ]
+        },
+        {
+          name: "Liver Health Package",
+          description: "Comprehensive liver health assessment including liver function tests, hepatitis screening, and liver damage markers.",
+          category: "Liver Health",
+          price: 999,
+          originalPrice: 1400,
+          discount: 29,
+          duration: "2 hours",
+          preparation: "10-12 hours fasting required. Avoid alcohol for 24 hours.",
+          sampleTypes: ["Blood"],
+          isActive: true,
+          isPopular: false,
+          isRecommended: false,
+          tags: ["liver", "hepatitis", "function", "detox"],
+          includes: [
+            "Liver Function Test (LFT)",
+            "Complete Blood Count (CBC)",
+            "Blood Sugar Fasting",
+            "Liver Specialist Consultation"
+          ],
+          benefits: [
+            "Complete liver function assessment",
+            "Early detection of liver diseases",
+            "Hepatitis screening",
+            "Specialized consultation"
+          ],
+          suitableFor: [
+            "Alcohol consumers",
+            "Liver disease patients",
+            "Medication users",
+            "Obesity patients"
+          ]
+        },
+        {
+          name: "Kidney Health Package",
+          description: "Specialized kidney health assessment including renal function tests, urine analysis, and electrolyte balance.",
+          category: "Kidney Health",
+          price: 899,
+          originalPrice: 1200,
+          discount: 25,
+          duration: "2 hours",
+          preparation: "Drink plenty of water. Avoid heavy exercise 24 hours before.",
+          sampleTypes: ["Blood", "Urine"],
+          isActive: true,
+          isPopular: false,
+          isRecommended: false,
+          tags: ["kidney", "renal", "creatinine", "urine"],
+          includes: [
+            "Kidney Function Test (KFT)",
+            "Complete Blood Count (CBC)",
+            "Blood Sugar Fasting",
+            "Urine Routine & Microscopy",
+            "Nephrologist Consultation"
+          ],
+          benefits: [
+            "Complete kidney function assessment",
+            "Early detection of kidney diseases",
+            "Urine analysis",
+            "Specialized consultation"
+          ],
+          suitableFor: [
+            "Hypertension patients",
+            "Diabetes patients",
+            "Kidney disease family history",
+            "Elderly individuals"
+          ]
+        },
+        {
+          name: "Thyroid Care Package",
+          description: "Complete thyroid assessment including T3, T4, TSH, and related antibodies for comprehensive thyroid health evaluation.",
+          category: "Thyroid",
+          price: 799,
+          originalPrice: 1100,
+          discount: 27,
+          duration: "1 hour",
+          preparation: "No special preparation required.",
+          sampleTypes: ["Blood"],
+          isActive: true,
+          isPopular: true,
+          isRecommended: false,
+          tags: ["thyroid", "hormones", "tsh", "metabolism"],
+          includes: [
+            "Thyroid Profile (T3, T4, TSH)",
+            "Complete Blood Count (CBC)",
+            "Endocrinologist Consultation"
+          ],
+          benefits: [
+            "Complete thyroid function assessment",
+            "Hormone level evaluation",
+            "Metabolism assessment",
+            "Specialized consultation"
+          ],
+          suitableFor: [
+            "Thyroid patients",
+            "Women with hormonal issues",
+            "Obesity patients",
+            "Family history of thyroid disorders"
+          ]
+        },
+        {
+          name: "Heart Health Package",
+          description: "Cardiovascular health assessment including lipid profile, cardiac markers, and risk factor evaluation.",
+          category: "Heart Health",
+          price: 1499,
+          originalPrice: 2000,
+          discount: 25,
+          duration: "2 hours",
+          preparation: "10-12 hours fasting required. Avoid heavy meals.",
+          sampleTypes: ["Blood"],
+          isActive: true,
+          isPopular: false,
+          isRecommended: true,
+          tags: ["heart", "cardiac", "cholesterol", "lipids"],
+          includes: [
+            "Lipid Profile",
+            "Complete Blood Count (CBC)",
+            "Blood Sugar Fasting",
+            "CRP (C-Reactive Protein)",
+            "Kidney Function Test",
+            "Cardiologist Consultation"
+          ],
+          benefits: [
+            "Complete cardiac risk assessment",
+            "Cholesterol evaluation",
+            "Inflammation markers",
+            "Specialized consultation"
+          ],
+          suitableFor: [
+            "Heart disease patients",
+            "High cholesterol individuals",
+            "Hypertension patients",
+            "Family history of heart disease"
+          ]
+        },
+        {
+          name: "Women's Health Package",
+          description: "Comprehensive health screening specifically designed for women including hormonal balance, anemia screening, and vital health markers.",
+          category: "Women Health",
+          price: 1799,
+          originalPrice: 2500,
+          discount: 28,
+          duration: "3 hours",
+          preparation: "10-12 hours fasting required. Avoid hormonal medications if possible.",
+          sampleTypes: ["Blood"],
+          isActive: true,
+          isPopular: true,
+          isRecommended: false,
+          tags: ["women", "hormones", "anemia", "preventive"],
+          includes: [
+            "Complete Blood Count (CBC)",
+            "Thyroid Profile",
+            "Lipid Profile",
+            "Blood Sugar Fasting",
+            "Kidney Function Test",
+            "Vitamin D Test",
+            "Gynecologist Consultation"
+          ],
+          benefits: [
+            "Women-specific health assessment",
+            "Hormonal balance evaluation",
+            "Anemia screening",
+            "Specialized consultation"
+          ],
+          suitableFor: [
+            "Women above 25 years",
+            "Pregnancy planning",
+            "Menopausal women",
+            "Women with hormonal issues"
+          ]
+        },
+        {
+          name: "Senior Citizen Package",
+          description: "Comprehensive health package for elderly individuals focusing on age-related health concerns and preventive screening.",
+          category: "Senior Citizen",
+          price: 2999,
+          originalPrice: 4000,
+          discount: 25,
+          duration: "4 hours",
+          preparation: "10-12 hours fasting required. Bring medications list.",
+          sampleTypes: ["Blood", "Urine"],
+          isActive: true,
+          isPopular: false,
+          isRecommended: true,
+          tags: ["senior", "elderly", "comprehensive", "age-related"],
+          includes: [
+            "Complete Blood Count (CBC)",
+            "Liver Function Test (LFT)",
+            "Kidney Function Test (KFT)",
+            "Lipid Profile",
+            "Blood Sugar Fasting",
+            "Thyroid Profile",
+            "Urine Routine & Microscopy",
+            "Vitamin D Test",
+            "CRP (C-Reactive Protein)",
+            "Geriatric Specialist Consultation"
+          ],
+          benefits: [
+            "Age-appropriate health screening",
+            "Multiple organ function assessment",
+            "Inflammation markers",
+            "Specialized geriatric consultation"
+          ],
+          suitableFor: [
+            "Adults above 60 years",
+            "Elderly with chronic conditions",
+            "Preventive health screening",
+            "Medication monitoring"
+          ]
         }
+      ];
 
-        // Store service features data (only if not already exists)
-        const existingServiceContentResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content`, {
-          headers: {
-            'Authorization': `Bearer ${user.token}`
-          }
-        });
-        
-        if (existingServiceContentResponse.ok) {
-          const existingServiceResult = await existingServiceContentResponse.json();
-          const existingServiceData = existingServiceResult.data || {};
-          const existingFeatures = existingServiceData.features || [];
-          const existingHighlights = existingServiceData.highlights || [];
-          
-          // Only insert service features if database is empty
-          if (existingFeatures.length === 0) {
-            for (const featureData of seedServiceData.features) {
-              try {
-                const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/features`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${user.token}`
-                  },
-                  body: JSON.stringify(featureData)
-                });
-                if (!response.ok) {
-                  console.error('Failed to store feature:', featureData.title);
-                }
-              } catch (error) {
-                console.error('Error storing feature:', error);
-              }
-            }
-          }
-          
-          // Only insert service highlights if database is empty
-          if (existingHighlights.length === 0) {
-            for (const highlightData of seedServiceData.highlights) {
-              try {
-                const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/highlights`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${user.token}`
-                  },
-                  body: JSON.stringify(highlightData)
-                });
-                if (!response.ok) {
-                  console.error('Failed to store highlight:', highlightData.title);
-                }
-              } catch (error) {
-                console.error('Error storing highlight:', error);
-              }
-            }
-          }
-        }
-
-        // Store seed terms data
-        const seedTermsData = [
+      // Store seed service content data
+      const seedServiceData = {
+        features: [
           {
-            sectionNumber: 1,
-            title: "Acceptance of Terms & Eligibility",
-            content: `Legal Affirmation: By accessing the BookMyLab platform, you agree to be bound by this Agreement.\nEligibility Criteria: You must be 18+, minors require guardian supervision.\nEntire Agreement: These Terms, Privacy Policy, and Cookie Policy form the full agreement.\nRight to Amend: We may modify these terms, changes take effect upon posting.`,
-            order: 0,
-            isActive: true
-          },
-          {
-            sectionNumber: 2,
-            title: "User Accounts & Prohibited Conduct",
-            content: `Registration Veracity: Provide accurate identity and medical information.\nAccount Custodianship: Keep credentials secure, avoid unsafe networks.\nAutomated Access: Scrapers/crawlers to extract data are prohibited.\nCommunity Standards: Do not transmit defamatory content or harvest partner data.`,
+            title: 'Laboratory Booking',
+            description: 'Reserve chemistry, physics, biology, and computer labs with real-time availability.',
+            iconKey: 'FlaskConical',
             order: 1,
             isActive: true
           },
           {
-            sectionNumber: 3,
-            title: "Booking & Sample Collection Protocols",
-            content: `Booking Validity: Contract forms upon lab confirmation of dispatch.\nPre-Analytic Requirements: Fasting may be required for certain tests.\nHome Collection Access: Provide a safe, accessible environment.\nTurnaround Time (TAT) Estimates: may vary due to clinical factors.`,
+            title: 'Smart Scheduling',
+            description: 'Avoid clashes with an intelligent calendar that respects classes, exams, and holidays.',
+            iconKey: 'CalendarCheck',
             order: 2,
             isActive: true
           },
           {
-            sectionNumber: 4,
-            title: "Financial Terms & Refund Architecture",
-            content: `Pricing Structure: Prices include taxes unless stated.\nPayment Gateway: Encrypted gateways, we do not store CVV/PIN.\nCancellation Window: Tiered refunds based on time.\nDispute Window: Report billing discrepancies within 14 days.`,
+            title: 'Role-Based Access',
+            description: 'Separate views for students, faculty, and admins with the right level of control.',
+            iconKey: 'Users2',
             order: 3,
             isActive: true
           },
           {
-            sectionNumber: 5,
-            title: "Data Sovereignty & Medical Privacy",
-            content: `Clinical Data Usage: Labs act as Data Controllers, platform as Processor.\nHIPAA/GDPR Alignment: No health data sales for marketing.\nData Retention: Records retained per regulation.\nBreach Notification: Notify users/regulators within stipulated time.`,
+            title: 'Notifications & Reminders',
+            description: 'Email or in-app reminders so you never miss an important lab session.',
+            iconKey: 'BellRing',
             order: 4,
             isActive: true
           },
           {
-            sectionNumber: 6,
-            title: "Intellectual Property & Brand Assets",
-            content: `Proprietary Rights: Code, graphics, branding owned by Company.\nLimited License: Personal, non-commercial use only.\nSoftware Integrity: No reverse engineering.\nUser Contributions: Feedback becomes Company property.`,
+            title: 'Usage Analytics',
+            description: 'Understand lab usage patterns to plan resources and maintenance better.',
+            iconKey: 'BarChart4',
             order: 5,
             isActive: true
           },
           {
-            sectionNumber: 7,
-            title: "Limitation of Liability & Disclaimers",
-            content: `Medical Disclaimer: Platform is facilitator, consult practitioners.\nExclusion of Warranties: Service provided as-is.\nIndemnification: You indemnify for violations/misuse.`,
+            title: 'Anywhere Access',
+            description: 'Responsive web app that works on mobile, tablet, and desktop.',
+            iconKey: 'Globe',
             order: 6,
             isActive: true
           }
-        ];
-
-        // Store seed FAQ data
-        const seedFAQData = [
+        ],
+        highlights: [
           {
-            question: 'How do I book a laboratory?',
-            answer: 'You can book a laboratory through our online platform by selecting your desired lab, choosing an available time slot, and providing the necessary details. You can also book through our mobile app or contact our support team for assistance.',
-            category: 'booking',
+            title: 'Fast Booking',
+            description: 'Book a lab in just a few clicks.',
+            iconKey: 'Zap',
             order: 1,
             isActive: true
           },
           {
-            question: 'Can I book multiple labs at the same time?',
-            answer: 'Yes, you can book multiple labs simultaneously, subject to availability. Our system will show you all available time slots across different labs, allowing you to coordinate bookings efficiently.',
-            category: 'booking',
+            title: 'Secure Platform',
+            description: 'Protected data and controlled access.',
+            iconKey: 'ShieldCheck',
             order: 2,
             isActive: true
           },
           {
-            question: 'When can my sample be rejected?',
-            answer: 'Samples may be rejected if they are improperly collected, contaminated, not stored at the correct temperature, or collected outside the specified time window. Following all pre-test instructions carefully helps ensure sample acceptance.',
-            category: 'general',
+            title: 'Clear History',
+            description: 'Track past and upcoming reservations.',
+            iconKey: 'Clock',
             order: 3,
             isActive: true
           },
           {
-            question: 'How can I create a user account on your platform?',
-            answer: 'Creating an account is simple. Click on the "Sign Up" button, provide your basic information including email and phone number, verify your email, and set a secure password. The entire process takes less than 5 minutes.',
-            category: 'account',
+            title: 'Collaboration Ready',
+            description: 'Share booking details with teams.',
+            iconKey: 'Handshake',
             order: 4,
             isActive: true
-          },
-          {
-            question: 'Is my personal and medical data secure?',
-            answer: 'Absolutely. We use industry-standard encryption and security measures to protect your data. Our platform complies with HIPAA and other privacy regulations, ensuring your personal and medical information remains confidential and secure.',
-            category: 'security',
-            order: 5,
-            isActive: true
-          },
-          {
-            question: 'Can I save my medical records on my account?',
-            answer: 'Yes, you can securely store your medical records in your account. All records are encrypted and accessible only to you. You can also grant temporary access to healthcare providers when needed.',
-            category: 'account',
-            order: 6,
-            isActive: true
-          },
-          {
-            question: 'Can I add family members to my account?',
-            answer: 'Yes, you can add family members to your account as dependents. This allows you to manage bookings and view results for your children, elderly parents, or other family members with their consent.',
-            category: 'account',
-            order: 7,
-            isActive: true
-          },
-          {
-            question: 'What should I do if I cannot log in to my account?',
-            answer: 'If you cannot log in, first try resetting your password using the "Forgot Password" link. If issues persist, contact our support team at support@labbooking.com or call our helpline for immediate assistance.',
-            category: 'technical',
-            order: 8,
-            isActive: true
-          },
-          {
-            question: 'How long does it take to resolve a technical issue?',
-            answer: 'Most technical issues are resolved within 24-48 hours. Critical issues affecting multiple users are prioritized and typically resolved within 4-6 hours. You can track your support ticket status online.',
-            category: 'technical',
-            order: 9,
-            isActive: true
-          },
-          {
-            question: 'Can my medical data be misused?',
-            answer: 'No, your medical data cannot be misused. We have strict policies and technical safeguards in place. We never sell your data to third parties, and access is limited to authorized personnel for legitimate purposes only.',
-            category: 'security',
-            order: 10,
-            isActive: true
-          },
-          {
-            question: 'How can I know how my data is being used?',
-            answer: 'You can view your data usage history in your account settings. We provide transparent logs of when your data is accessed and for what purpose. Our privacy policy clearly outlines all data usage practices.',
-            category: 'security',
-            order: 11,
-            isActive: true
-          },
-          {
-            question: 'Who can access my medical history and records?',
-            answer: 'Only you and authorized healthcare providers with your explicit consent can access your medical records. Our staff can only access data necessary for providing services, and all access is logged and audited regularly.',
-            category: 'security',
-            order: 12,
-            isActive: true
-          },
-          {
-            question: 'Can I delete my account if I no longer want to use the service?',
-            answer: 'Yes, you can delete your account at any time from your account settings. Upon deletion, your personal data will be removed from our active systems, though we may retain certain information as required by law or for legitimate business purposes.',
-            category: 'account',
-            order: 13,
-            isActive: true
           }
-        ];
+        ]
+      };
 
-        // Store terms data
-        try {
-          const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/terms`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${user.token}`
-              },
-              body: JSON.stringify({
-                sections: seedTermsData,
-                version: '1.0',
-                lastUpdated: new Date().toISOString()
-              })
-            });
-            if (!response.ok) {
-              console.error('Failed to store terms data');
-            }
-          } catch (error) {
-            console.error('Error storing terms data:', error);
-          }
+      // Store packages data (only if not already exists)
+      const existingPackagesResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages`, {
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
 
-        // Store FAQ data (only if not already exists)
-        const existingFAQsResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq/admin`, {
-          headers: {
-            'Authorization': `Bearer ${user.token}`
-          }
-        });
-        
-        if (existingFAQsResponse.ok) {
-          const existingFAQsResult = await existingFAQsResponse.json();
-          const existingFAQs = existingFAQsResult.data || [];
-          
-          // Only insert FAQs if database is empty
-          if (existingFAQs.length === 0) {
-            for (const faqData of seedFAQData) {
-              try {
-                const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq`, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${user.token}`
-                  },
-                  body: JSON.stringify(faqData)
-                });
-                if (!response.ok) {
-                  console.error('Failed to store FAQ:', faqData.question);
-                }
-              } catch (error) {
-                console.error('Error storing FAQ:', error);
+      if (existingPackagesResponse.ok) {
+        const existingPackagesResult = await existingPackagesResponse.json();
+        const existingPackages = existingPackagesResult.data || [];
+
+        // Only insert packages if database is empty
+        if (existingPackages.length === 0) {
+          for (const packageData of seedPackagesData) {
+            try {
+              const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${user.token}`
+                },
+                body: JSON.stringify(packageData)
+              });
+              if (!response.ok) {
+                console.error('Failed to store package:', packageData.name);
               }
+            } catch (error) {
+              console.error('Error storing package:', error);
             }
           }
         }
-
-        console.log('Seed data stored successfully');
-      } catch (error) {
-        console.error('Error storing seed data:', error);
       }
-    }, [user]);
+
+      // Store service features data (only if not already exists)
+      const existingServiceContentResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content`, {
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
+
+      if (existingServiceContentResponse.ok) {
+        const existingServiceResult = await existingServiceContentResponse.json();
+        const existingServiceData = existingServiceResult.data || {};
+        const existingFeatures = existingServiceData.features || [];
+        const existingHighlights = existingServiceData.highlights || [];
+
+        // Only insert service features if database is empty
+        if (existingFeatures.length === 0) {
+          for (const featureData of seedServiceData.features) {
+            try {
+              const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/features`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${user.token}`
+                },
+                body: JSON.stringify(featureData)
+              });
+              if (!response.ok) {
+                console.error('Failed to store feature:', featureData.title);
+              }
+            } catch (error) {
+              console.error('Error storing feature:', error);
+            }
+          }
+        }
+
+        // Only insert service highlights if database is empty
+        if (existingHighlights.length === 0) {
+          for (const highlightData of seedServiceData.highlights) {
+            try {
+              const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/highlights`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${user.token}`
+                },
+                body: JSON.stringify(highlightData)
+              });
+              if (!response.ok) {
+                console.error('Failed to store highlight:', highlightData.title);
+              }
+            } catch (error) {
+              console.error('Error storing highlight:', error);
+            }
+          }
+        }
+      }
+
+      // Store seed terms data
+      const seedTermsData = [
+        {
+          sectionNumber: 1,
+          title: "Acceptance of Terms & Eligibility",
+          content: `Legal Affirmation: By accessing the BookMyLab platform, you agree to be bound by this Agreement.\nEligibility Criteria: You must be 18+, minors require guardian supervision.\nEntire Agreement: These Terms, Privacy Policy, and Cookie Policy form the full agreement.\nRight to Amend: We may modify these terms, changes take effect upon posting.`,
+          order: 0,
+          isActive: true
+        },
+        {
+          sectionNumber: 2,
+          title: "User Accounts & Prohibited Conduct",
+          content: `Registration Veracity: Provide accurate identity and medical information.\nAccount Custodianship: Keep credentials secure, avoid unsafe networks.\nAutomated Access: Scrapers/crawlers to extract data are prohibited.\nCommunity Standards: Do not transmit defamatory content or harvest partner data.`,
+          order: 1,
+          isActive: true
+        },
+        {
+          sectionNumber: 3,
+          title: "Booking & Sample Collection Protocols",
+          content: `Booking Validity: Contract forms upon lab confirmation of dispatch.\nPre-Analytic Requirements: Fasting may be required for certain tests.\nHome Collection Access: Provide a safe, accessible environment.\nTurnaround Time (TAT) Estimates: may vary due to clinical factors.`,
+          order: 2,
+          isActive: true
+        },
+        {
+          sectionNumber: 4,
+          title: "Financial Terms & Refund Architecture",
+          content: `Pricing Structure: Prices include taxes unless stated.\nPayment Gateway: Encrypted gateways, we do not store CVV/PIN.\nCancellation Window: Tiered refunds based on time.\nDispute Window: Report billing discrepancies within 14 days.`,
+          order: 3,
+          isActive: true
+        },
+        {
+          sectionNumber: 5,
+          title: "Data Sovereignty & Medical Privacy",
+          content: `Clinical Data Usage: Labs act as Data Controllers, platform as Processor.\nHIPAA/GDPR Alignment: No health data sales for marketing.\nData Retention: Records retained per regulation.\nBreach Notification: Notify users/regulators within stipulated time.`,
+          order: 4,
+          isActive: true
+        },
+        {
+          sectionNumber: 6,
+          title: "Intellectual Property & Brand Assets",
+          content: `Proprietary Rights: Code, graphics, branding owned by Company.\nLimited License: Personal, non-commercial use only.\nSoftware Integrity: No reverse engineering.\nUser Contributions: Feedback becomes Company property.`,
+          order: 5,
+          isActive: true
+        },
+        {
+          sectionNumber: 7,
+          title: "Limitation of Liability & Disclaimers",
+          content: `Medical Disclaimer: Platform is facilitator, consult practitioners.\nExclusion of Warranties: Service provided as-is.\nIndemnification: You indemnify for violations/misuse.`,
+          order: 6,
+          isActive: true
+        }
+      ];
+
+      // Store seed FAQ data
+      const seedFAQData = [
+        {
+          question: 'How do I book a laboratory?',
+          answer: 'You can book a laboratory through our online platform by selecting your desired lab, choosing an available time slot, and providing the necessary details. You can also book through our mobile app or contact our support team for assistance.',
+          category: 'booking',
+          order: 1,
+          isActive: true
+        },
+        {
+          question: 'Can I book multiple labs at the same time?',
+          answer: 'Yes, you can book multiple labs simultaneously, subject to availability. Our system will show you all available time slots across different labs, allowing you to coordinate bookings efficiently.',
+          category: 'booking',
+          order: 2,
+          isActive: true
+        },
+        {
+          question: 'When can my sample be rejected?',
+          answer: 'Samples may be rejected if they are improperly collected, contaminated, not stored at the correct temperature, or collected outside the specified time window. Following all pre-test instructions carefully helps ensure sample acceptance.',
+          category: 'general',
+          order: 3,
+          isActive: true
+        },
+        {
+          question: 'How can I create a user account on your platform?',
+          answer: 'Creating an account is simple. Click on the "Sign Up" button, provide your basic information including email and phone number, verify your email, and set a secure password. The entire process takes less than 5 minutes.',
+          category: 'account',
+          order: 4,
+          isActive: true
+        },
+        {
+          question: 'Is my personal and medical data secure?',
+          answer: 'Absolutely. We use industry-standard encryption and security measures to protect your data. Our platform complies with HIPAA and other privacy regulations, ensuring your personal and medical information remains confidential and secure.',
+          category: 'security',
+          order: 5,
+          isActive: true
+        },
+        {
+          question: 'Can I save my medical records on my account?',
+          answer: 'Yes, you can securely store your medical records in your account. All records are encrypted and accessible only to you. You can also grant temporary access to healthcare providers when needed.',
+          category: 'account',
+          order: 6,
+          isActive: true
+        },
+        {
+          question: 'Can I add family members to my account?',
+          answer: 'Yes, you can add family members to your account as dependents. This allows you to manage bookings and view results for your children, elderly parents, or other family members with their consent.',
+          category: 'account',
+          order: 7,
+          isActive: true
+        },
+        {
+          question: 'What should I do if I cannot log in to my account?',
+          answer: 'If you cannot log in, first try resetting your password using the "Forgot Password" link. If issues persist, contact our support team at support@labbooking.com or call our helpline for immediate assistance.',
+          category: 'technical',
+          order: 8,
+          isActive: true
+        },
+        {
+          question: 'How long does it take to resolve a technical issue?',
+          answer: 'Most technical issues are resolved within 24-48 hours. Critical issues affecting multiple users are prioritized and typically resolved within 4-6 hours. You can track your support ticket status online.',
+          category: 'technical',
+          order: 9,
+          isActive: true
+        },
+        {
+          question: 'Can my medical data be misused?',
+          answer: 'No, your medical data cannot be misused. We have strict policies and technical safeguards in place. We never sell your data to third parties, and access is limited to authorized personnel for legitimate purposes only.',
+          category: 'security',
+          order: 10,
+          isActive: true
+        },
+        {
+          question: 'How can I know how my data is being used?',
+          answer: 'You can view your data usage history in your account settings. We provide transparent logs of when your data is accessed and for what purpose. Our privacy policy clearly outlines all data usage practices.',
+          category: 'security',
+          order: 11,
+          isActive: true
+        },
+        {
+          question: 'Who can access my medical history and records?',
+          answer: 'Only you and authorized healthcare providers with your explicit consent can access your medical records. Our staff can only access data necessary for providing services, and all access is logged and audited regularly.',
+          category: 'security',
+          order: 12,
+          isActive: true
+        },
+        {
+          question: 'Can I delete my account if I no longer want to use the service?',
+          answer: 'Yes, you can delete your account at any time from your account settings. Upon deletion, your personal data will be removed from our active systems, though we may retain certain information as required by law or for legitimate business purposes.',
+          category: 'account',
+          order: 13,
+          isActive: true
+        }
+      ];
+
+      // Store terms data
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/terms`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${user.token}`
+          },
+          body: JSON.stringify({
+            sections: seedTermsData,
+            version: '1.0',
+            lastUpdated: new Date().toISOString()
+          })
+        });
+        if (!response.ok) {
+          console.error('Failed to store terms data');
+        }
+      } catch (error) {
+        console.error('Error storing terms data:', error);
+      }
+
+      // Store FAQ data (only if not already exists)
+      const existingFAQsResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq/admin`, {
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
+
+      if (existingFAQsResponse.ok) {
+        const existingFAQsResult = await existingFAQsResponse.json();
+        const existingFAQs = existingFAQsResult.data || [];
+
+        // Only insert FAQs if database is empty
+        if (existingFAQs.length === 0) {
+          for (const faqData of seedFAQData) {
+            try {
+              const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${user.token}`
+                },
+                body: JSON.stringify(faqData)
+              });
+              if (!response.ok) {
+                console.error('Failed to store FAQ:', faqData.question);
+              }
+            } catch (error) {
+              console.error('Error storing FAQ:', error);
+            }
+          }
+        }
+      }
+
+      console.log('Seed data stored successfully');
+    } catch (error) {
+      console.error('Error storing seed data:', error);
+    }
+  }, [user]);
 
   // Auto-store seed data on component mount
   useEffect(() => {
@@ -3062,7 +3066,7 @@ export default function AdminDashboardIndex() {
     console.log('User token length:', user?.token?.length || 0);
     console.log('User role:', user?.role);
     console.log('Is authenticated:', !!user && (user.emailVerified || user.isEmailVerified));
-    
+
     // Since we're using ProtectedRoute, we can assume user is admin and authenticated
     // Only fetch data if user is authenticated and has token
     if (user?.token) {
@@ -3089,10 +3093,10 @@ export default function AdminDashboardIndex() {
 
   // Fetch tests when package form is opened
   useEffect(() => {
-    if (showPackageForm && user?.token && tests.length === 0) {
+    if (showPackageForm && user?.token) {
       fetchTests();
     }
-  }, [showPackageForm, user, tests.length]);
+  }, [showPackageForm, user]);
 
   // Fetch health concerns when user-dashboard tab is active
   useEffect(() => {
@@ -3119,12 +3123,12 @@ export default function AdminDashboardIndex() {
   useEffect(() => {
     if (activeTab === 'bookings' && user?.token) {
       fetchBookings();
-      
+
       // Set up polling to refresh bookings every 10 seconds
       const pollingInterval = setInterval(() => {
         fetchBookings();
       }, 10000);
-      
+
       // Cleanup interval when component unmounts or tab changes
       return () => {
         clearInterval(pollingInterval);
@@ -3163,17 +3167,17 @@ export default function AdminDashboardIndex() {
   const handleApprove = async (id) => {
     try {
       console.log('Approving booking:', id);
-      
+
       // Show loading state
       const originalBookings = [...bookings];
-      setBookings(prevBookings => 
-        prevBookings.map(booking => 
-          booking._id === id 
+      setBookings(prevBookings =>
+        prevBookings.map(booking =>
+          booking._id === id
             ? { ...booking, adminStatus: 'approving' }
             : booking
         )
       );
-      
+
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/bookings/${id}/status`, {
         method: 'PATCH',
         headers: {
@@ -3188,31 +3192,31 @@ export default function AdminDashboardIndex() {
 
       if (response.ok && responseData.success) {
         // Update local state with approved status
-        setBookings(prevBookings => 
-          prevBookings.map(booking => 
-            booking._id === id 
+        setBookings(prevBookings =>
+          prevBookings.map(booking =>
+            booking._id === id
               ? { ...booking, adminStatus: 'approved' }
               : booking
           )
         );
-        
+
         // Update stats
-        const updatedBookings = bookings.map(booking => 
-          booking._id === id 
+        const updatedBookings = bookings.map(booking =>
+          booking._id === id
             ? { ...booking, adminStatus: 'approved' }
             : booking
         );
         const pending = updatedBookings.filter(b => (b.adminStatus || '').toLowerCase() === 'pending').length;
         const approved = updatedBookings.filter(b => (b.adminStatus || '').toLowerCase() === 'approved').length;
         const rejected = updatedBookings.filter(b => (b.adminStatus || '').toLowerCase() === 'rejected').length;
-        
+
         setStats(prev => ({
           ...prev,
           pendingBookings: pending,
           approvedBookings: approved,
           rejectedBookings: rejected
         }));
-        
+
         // Show success message
         await Swal.fire({
           icon: 'success',
@@ -3221,7 +3225,7 @@ export default function AdminDashboardIndex() {
           confirmButtonColor: Theme.colors.primary
         });
         console.log(`Booking ${id} approved successfully`);
-        
+
         // Refresh bookings to ensure data consistency
         setTimeout(() => fetchBookings(), 1000);
       } else {
@@ -3256,20 +3260,20 @@ export default function AdminDashboardIndex() {
       });
       return;
     }
-    
+
     try {
       console.log('Rejecting booking:', id, 'with reason:', reason);
-      
+
       // Show loading state
       const originalBookings = [...bookings];
-      setBookings(prevBookings => 
-        prevBookings.map(booking => 
-          booking._id === id 
+      setBookings(prevBookings =>
+        prevBookings.map(booking =>
+          booking._id === id
             ? { ...booking, adminStatus: 'rejecting' }
             : booking
         )
       );
-      
+
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/bookings/${id}/status`, {
         method: 'PATCH',
         headers: {
@@ -3284,31 +3288,31 @@ export default function AdminDashboardIndex() {
 
       if (response.ok && responseData.success) {
         // Update local state with rejected status
-        setBookings(prevBookings => 
-          prevBookings.map(booking => 
-            booking._id === id 
+        setBookings(prevBookings =>
+          prevBookings.map(booking =>
+            booking._id === id
               ? { ...booking, adminStatus: 'rejected', rejectionReason: reason.trim() }
               : booking
           )
         );
-        
+
         // Update stats
-        const updatedBookings = bookings.map(booking => 
-          booking._id === id 
+        const updatedBookings = bookings.map(booking =>
+          booking._id === id
             ? { ...booking, adminStatus: 'rejected', rejectionReason: reason.trim() }
             : booking
         );
         const pending = updatedBookings.filter(b => (b.adminStatus || '').toLowerCase() === 'pending').length;
         const approved = updatedBookings.filter(b => (b.adminStatus || '').toLowerCase() === 'approved').length;
         const rejected = updatedBookings.filter(b => (b.adminStatus || '').toLowerCase() === 'rejected').length;
-        
+
         setStats(prev => ({
           ...prev,
           pendingBookings: pending,
           approvedBookings: approved,
           rejectedBookings: rejected
         }));
-        
+
         // Show success message
         await Swal.fire({
           icon: 'success',
@@ -3317,7 +3321,7 @@ export default function AdminDashboardIndex() {
           confirmButtonColor: Theme.colors.primary
         });
         console.log(`Booking ${id} rejected successfully`);
-        
+
         // Refresh bookings to ensure data consistency
         setTimeout(() => fetchBookings(), 1000);
       } else {
@@ -3363,9 +3367,9 @@ export default function AdminDashboardIndex() {
   };
 
   const markFeedbackAsReviewed = async (id) => {
-    setFeedbacks(prevFeedbacks => 
-      prevFeedbacks.map(f => 
-        f._id === id 
+    setFeedbacks(prevFeedbacks =>
+      prevFeedbacks.map(f =>
+        f._id === id
           ? { ...f, status: 'reviewed' }
           : f
       )
@@ -3373,9 +3377,9 @@ export default function AdminDashboardIndex() {
   };
 
   const markFeedbackAsResolved = async (id) => {
-    setFeedbacks(prevFeedbacks => 
-      prevFeedbacks.map(f => 
-        f._id === id 
+    setFeedbacks(prevFeedbacks =>
+      prevFeedbacks.map(f =>
+        f._id === id
           ? { ...f, status: 'resolved' }
           : f
       )
@@ -3393,7 +3397,7 @@ export default function AdminDashboardIndex() {
       confirmButtonText: 'Delete',
       cancelButtonText: 'Cancel'
     });
-    
+
     if (!result.isConfirmed) return;
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/feedback/${id}`, {
@@ -3423,7 +3427,7 @@ export default function AdminDashboardIndex() {
       confirmButtonText: 'Delete',
       cancelButtonText: 'Cancel'
     });
-    
+
     if (!result.isConfirmed) return;
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/contact/${id}`, {
@@ -3486,7 +3490,7 @@ export default function AdminDashboardIndex() {
     }
 
     setSendingReply(true);
-    
+
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/admin/contact-reply/${selectedContact._id}`, {
         method: 'POST',
@@ -3498,7 +3502,7 @@ export default function AdminDashboardIndex() {
       });
 
       const result = await response.json();
-      
+
       if (response.ok && result.success) {
         await Swal.fire({
           icon: 'success',
@@ -3506,18 +3510,18 @@ export default function AdminDashboardIndex() {
           html: `
             <div class="text-left">
               <p class="mb-2">Your reply has been sent successfully!</p>
-              ${result.emailSent ? 
-                '<p class="text-green-600"><i class="fas fa-check-circle"></i> Email delivered successfully</p>' : 
-                `<p class="text-orange-600"><i class="fas fa-exclamation-triangle"></i> Email delivery failed</p>
+              ${result.emailSent ?
+              '<p class="text-green-600"><i class="fas fa-check-circle"></i> Email delivered successfully</p>' :
+              `<p class="text-orange-600"><i class="fas fa-exclamation-triangle"></i> Email delivery failed</p>
                  ${result.emailError ? `<p class="text-sm text-gray-600 mt-1">Error: ${result.emailError.message}</p>` : ''}`
-              }
+            }
             </div>
           `,
           confirmButtonColor: Theme.colors.primary,
           timer: 3000,
           timerProgressBar: true
         });
-        
+
         fetchContactsAdmin();
         closeReplyModal();
       } else {
@@ -3525,11 +3529,11 @@ export default function AdminDashboardIndex() {
       }
     } catch (error) {
       console.error('Error sending reply:', error);
-      
+
       // Try to parse error details if available
       let errorMessage = error.message || 'Failed to send reply. Please try again.';
       let errorDetails = null;
-      
+
       if (error.response) {
         try {
           const errorData = await error.response.json();
@@ -3541,7 +3545,7 @@ export default function AdminDashboardIndex() {
           console.log('Could not parse error response:', parseError);
         }
       }
-      
+
       await Swal.fire({
         icon: 'error',
         title: 'Error!',
@@ -3564,7 +3568,7 @@ export default function AdminDashboardIndex() {
     }
   };
 
-  
+
 
   // Home Content Functions
   const createHomeWhyBookItem = async (itemData) => {
@@ -3577,7 +3581,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(itemData)
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -3601,7 +3605,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(itemData)
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -3626,9 +3630,9 @@ export default function AdminDashboardIndex() {
       confirmButtonText: 'Delete',
       cancelButtonText: 'Cancel'
     });
-    
+
     if (!result.isConfirmed) return false;
-    
+
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/why-book/${id}`, {
         method: 'DELETE',
@@ -3636,7 +3640,7 @@ export default function AdminDashboardIndex() {
           'Authorization': `Bearer ${user.token}`
         }
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -3660,7 +3664,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(itemData)
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -3684,7 +3688,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(itemData)
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -3709,9 +3713,9 @@ export default function AdminDashboardIndex() {
       confirmButtonText: 'Delete',
       cancelButtonText: 'Cancel'
     });
-    
+
     if (!result.isConfirmed) return false;
-    
+
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/how-it-works/${id}`, {
         method: 'DELETE',
@@ -3719,7 +3723,7 @@ export default function AdminDashboardIndex() {
           'Authorization': `Bearer ${user.token}`
         }
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -3737,13 +3741,13 @@ export default function AdminDashboardIndex() {
   const handleWhyBookFormSubmit = async (e) => {
     e.preventDefault();
     let success = false;
-    
+
     if (editingWhyBookItem && editingWhyBookItem.id) {
       success = await updateHomeWhyBookItem(editingWhyBookItem.id, whyBookFormData);
     } else {
       success = await createHomeWhyBookItem(whyBookFormData);
     }
-    
+
     if (success) {
       resetWhyBookForm();
     } else {
@@ -3759,13 +3763,13 @@ export default function AdminDashboardIndex() {
   const handleHowItWorksFormSubmit = async (e) => {
     e.preventDefault();
     let success = false;
-    
+
     if (editingHowItWorksItem && editingHowItWorksItem.id) {
       success = await updateHomeHowItWorksItem(editingHowItWorksItem.id, howItWorksFormData);
     } else {
       success = await createHomeHowItWorksItem(howItWorksFormData);
     }
-    
+
     if (success) {
       resetHowItWorksForm();
     } else {
@@ -3854,7 +3858,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(faqData)
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -3875,7 +3879,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(faqData)
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -3897,9 +3901,9 @@ export default function AdminDashboardIndex() {
       confirmButtonText: 'Delete',
       cancelButtonText: 'Cancel'
     });
-    
+
     if (!result.isConfirmed) return false;
-    
+
     try {
       const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq/${id}`, {
         method: 'DELETE',
@@ -3907,7 +3911,7 @@ export default function AdminDashboardIndex() {
           Authorization: `Bearer ${user.token}`
         }
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -3929,7 +3933,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(policyData)
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -3951,7 +3955,7 @@ export default function AdminDashboardIndex() {
         },
         body: JSON.stringify(termsData)
       });
-      
+
       if (response.ok) {
         fetchContentData();
         return true;
@@ -3963,6 +3967,22 @@ export default function AdminDashboardIndex() {
   };
 
 
+  // Enhanced mobile menu close function
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+  };
+
+  // Handle sidebar item click with mobile menu close
+  const handleSidebarItemClick = (id) => {
+    setActiveTab(id);
+    // Close mobile menu after selection with smooth transition
+    if (window.innerWidth < 768) {
+      setTimeout(() => {
+        closeMobileMenu();
+      }, 200);
+    }
+  };
+
   const handleLogout = (reason) => {
     logout();
     navigate("/admin-login");
@@ -3970,67 +3990,124 @@ export default function AdminDashboardIndex() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-blue-50/20">
+      {/* Header without system name */}
       <Header hideNavItems={true} />
+
       <div className="flex flex-1 container mx-auto px-4 pt-0 pb-4 md:pb-8 gap-4 md:gap-8 max-w-screen-2xl relative">
         {/* Mobile Menu Button */}
-        <CButton 
+        <CButton
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="md:hidden fixed top-20 left-4 z-50 p-2 bg-white rounded-lg shadow-md border border-gray-200"
+          data-mobile-menu-button
+          className="md:hidden fixed top-20 left-4 z-50 p-3 bg-white rounded-lg shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-200"
           variant="outline"
         >
           {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </CButton>
 
-        {/* Sidebar */}
-        <aside className={`${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed md:relative md:flex md:flex-col top-0 left-0 h-full md:h-auto w-64 md:w-72 bg-white/90 backdrop-blur-xl border-r border-gray-200/30 z-40 transition-transform duration-300 ease-in-out pt-20 md:pt-0 rounded-2xl md:rounded-none shadow-2xl md:shadow-none flex-shrink-0`}>
-          <div className="p-6 mb-4 border-b border-gray-100/50">
-            <h2 className="text-2xl font-bold capitalize tracking-tight" style={{ color: Theme.colors.primary }}>Admin Panel</h2>
-            <p className="text-sm mt-1 font-medium" style={{ color: Theme.colors.primaryHover }}>Hospital Management System</p>
+        {/* Sidebar - Responsive with system name */}
+        <aside className={`
+          ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} 
+          md:translate-x-0 
+          fixed md:relative 
+          top-0 left-0 
+          h-full md:h-auto 
+          w-72 md:w-80 
+          bg-white/95 backdrop-blur-xl 
+          border-r border-gray-200/30 
+          z-40 
+          transition-transform duration-300 ease-in-out 
+          pt-20 md:pt-0 
+          rounded-r-2xl md:rounded-none 
+          shadow-2xl md:shadow-lg 
+          flex-shrink-0
+          overflow-y-auto
+          max-h-screen md:max-h-none
+        `}>
+          {/* System Name Section - Moved from header */}
+          <div className="p-6 mb-6 border-b border-gray-100/50 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-t-2xl md:rounded-t-none">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: Theme.colors.primary }}>
+                <LayoutDashboard size={24} className="text-white" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Admin Panel</h2>
+                <p className="text-sm font-medium text-gray-600">Hospital Management System</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <ShieldCheck size={14} />
+              <span>Secure Admin Access</span>
+            </div>
           </div>
-          <div className="flex flex-col gap-3 p-4 md:p-0">
-            <SidebarItem id="registration" label="Registration" icon={LayoutDashboard} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
-            <SidebarItem id="bookings" label="Lab Bookings" icon={ClipboardList} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
-            <SidebarItem id="feedback" label="User Feedback" icon={MessageSquare} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
-            <SidebarItem id="contact" label="Contact Requests" icon={PhoneCall} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
-            
-            <div className="border-t border-gray-200 my-2"></div>
-            
-            <SidebarItem id="tests" label="Test Management" icon={TestTube} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
-            <SidebarItem id="packages" label="Package Management" icon={Package} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
-            <SidebarItem id="health-concerns" label="Health Concerns" icon={Stethoscope} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
-            
-            <div className="border-t border-gray-200 my-2"></div>
-            
-            <SidebarItem id="service-content" label="Service Content" icon={Globe} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
-            <SidebarItem id="about" label="About Content" icon={FileText} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
-            <SidebarItem id="home-content" label="Home Content" icon={Home} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
-            <SidebarItem id="terms" label="Terms & Conditions" icon={FileText} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
-            <SidebarItem id="privacy" label="Privacy Policy" icon={ShieldCheck} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
-            <SidebarItem id="faq" label="FAQ Management" icon={HelpCircle} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} />
+
+          {/* Navigation Items */}
+          <div className="flex flex-col gap-2 px-4 pb-6">
+            {/* Main Management */}
+            <div className="mb-4">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Main Management</h3>
+              <SidebarItem id="registration" label="User Registration" icon={LayoutDashboard} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="bookings" label="Lab Bookings" icon={ClipboardList} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="feedback" label="User Feedback" icon={MessageSquare} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="contact" label="Contact Requests" icon={PhoneCall} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
+            </div>
+
+            {/* Content Management */}
+            <div className="mb-4">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Content Management</h3>
+              <SidebarItem id="tests" label="Test Management" icon={TestTube} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="packages" label="Package Management" icon={Package} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="health-concerns" label="Health Concerns" icon={Stethoscope} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
+            </div>
+
+            {/* System Settings */}
+            <div className="mb-4">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">System Settings</h3>
+              <SidebarItem id="service-content" label="Service Content" icon={Globe} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="about" label="About Content" icon={FileText} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="home-content" label="Home Content" icon={Home} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="terms" label="Terms & Conditions" icon={FileText} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="privacy" label="Privacy Policy" icon={ShieldCheck} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="faq" label="FAQ Management" icon={HelpCircle} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
+            </div>
           </div>
         </aside>
 
-        {/* Overlay for mobile */}
+        {/* Overlay for mobile - Enhanced */}
         {mobileMenuOpen && (
-          <div 
-            className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
-            onClick={() => setMobileMenuOpen(false)}
+          <div
+            className="md:hidden fixed inset-0 bg-black/60 z-30 backdrop-blur-sm transition-opacity duration-300"
+            onClick={closeMobileMenu}
           />
         )}
 
-        {/* Main Content */}
-        
+        {/* Main Content - Responsive adjustments */}
         <main className="flex-1 md:ml-0 ml-0 pt-0 min-w-0">
           <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-100/50 overflow-hidden">
-            <div className="bg-gradient-to-r p-8 border-b border-gray-100/30"
+            {/* Header Section */}
+            <div className="bg-gradient-to-r p-6 md:p-8 border-b border-gray-100/30"
               style={{
                 background: `linear-gradient(135deg, ${Theme.colors.secondary} 0%, ${Theme.colors.secondaryLight} 100%)`
               }}
             >
-              <div className="flex justify-between items-center">
+              <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
                 <div>
-                  <h1 className="text-3xl md:text-4xl font-bold capitalize tracking-tight" style={{ color: Theme.colors.primary }}>{activeTab.replace('-', ' ')}</h1>
-                  <p className="text-sm mt-2 font-medium" style={{ color: Theme.colors.primaryHover }}>Manage your {activeTab.replace('-', ' ')} efficiently</p>
+                  <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold capitalize tracking-tight" style={{ color: Theme.colors.primary }}>
+                    {activeTab.replace('-', ' ')}
+                  </h1>
+                  <p className="text-sm mt-2 font-medium" style={{ color: Theme.colors.primaryHover }}>
+                    Manage your {activeTab.replace('-', ' ')} efficiently
+                  </p>
+                </div>
+
+                {/* Mobile menu indicator */}
+                <div className="md:hidden">
+                  <CButton
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    className="p-2 bg-white/20 backdrop-blur-sm rounded-lg border border-white/30"
+                    variant="outline"
+                  >
+                    <Menu size={20} className="text-white" />
+                  </CButton>
                 </div>
               </div>
             </div>
@@ -4040,254 +4117,157 @@ export default function AdminDashboardIndex() {
                 <div className="space-y-6">
                   {/* User Management Table */}
                   <div className="overflow-x-auto">
-                      {usersLoading ? (
-                        <div className="text-center py-8">
-                          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2" style={{borderColor: Theme.colors.primary}}></div>
-                          <p className="mt-2 text-gray-500">Loading users...</p>
-                        </div>
-                      ) : getFilteredUsers().length === 0 ? (
-                        <div className="text-center py-8">
-                          <p className="text-gray-500">No users found matching your criteria.</p>
-                        </div>
-                      ) : (
-                        <table className="w-full text-left">
-                          <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
-                            <tr>
-                              <th className="p-4">User Details</th>
-                              <th className="p-4">Role</th>
-                              <th className="p-4">Email Verified</th>
-                              <th className="p-4">Registration Date</th>
-                              <th className="p-4">Last Login</th>
-                              <th className="p-4 text-right">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {users.map((userItem) => (
-                              <tr key={userItem._id} className="border-b border-gray-100 hover:bg-gray-50">
-                                <td className="p-4">
-                                  <div>
-                                    <div className="font-medium text-gray-900">{userItem.name || 'N/A'}</div>
-                                    <div className="text-sm text-gray-500">{userItem.email || 'N/A'}</div>
-                                    {userItem.phone && (
-                                      <div className="text-xs text-gray-400">{userItem.phone}</div>
-                                    )}
-                                  </div>
-                                </td>
-                                <td className="p-4">
-                                  <span className={`px-2 py-1 text-xs rounded-full font-medium ${
-                                    userItem.role === 'admin' ? 'bg-emerald-100 text-emerald-800' :
-                                    userItem.role === 'labtechnician' ? 'bg-blue-100 text-blue-800' :
-                                    'bg-gray-100 text-gray-800'
-                                  }`} style={userItem.role === 'labtechnician' ? {backgroundColor: Theme.colors.primary, color: 'white'} : {}}>
-                                    {userItem.role || 'user'}
-                                  </span>
-                                </td>
-                                <td className="p-4">
-                                  <span className={`px-2 py-1 text-xs rounded-full font-medium ${
-                                    userItem.emailVerified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                  }`}>
-                                    {userItem.emailVerified ? 'Verified' : 'Not Verified'}
-                                  </span>
-                                </td>
-                                <td className="p-4 text-sm">
-                                  {userItem.createdAt ? new Date(userItem.createdAt).toLocaleDateString() : 'N/A'}
-                              </td>
-                              <td className="p-4 text-sm">
-                                {userItem.lastLogin ? new Date(userItem.lastLogin).toLocaleDateString() : 'Never'}
-                              </td>
-                              <td className="p-4 text-right">
-                                <CButton
-                                  onClick={() => handleDeleteUser(userItem._id, userItem.name)}
-                                  className="p-2 rounded-full text-red-600 hover:bg-red-50 transition-colors"
-                                  variant="outline"
-                                  title="Delete User"
-                                >
-                                  <Trash2 size={16} />
-                                </CButton>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
+                    {usersLoading ? (
+                      <div className="text-center py-8">
+                        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: Theme.colors.primary }}></div>
+                        <p className="mt-2 text-gray-500">Loading users...</p>
+                      </div>
+                    ) : getFilteredUsers().length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-gray-500">No users found matching your criteria.</p>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
+                        <table className="w-full text-left min-w-[600px]">
+                    <thead className="bg-gray-50 text-gray-500 text-xs uppercase sticky top-0 z-10">
+                      <tr>
+                        <th className="p-4">User Details</th>
+                        <th className="p-4">Role</th>
+                        <th className="p-4">Email Verified</th>
+                        <th className="p-4">Registration Date</th>
+                        <th className="p-4">Last Login</th>
+                        <th className="p-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users.map((userItem) => (
+                        <tr key={userItem._id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="p-4">
+                            <div>
+                              <div className="font-medium text-gray-900">{userItem.name || 'N/A'}</div>
+                              <div className="text-sm text-gray-500">{userItem.email || 'N/A'}</div>
+                              {userItem.phone && (
+                                <div className="text-xs text-gray-400">{userItem.phone}</div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <span className={`px-2 py-1 text-xs rounded-full font-medium ${userItem.role === 'admin' ? 'bg-emerald-100 text-emerald-800' :
+                              userItem.role === 'labtechnician' ? 'bg-blue-100 text-blue-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`} style={userItem.role === 'labtechnician' ? { backgroundColor: Theme.colors.primary, color: 'white' } : {}}>
+                              {userItem.role || 'user'}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <span className={`px-2 py-1 text-xs rounded-full font-medium ${userItem.emailVerified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              }`}>
+                              {userItem.emailVerified ? 'Verified' : 'Not Verified'}
+                            </span>
+                          </td>
+                          <td className="p-4 text-sm">
+                            {userItem.createdAt ? new Date(userItem.createdAt).toLocaleDateString() : 'N/A'}
+                          </td>
+                          <td className="p-4 text-sm">
+                            {userItem.lastLogin ? new Date(userItem.lastLogin).toLocaleDateString() : 'Never'}
+                          </td>
+                          <td className="p-4 text-right">
+                            <CButton
+                              onClick={() => handleDeleteUser(userItem._id, userItem.name)}
+                              className="p-2 rounded-full text-red-600 hover:bg-red-50 transition-colors"
+                              variant="outline"
+                              title="Delete User"
+                            >
+                              <Trash2 size={16} />
+                            </CButton>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
+            </div>
+          </div>
+        )}
 
-              {/* Bookings Section */}
-              {activeTab === "bookings" && (
-                <>
-                {/* Statistics Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <div 
-                    onClick={() => setBookingFilter('all')}
-                    className={`bg-white rounded-xl p-6 border-2 cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                      bookingFilter === 'all' ? 'border-blue-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Total Bookings</p>
-                        <p className="text-3xl font-bold text-gray-900 mt-2">{stats?.totalBookings || 0}</p>
-                      </div>
-                      <div className="p-3 bg-blue-100 rounded-lg">
-                        <ClipboardList size={24} className="text-blue-600" />
-                      </div>
-                    </div>
+        {/* Bookings Section */}
+        {activeTab === "bookings" && (
+          <>
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div
+                onClick={() => setBookingFilter('all')}
+                className={`bg-white rounded-xl p-6 border-2 cursor-pointer transition-all duration-300 hover:shadow-lg ${bookingFilter === 'all' ? 'border-blue-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
+                  }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Bookings</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">{stats?.totalBookings || 0}</p>
                   </div>
-
-                  <div 
-                    onClick={() => setBookingFilter('approved')}
-                    className={`bg-white rounded-xl p-6 border-2 cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                      bookingFilter === 'approved' ? 'border-green-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Approved Bookings</p>
-                        <p className="text-3xl font-bold text-green-600 mt-2">{stats?.approvedBookings || 0}</p>
-                      </div>
-                      <div className="p-3 bg-green-100 rounded-lg">
-                        <CheckCircle2 size={24} className="text-green-600" />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div 
-                    onClick={() => setBookingFilter('pending')}
-                    className={`bg-white rounded-xl p-6 border-2 cursor-pointer transition-all duration-300 hover:shadow-lg ${
-                      bookingFilter === 'pending' ? 'border-yellow-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Pending Bookings</p>
-                        <p className="text-3xl font-bold text-yellow-600 mt-2">{stats?.pendingBookings || 0}</p>
-                      </div>
-                      <div className="p-3 bg-yellow-100 rounded-lg">
-                        <Clock size={24} className="text-yellow-600" />
-                      </div>
-                    </div>
+                  <div className="p-3 bg-blue-100 rounded-lg">
+                    <ClipboardList size={24} className="text-blue-600" />
                   </div>
                 </div>
+              </div>
 
-                <div className="space-y-6">
-                  <div className="overflow-x-auto">
-                      {loading ? (
-                        <div className="text-center py-8">
-                          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2" style={{borderColor: Theme.colors.primary}}></div>
-                          <p className="mt-2 text-gray-500">Loading bookings...</p>
-                        </div>
-                      ) : bookings.length === 0 ? (
-                        <div className="text-center py-8">
-                          <p className="text-gray-500">No bookings found.</p>
-                        </div>
-                      ) : (
-                        <table className="w-full text-left">
-                          <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
-                            <tr>
-                              <th className="p-4">Patient Info</th>
-                              <th className="p-4">Lab Details</th>
-                              <th className="p-4">Schedule</th>
-                              <th className="p-4">Status</th>
-                              <th className="p-4 text-right">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {bookings
-                              .filter(b => {
-                                if (bookingFilter === 'all') return true;
-                                if (bookingFilter === 'pending') return (b.adminStatus || '').toLowerCase() === 'pending';
-                                if (bookingFilter === 'approved') return (b.adminStatus || '').toLowerCase() === 'approved';
-                                return true;
-                              })
-                              .map((b) => (
-                                <tr key={b._id || b.id} className="border-b border-gray-100 hover:bg-gray-50">
-                                  <td className="p-4">
-                                    <div>
-                                      <div className="font-medium text-gray-900">{b.patientName || b.user?.name || 'Unknown'}</div>
-                                      <div className="text-sm text-gray-500">{b.user?.email || 'No email'}</div>
-                                      {b.user?.phone && <div className="text-xs text-gray-400">{b.user.phone}</div>}
-                                    </div>
-                                  </td>
-                                  <td className="p-4">
-                                    <div className="text-sm">
-                                      <div className="font-medium">{b.labName || b.labAppointment}</div>
-                                      {b.packageName && <div className="text-gray-500">{b.packageName}</div>}
-                                    </div>
-                                  </td>
-                                  <td className="p-4 text-sm">
-                                    <div>{b.date}</div>
-                                    <div className="text-gray-500">{b.time} ({b.duration})</div>
-                                    {b.rescheduleFrom && (
-                                      <div className="text-xs text-blue-600 mt-1">
-                                        Rescheduled from: {b.rescheduleFrom._id?.slice(-6) || b.rescheduleFrom.slice(-6)}
-                                      </div>
-                                    )}
-                                  </td>
-                                  <td className="p-4">
-                                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${
-                                      b.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                      b.adminStatus === 'approved' ? 'bg-green-100 text-green-800' :
-                                      b.adminStatus === 'rejected' ? 'bg-red-100 text-red-800' :
-                                      'bg-yellow-100 text-yellow-800'
-                                    }`}>
-                                      {b.status === 'cancelled' ? 'Cancelled' : (b.adminStatus || 'pending')}
-                                    </span>
-                                  </td>
-                                  <td className="p-4 text-right">
-                                    {b.adminStatus === 'pending' && b.status !== 'cancelled' && (
-                                      <div className="flex justify-end gap-2">
-                                        <CButton 
-                                          onClick={() => handleApprove(b._id || b.id)} 
-                                          className="p-2 rounded-full transition-colors" 
-                                          variant="outline"
-                                          title="Approve"
-                                          style={{
-                                            backgroundColor: '#10b981',
-                                            color: 'white',
-                                            borderColor: '#10b981'
-                                          }}
-                                        >
-                                          <CheckCircle2 size={20}/>
-                                        </CButton>
-                                        <CButton 
-                                          onClick={() => {
-                                            const reason = prompt('Please enter rejection reason:');
-                                            if (reason) {
-                                              handleRejectWithReason(b._id || b.id, reason);
-                                            }
-                                          }} 
-                                          className="p-2 rounded-full transition-colors" 
-                                          variant="outline"
-                                          title="Reject"
-                                          style={{
-                                            backgroundColor: '#ef4444',
-                                            color: 'white',
-                                            borderColor: '#ef4444'
-                                          }}
-                                        >
-                                          <XCircle size={20}/>
-                                        </CButton>
-                                      </div>
-                                    )}
-                                    {b.status === 'cancelled' && (
-                                      <div className="flex justify-end">
-                                        <span className="px-3 py-1 text-xs font-medium text-red-600 bg-red-100 rounded-full">
-                                          Cancelled by User
-                                        </span>
-                                      </div>
-                                    )}
-                                  </td>
-                                </tr>
-                              ))}
-                          </tbody>
-                        </table>
-                      )}
-                    </div>
+              <div
+                onClick={() => setBookingFilter('approved')}
+                className={`bg-white rounded-xl p-6 border-2 cursor-pointer transition-all duration-300 hover:shadow-lg ${bookingFilter === 'approved' ? 'border-green-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
+                  }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Approved Bookings</p>
+                    <p className="text-3xl font-bold text-green-600 mt-2">{stats?.approvedBookings || 0}</p>
+                  </div>
+                  <div className="p-3 bg-green-100 rounded-lg">
+                    <CheckCircle2 size={24} className="text-green-600" />
+                  </div>
+                </div>
+              </div>
 
-                    {/* Mobile Card View */}
-                    <div className="md:hidden space-y-4">
+              <div
+                onClick={() => setBookingFilter('pending')}
+                className={`bg-white rounded-xl p-6 border-2 cursor-pointer transition-all duration-300 hover:shadow-lg ${bookingFilter === 'pending' ? 'border-yellow-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
+                  }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Pending Bookings</p>
+                    <p className="text-3xl font-bold text-yellow-600 mt-2">{stats?.pendingBookings || 0}</p>
+                  </div>
+                  <div className="p-3 bg-yellow-100 rounded-lg">
+                    <Clock size={24} className="text-yellow-600" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="overflow-x-auto">
+                {loading ? (
+                  <div className="text-center py-8">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: Theme.colors.primary }}></div>
+                    <p className="mt-2 text-gray-500">Loading bookings...</p>
+                  </div>
+                ) : bookings.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No bookings found.</p>
+                  </div>
+                ) : (
+                  <table className="w-full text-left">
+                    <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
+                      <tr>
+                        <th className="p-4">Patient Info</th>
+                        <th className="p-4">Lab Details</th>
+                        <th className="p-4">Schedule</th>
+                        <th className="p-4">Status</th>
+                        <th className="p-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
                       {bookings
                         .filter(b => {
                           if (bookingFilter === 'all') return true;
@@ -4296,787 +4276,1427 @@ export default function AdminDashboardIndex() {
                           return true;
                         })
                         .map((b) => (
-                        <div key={b._id || b.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                          <div className="flex justify-between items-start mb-3">
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-lg">{b.patientName || b.user?.name || 'Unknown'}</h4>
-                              <p className="text-sm text-gray-600">{b.user?.email || 'No email'}</p>
-                              {b.user?.phone && <p className="text-sm text-gray-600">{b.user.phone}</p>}
-                            </div>
-                            <span className={`px-2 py-1 text-xs rounded-full`}
-                              style={{
-                                backgroundColor: b.status === 'cancelled' ? '#FEE2E2' : 
-                                               b.adminStatus === 'approved' ? Theme.colors.emerald100 : 
-                                               b.adminStatus === 'rejected' ? Theme.colors.red50 : Theme.colors.yellow50,
-                                color: b.status === 'cancelled' ? '#DC2626' : 
-                                       b.adminStatus === 'approved' ? Theme.colors.emerald600 : 
-                                       b.adminStatus === 'rejected' ? Theme.colors.red600 : Theme.colors.yellow600
-                              }}
-                            >
-                              {b.status === 'cancelled' ? 'Cancelled' : (b.adminStatus || 'pending')}
-                            </span>
-                          </div>
-                          <div className="space-y-2 text-sm">
-                            <div>
-                              <span className="text-gray-500">Lab: </span>
-                              <span className="font-medium">{b.labName || b.labAppointment}</span>
-                            </div>
-                            {b.packageName && (
+                          <tr key={b._id || b.id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="p-4">
                               <div>
-                                <span className="text-gray-500">Package: </span>
-                                <span>{b.packageName}</span>
+                                <div className="font-medium text-gray-900">{b.patientName || b.user?.name || 'Unknown'}</div>
+                                <div className="text-sm text-gray-500">{b.user?.email || 'No email'}</div>
+                                {b.user?.phone && <div className="text-xs text-gray-400">{b.user.phone}</div>}
                               </div>
-                            )}
-                            {b.packagePrice > 0 && (
-                              <div>
-                                <span className="text-gray-500">Price: </span>
-                                <span className="text-primary font-semibold">₹{b.packagePrice}</span>
+                            </td>
+                            <td className="p-4">
+                              <div className="text-sm">
+                                <div className="font-medium">{b.labName || b.labAppointment}</div>
+                                {b.packageName && <div className="text-gray-500">{b.packageName}</div>}
                               </div>
-                            )}
-                            <div>
-                              <span className="text-gray-500">Schedule: </span>
-                              <span>{b.date} at {b.time} ({b.duration})</span>
-                            </div>
-                            {b.rescheduleFrom && (
-                              <div>
-                                <span className="text-gray-500">Rescheduled from: </span>
-                                <span className="text-blue-600 text-xs">{b.rescheduleFrom._id?.slice(-6) || b.rescheduleFrom.slice(-6)}</span>
-                              </div>
-                            )}
-                            <div>
-                              <span className="text-gray-500">Purpose: </span>
-                              <span>{b.purpose}</span>
-                            </div>
-                            {b.rejectionReason && (
-                              <div>
-                                <span className="text-gray-500">Reason: </span>
-                                <span style={{ color: Theme.colors.red600 }}>{b.rejectionReason}</span>
-                              </div>
-                            )}
-                          </div>
-                          {b.adminStatus === 'pending' && b.status !== 'cancelled' && (
-                            <div className="flex justify-end gap-2 mt-4">
-                              <CButton 
-                                onClick={() => handleApprove(b._id || b.id)} 
-                                className="px-3 py-1 rounded-full text-sm text-white"
-                                variant="primary"
-                                style={{
-                                  backgroundColor: Theme.colors.emerald600
-                                }}
-                              >
-                                Approve
-                              </CButton>
-                              <CButton 
-                                onClick={() => {
-                                  const reason = prompt('Please enter rejection reason:');
-                                  if (reason) {
-                                    handleRejectWithReason(b._id || b.id, reason);
-                                  }
-                                }} 
-                                className="px-3 py-1 rounded-full text-sm text-white"
-                                variant="primary"
-                                style={{
-                                  backgroundColor: Theme.colors.red600
-                                }}
-                              >
-                                Reject
-                              </CButton>
-                            </div>
-                          )}
-                          {b.status === 'cancelled' && (
-                            <div className="flex justify-end mt-4">
-                              <span className="px-3 py-1 text-xs font-medium text-red-600 bg-red-100 rounded-full">
-                                Cancelled by User
+                            </td>
+                            <td className="p-4 text-sm">
+                              <div>{b.date}</div>
+                              <div className="text-gray-500">{b.time} ({b.duration})</div>
+                              {b.rescheduleFrom && (
+                                <div className="text-xs text-blue-600 mt-1">
+                                  Rescheduled from: {b.rescheduleFrom._id?.slice(-6) || b.rescheduleFrom.slice(-6)}
+                                </div>
+                              )}
+                            </td>
+                            <td className="p-4">
+                              <span className={`px-2 py-1 text-xs rounded-full font-medium ${b.status === 'cancelled' ? 'bg-red-100 text-red-800' :
+                                b.adminStatus === 'approved' ? 'bg-green-100 text-green-800' :
+                                  b.adminStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+                                    'bg-yellow-100 text-yellow-800'
+                                }`}>
+                                {b.status === 'cancelled' ? 'Cancelled' : (b.adminStatus || 'pending')}
                               </span>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
+                            </td>
+                            <td className="p-4 text-right">
+                              {b.adminStatus === 'pending' && b.status !== 'cancelled' && (
+                                <div className="flex justify-end gap-2">
+                                  <CButton
+                                    onClick={() => handleApprove(b._id || b.id)}
+                                    className="p-2 rounded-full transition-colors"
+                                    variant="outline"
+                                    title="Approve"
+                                    style={{
+                                      backgroundColor: '#10b981',
+                                      color: 'white',
+                                      borderColor: '#10b981'
+                                    }}
+                                  >
+                                    <CheckCircle2 size={20} />
+                                  </CButton>
+                                  <CButton
+                                    onClick={() => {
+                                      const reason = prompt('Please enter rejection reason:');
+                                      if (reason) {
+                                        handleRejectWithReason(b._id || b.id, reason);
+                                      }
+                                    }}
+                                    className="p-2 rounded-full transition-colors"
+                                    variant="outline"
+                                    title="Reject"
+                                    style={{
+                                      backgroundColor: '#ef4444',
+                                      color: 'white',
+                                      borderColor: '#ef4444'
+                                    }}
+                                  >
+                                    <XCircle size={20} />
+                                  </CButton>
+                                </div>
+                              )}
+                              {b.status === 'cancelled' && (
+                                <div className="flex justify-end">
+                                  <span className="px-3 py-1 text-xs font-medium text-red-600 bg-red-100 rounded-full">
+                                    Cancelled by User
+                                  </span>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
 
-              {activeTab === "feedback" && (
-                <div className="space-y-8">
-                  <div className="overflow-x-auto rounded-2xl border border-gray-200/50 shadow-xl backdrop-blur-sm">
-                    <div className="min-w-[800px]">
-                      <table className="w-full text-sm bg-white/80 backdrop-blur-sm">
-                      <thead className="bg-gradient-to-r border-b border-gray-200/50 backdrop-blur-sm"
-                        style={{
-                          background: `linear-gradient(135deg, ${Theme.colors.primary}05, ${Theme.colors.secondary}10)`
-                        }}
-                      >
-                        <tr>
-                          <th className="p-4 font-bold text-left text-xs uppercase tracking-wider" style={{ color: Theme.colors.primary }}>User Info</th>
-                          <th className="p-4 font-bold text-left text-xs uppercase tracking-wider" style={{ color: Theme.colors.primary }}>Rating</th>
-                          <th className="p-4 font-bold text-left text-xs uppercase tracking-wider" style={{ color: Theme.colors.primary }}>Feedback</th>
-                          <th className="p-4 font-bold text-left text-xs uppercase tracking-wider" style={{ color: Theme.colors.primary }}>Status</th>
-                          <th className="p-4 font-bold text-left text-xs uppercase tracking-wider" style={{ color: Theme.colors.primary }}>Date</th>
-                          <th className="p-4 font-bold text-right text-xs uppercase tracking-wider" style={{ color: Theme.colors.primary }}>Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {feedbacks.map((f, index) => (
-                          <tr key={f._id} className={`border-b border-gray-100/30 hover:bg-gradient-to-r transition-all duration-300 ${index % 2 === 0 ? 'bg-white/70' : 'bg-gray-50/40'}`}
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-4">
+                {bookings
+                  .filter(b => {
+                    if (bookingFilter === 'all') return true;
+                    if (bookingFilter === 'pending') return (b.adminStatus || '').toLowerCase() === 'pending';
+                    if (bookingFilter === 'approved') return (b.adminStatus || '').toLowerCase() === 'approved';
+                    return true;
+                  })
+                  .map((b) => (
+                    <div key={b._id || b.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-lg">{b.patientName || b.user?.name || 'Unknown'}</h4>
+                          <p className="text-sm text-gray-600">{b.user?.email || 'No email'}</p>
+                          {b.user?.phone && <p className="text-sm text-gray-600">{b.user.phone}</p>}
+                        </div>
+                        <span className={`px-2 py-1 text-xs rounded-full`}
+                          style={{
+                            backgroundColor: b.status === 'cancelled' ? '#FEE2E2' :
+                              b.adminStatus === 'approved' ? Theme.colors.emerald100 :
+                                b.adminStatus === 'rejected' ? Theme.colors.red50 : Theme.colors.yellow50,
+                            color: b.status === 'cancelled' ? '#DC2626' :
+                              b.adminStatus === 'approved' ? Theme.colors.emerald600 :
+                                b.adminStatus === 'rejected' ? Theme.colors.red600 : Theme.colors.yellow600
+                          }}
+                        >
+                          {b.status === 'cancelled' ? 'Cancelled' : (b.adminStatus || 'pending')}
+                        </span>
+                      </div>
+                      <div className="space-y-2 text-sm">
+                        <div>
+                          <span className="text-gray-500">Lab: </span>
+                          <span className="font-medium">{b.labName || b.labAppointment}</span>
+                        </div>
+                        {b.packageName && (
+                          <div>
+                            <span className="text-gray-500">Package: </span>
+                            <span>{b.packageName}</span>
+                          </div>
+                        )}
+                        {b.packagePrice > 0 && (
+                          <div>
+                            <span className="text-gray-500">Price: </span>
+                            <span className="text-primary font-semibold">₹{b.packagePrice}</span>
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-gray-500">Schedule: </span>
+                          <span>{b.date} at {b.time} ({b.duration})</span>
+                        </div>
+                        {b.rescheduleFrom && (
+                          <div>
+                            <span className="text-gray-500">Rescheduled from: </span>
+                            <span className="text-blue-600 text-xs">{b.rescheduleFrom._id?.slice(-6) || b.rescheduleFrom.slice(-6)}</span>
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-gray-500">Purpose: </span>
+                          <span>{b.purpose}</span>
+                        </div>
+                        {b.rejectionReason && (
+                          <div>
+                            <span className="text-gray-500">Reason: </span>
+                            <span style={{ color: Theme.colors.red600 }}>{b.rejectionReason}</span>
+                          </div>
+                        )}
+                      </div>
+                      {b.adminStatus === 'pending' && b.status !== 'cancelled' && (
+                        <div className="flex justify-end gap-2 mt-4">
+                          <CButton
+                            onClick={() => handleApprove(b._id || b.id)}
+                            className="px-3 py-1 rounded-full text-sm text-white"
+                            variant="primary"
                             style={{
-                              backgroundImage: `linear-gradient(135deg, ${Theme.colors.primary}08, ${Theme.colors.secondary}12)`,
-                              backgroundSize: '0% 100%',
-                              backgroundPosition: 'left',
-                              transition: 'background-size 0.3s ease'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundSize = '100% 100%';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundSize = '0% 100%';
+                              backgroundColor: Theme.colors.emerald600
                             }}
                           >
-                            <td className="p-4">
-                              <div className="flex flex-col space-y-1">
-                                <div className="font-semibold text-gray-800">{f.user?.name || f.userName || 'Anonymous'}</div>
-                                <div className="text-xs text-gray-500 flex items-center gap-1">
-                                  <Mail size={12} />
-                                  {f.user?.email || f.userEmail || 'No email'}
-                                </div>
-                                {f.user?.phone && (
-                                  <div className="text-xs text-gray-500 flex items-center gap-1">
-                                    <Phone size={12} />
-                                    {f.user.phone}
-                                  </div>
-                                )}
+                            Approve
+                          </CButton>
+                          <CButton
+                            onClick={() => {
+                              const reason = prompt('Please enter rejection reason:');
+                              if (reason) {
+                                handleRejectWithReason(b._id || b.id, reason);
+                              }
+                            }}
+                            className="px-3 py-1 rounded-full text-sm text-white"
+                            variant="primary"
+                            style={{
+                              backgroundColor: Theme.colors.red600
+                            }}
+                          >
+                            Reject
+                          </CButton>
+                        </div>
+                      )}
+                      {b.status === 'cancelled' && (
+                        <div className="flex justify-end mt-4">
+                          <span className="px-3 py-1 text-xs font-medium text-red-600 bg-red-100 rounded-full">
+                            Cancelled by User
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {activeTab === "feedback" && (
+          <div className="space-y-8">
+            <div className="overflow-x-auto rounded-2xl border border-gray-200/50 shadow-xl backdrop-blur-sm">
+              <div className="min-w-[800px]">
+                <table className="w-full text-sm bg-white/80 backdrop-blur-sm">
+                  <thead className="bg-gradient-to-r border-b border-gray-200/50 backdrop-blur-sm"
+                    style={{
+                      background: `linear-gradient(135deg, ${Theme.colors.primary}05, ${Theme.colors.secondary}10)`
+                    }}
+                  >
+                    <tr>
+                      <th className="p-4 font-bold text-left text-xs uppercase tracking-wider" style={{ color: Theme.colors.primary }}>User Info</th>
+                      <th className="p-4 font-bold text-left text-xs uppercase tracking-wider" style={{ color: Theme.colors.primary }}>Rating</th>
+                      <th className="p-4 font-bold text-left text-xs uppercase tracking-wider" style={{ color: Theme.colors.primary }}>Feedback</th>
+                      <th className="p-4 font-bold text-left text-xs uppercase tracking-wider" style={{ color: Theme.colors.primary }}>Status</th>
+                      <th className="p-4 font-bold text-left text-xs uppercase tracking-wider" style={{ color: Theme.colors.primary }}>Date</th>
+                      <th className="p-4 font-bold text-right text-xs uppercase tracking-wider" style={{ color: Theme.colors.primary }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {feedbacks.map((f, index) => (
+                      <tr key={f._id} className={`border-b border-gray-100/30 hover:bg-gradient-to-r transition-all duration-300 ${index % 2 === 0 ? 'bg-white/70' : 'bg-gray-50/40'}`}
+                        style={{
+                          backgroundImage: `linear-gradient(135deg, ${Theme.colors.primary}08, ${Theme.colors.secondary}12)`,
+                          backgroundSize: '0% 100%',
+                          backgroundPosition: 'left',
+                          transition: 'background-size 0.3s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundSize = '100% 100%';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundSize = '0% 100%';
+                        }}
+                      >
+                        <td className="p-4">
+                          <div className="flex flex-col space-y-1">
+                            <div className="font-semibold text-gray-800">{f.user?.name || f.userName || 'Anonymous'}</div>
+                            <div className="text-xs text-gray-500 flex items-center gap-1">
+                              <Mail size={12} />
+                              {f.user?.email || f.userEmail || 'No email'}
+                            </div>
+                            {f.user?.phone && (
+                              <div className="text-xs text-gray-500 flex items-center gap-1">
+                                <Phone size={12} />
+                                {f.user.phone}
                               </div>
-                            </td>
-                            <td className="p-4">
-                              <div className="flex items-start gap-3">
-                                <div className="flex flex-col items-center">
-                                  <span className="text-xs font-medium text-gray-600 mb-1">B:</span>
-                                  <StarRating rating={f.bookingEaseRating || 0} size="small" />
-                                </div>
-                                <div className="flex flex-col items-center">
-                                  <span className="text-xs font-medium text-gray-600 mb-1">S:</span>
-                                  <StarRating rating={f.staffFriendlinessRating || 0} size="small" />
-                                </div>
-                                <div className="flex flex-col items-center">
-                                  <span className="text-xs font-medium text-gray-600 mb-1">W:</span>
-                                  <StarRating rating={f.waitTimeSatisfactionRating || 0} size="small" />
-                                </div>
-                                <div className="flex flex-col items-center">
-                                  <span className="text-xs font-medium text-gray-600 mb-1">T:</span>
-                                  <StarRating rating={f.turnaroundSatisfactionRating || 0} size="small" />
-                                </div>
-                                <div className="flex flex-col items-center">
-                                  <span className="text-xs font-medium text-gray-600 mb-1">P:</span>
-                                  <StarRating rating={f.portalEaseRating || 0} size="small" />
-                                </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="flex flex-col items-center">
+                              <span className="text-xs font-medium text-gray-600 mb-1">B:</span>
+                              <StarRating rating={f.bookingEaseRating || 0} size="small" />
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <span className="text-xs font-medium text-gray-600 mb-1">S:</span>
+                              <StarRating rating={f.staffFriendlinessRating || 0} size="small" />
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <span className="text-xs font-medium text-gray-600 mb-1">W:</span>
+                              <StarRating rating={f.waitTimeSatisfactionRating || 0} size="small" />
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <span className="text-xs font-medium text-gray-600 mb-1">T:</span>
+                              <StarRating rating={f.turnaroundSatisfactionRating || 0} size="small" />
+                            </div>
+                            <div className="flex flex-col items-center">
+                              <span className="text-xs font-medium text-gray-600 mb-1">P:</span>
+                              <StarRating rating={f.portalEaseRating || 0} size="small" />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="max-w-xs">
+                            {f.comment && (
+                              <div className="text-xs text-gray-600 line-clamp-3" title={f.comment}>
+                                {f.comment}
                               </div>
-                            </td>
-                            <td className="p-4">
-                              <div className="max-w-xs">
-                                {f.comment && (
-                                  <div className="text-xs text-gray-600 line-clamp-3" title={f.comment}>
-                                    {f.comment}
-                                  </div>
-                                )}
-                                {!f.comment && (
-                                  <div className="text-xs text-gray-400 italic">
-                                    No feedback provided
-                                  </div>
-                                )}
+                            )}
+                            {!f.comment && (
+                              <div className="text-xs text-gray-400 italic">
+                                No feedback provided
                               </div>
-                            </td>
-                            <td className="p-4">
-                              <span className={`px-3 py-1 text-xs rounded-full font-medium capitalize inline-flex items-center gap-1`}
-                                style={{
-                                  backgroundColor: f.status === 'pending' ? `${Theme.colors.yellow50}CC` :
-                                                 f.status === 'reviewed' ? `${Theme.colors.emerald50}CC` : `${Theme.colors.secondary}20CC`,
-                                  color: f.status === 'pending' ? Theme.colors.yellow600 :
-                                         f.status === 'reviewed' ? Theme.colors.emerald600 : Theme.colors.primary,
-                                  border: `1px solid ${f.status === 'pending' ? `${Theme.colors.yellow50}` :
-                                                 f.status === 'reviewed' ? `${Theme.colors.emerald50}` : `${Theme.colors.secondary}30`}`
-                                }}
+                            )}
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <span className={`px-3 py-1 text-xs rounded-full font-medium capitalize inline-flex items-center gap-1`}
+                            style={{
+                              backgroundColor: f.status === 'pending' ? `${Theme.colors.yellow50}CC` :
+                                f.status === 'reviewed' ? `${Theme.colors.emerald50}CC` : `${Theme.colors.secondary}20CC`,
+                              color: f.status === 'pending' ? Theme.colors.yellow600 :
+                                f.status === 'reviewed' ? Theme.colors.emerald600 : Theme.colors.primary,
+                              border: `1px solid ${f.status === 'pending' ? `${Theme.colors.yellow50}` :
+                                f.status === 'reviewed' ? `${Theme.colors.emerald50}` : `${Theme.colors.secondary}30`}`
+                            }}
+                          >
+                            {f.status === 'pending' && <Clock size={10} />}
+                            {f.status === 'reviewed' && <CheckCircle2 size={10} />}
+                            {f.status || 'pending'}
+                          </span>
+                        </td>
+                        <td className="p-4 text-xs text-gray-500">{new Date(f.createdAt || Date.now()).toLocaleDateString()}</td>
+                        <td className="p-4">
+                          <div className="flex items-center gap-2 justify-end">
+                            {f.status === 'pending' && (
+                              <CButton
+                                variant="primary"
+                                size="sm"
+                                onClick={() => markFeedbackAsReviewed(f._id)}
                               >
-                                {f.status === 'pending' && <Clock size={10} />}
-                                {f.status === 'reviewed' && <CheckCircle2 size={10} />}
-                                {f.status || 'pending'}
-                              </span>
+                                Mark Reviewed
+                              </CButton>
+                            )}
+                            {f.status === 'reviewed' && (
+                              <CButton
+                                variant="outline"
+                                size="sm"
+                                onClick={() => updateFeedbackStatus(f._id, 'pending')}
+                              >
+                                Back to Pending
+                              </CButton>
+                            )}
+                            <CButton
+                              variant="danger"
+                              size="sm"
+                              onClick={() => deleteFeedback(f._id)}
+                            >
+                              Delete
+                            </CButton>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {feedbacks.length === 0 && (
+                <div className="text-center py-20">
+                  <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-50 to-teal-50 flex items-center justify-center shadow-xl border border-gray-200/50"
+                    style={{
+                      background: `linear-gradient(135deg, ${Theme.colors.primary}10, ${Theme.colors.secondary}20)`,
+                      borderColor: `${Theme.colors.primary}30`
+                    }}
+                  >
+                    <MessageSquare size={48} className="text-blue-400" style={{ color: Theme.colors.primary }} />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-3" style={{ color: Theme.colors.textDark }}>No feedback found</h3>
+                  <p className="text-sm text-gray-500 max-w-md mx-auto">There are currently no feedbacks to display.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "contact" && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              <div className="p-4 rounded-lg border"
+                style={{
+                  backgroundColor: `${Theme.colors.primary}10`,
+                  borderColor: `${Theme.colors.primary}30`
+                }}
+              >
+                <div className="text-2xl font-bold" style={{ color: Theme.colors.primary }}>{contacts.length}</div>
+                <div className="text-sm" style={{ color: Theme.colors.primary }}>Total Contacts</div>
+              </div>
+              <div className="p-4 rounded-lg border"
+                style={{
+                  backgroundColor: Theme.colors.emerald50,
+                  borderColor: Theme.colors.emerald100
+                }}
+              >
+                <div className="text-2xl font-bold" style={{ color: Theme.colors.emerald600 }}>{contacts.filter(c => c.status === 'pending').length}</div>
+                <div className="text-sm" style={{ color: Theme.colors.emerald600 }}>Pending</div>
+              </div>
+            </div>
+
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="p-4">Contact Info</th>
+                    <th className="p-4">Message</th>
+                    <th className="p-4">Status</th>
+                    <th className="p-4">Date</th>
+                    <th className="p-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {contacts
+                    .map((c) => (
+                      <tr key={c._id} className="border-b">
+                        <td className="p-4">
+                          <div className="font-bold">{c.name}</div>
+                          <div className="text-xs text-gray-400">{c.email}</div>
+                          {c.phone && <div className="text-xs text-gray-400">{c.phone}</div>}
+                        </td>
+                        <td className="p-4">
+                          <div className="text-xs max-w-xs truncate" title={c.message}>{c.message}</div>
+                        </td>
+                        <td className="p-4">
+                          <span className={`px-2 py-1 text-xs rounded-full capitalize`}
+                            style={{
+                              backgroundColor: c.status === 'pending' ? `${Theme.colors.secondary}20` :
+                                c.status === 'reviewed' ? Theme.colors.emerald50 :
+                                  c.status === 'replied' ? `${Theme.colors.primary}20` : `${Theme.colors.secondary}20`,
+                              color: c.status === 'pending' ? Theme.colors.primary :
+                                c.status === 'reviewed' ? Theme.colors.emerald600 :
+                                  c.status === 'replied' ? Theme.colors.primary : Theme.colors.primary,
+                              borderColor: c.status === 'reviewed' ? Theme.colors.emerald600 :
+                                c.status === 'replied' ? Theme.colors.primary : 'transparent'
+                            }}
+                          >
+                            {c.status || 'pending'}
+                          </span>
+                        </td>
+                        <td className="p-4 text-xs text-gray-500">{new Date(c.createdAt || Date.now()).toLocaleDateString()}</td>
+                        <td className="p-4 text-right">
+                          <div className="flex gap-2 justify-end">
+                            <CButton
+                              variant="primary"
+                              className="py-1 px-3 text-xs text-white border relative"
+                              style={{
+                                backgroundColor: Theme.colors.primary,
+                                borderColor: Theme.colors.primary
+                              }}
+                              onClick={() => openReplyModal(c)}
+                            >
+                              <Mail size={14} className="mr-1" />
+                              View/Reply
+                            </CButton>
+                            <CButton
+                              variant="danger"
+                              className="py-1 px-3 text-xs"
+                              onClick={() => deleteContact(c._id)}
+                            >
+                              Delete
+                            </CButton>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+              {contacts.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No contact requests found.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Test Management */}
+        {activeTab === "tests" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">Test Management</h3>
+                <p className="text-sm text-gray-600 mt-1">Manage laboratory tests and pricing</p>
+              </div>
+              <div className="flex justify-end">
+                <CButton
+                  variant="primary"
+                  fullWidth={false}
+                  className="px-4 py-3 text-sm rounded-md"
+                  size="lg"
+                  onClick={() => setShowTestForm(true)}
+                >
+                  <Plus size={16} className="mr-2" />
+                  Add New Test
+                </CButton>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-between items-center">
+              <div className="text-sm text-gray-600">
+                {testLoading ? 'Loading...' : `${tests.length} tests found`}
+              </div>
+            </div>
+
+            {/* Tests Table */}
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+              <div className="overflow-x-auto max-w-full">
+                <div className="min-w-[600px] lg:min-w-full">
+                  <table className="w-full table-responsive-stack">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Icon</th>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">Name</th>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Price</th>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {testLoading ? (
+                        <tr>
+                          <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                            Loading tests...
+                          </td>
+                        </tr>
+                      ) : tests.length === 0 ? (
+                        <tr>
+                          <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                            No tests found
+                          </td>
+                        </tr>
+                      ) : (
+                        tests.map((test) => (
+                          <tr key={test._id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-3 py-3" data-label="Icon">
+                              <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
+                                <TestTube size={16} className="text-gray-500" />
+                              </div>
                             </td>
-                            <td className="p-4 text-xs text-gray-500">{new Date(f.createdAt || Date.now()).toLocaleDateString()}</td>
-                            <td className="p-4">
-                              <div className="flex items-center gap-2 justify-end">
-                                {f.status === 'pending' && (
-                                  <CButton 
-                                    variant="primary" 
-                                    size="sm"
-                                    onClick={() => markFeedbackAsReviewed(f._id)}
-                                  >
-                                    Mark Reviewed
-                                  </CButton>
-                                )}
-                                {f.status === 'reviewed' && (
-                                  <CButton 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => updateFeedbackStatus(f._id, 'pending')}
-                                  >
-                                    Back to Pending
-                                  </CButton>
-                                )}
-                                <CButton 
-                                  variant="danger" 
-                                  size="sm"
-                                  onClick={() => deleteFeedback(f._id)}
+                            <td className="px-3 py-3" data-label="Name">
+                              <div className="text-sm font-medium text-gray-900" title={typeof test.name === 'string' ? test.name : test.name?.name || test.name?.title || 'Test'}>
+                                {typeof test.name === 'string' ? test.name : test.name?.name || test.name?.title || JSON.stringify(test.name)}
+                              </div>
+                              {test.description && (
+                                <div className="text-xs text-gray-500 mt-1 line-clamp-2" title={test.description}>{test.description}</div>
+                              )}
+                            </td>
+                            <td className="px-3 py-3 text-sm text-gray-900" data-label="Price">
+                              ₹{test.price}
+                            </td>
+                            <td className="px-3 py-3 text-sm font-medium" data-label="Actions">
+                              <div className="flex flex-col sm:flex-row gap-2">
+                                <CButton
+                                  className="text-green-600 hover:text-green-900 p-1"
+                                  onClick={() => fetchTestDetails(test._id)}
+                                  variant="outline"
+                                  title="View Details"
                                 >
-                                  Delete
+                                  <FileText size={16} />
+                                </CButton>
+                                <CButton
+                                  className="p-1"
+                                  onClick={() => {
+                                    setEditingTest(test);
+                                    setTestFormData({
+                                      name: test.name || '',
+                                      description: test.description || '',
+                                      price: test.price?.toString() || '',
+                                      category: test.category || '',
+                                      duration: test.duration || '',
+                                      sampleType: test.sampleType || 'Blood',
+                                      preTestRequirements: test.preparation || 'No specific requirements.' // Map preparation to preTestRequirements for form
+                                    });
+                                    setShowTestForm(true);
+                                  }}
+                                  variant="outline"
+                                  title="Edit Test"
+                                >
+                                  <Edit2 size={16} />
+                                </CButton>
+                                <CButton
+                                  className="text-red-600 hover:text-red-900 p-1"
+                                  onClick={() => handleDeleteTest(test._id)}
+                                  variant="outline"
+                                  title="Delete Test"
+                                >
+                                  <Trash2 size={16} />
                                 </CButton>
                               </div>
                             </td>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    </div>
-                    {feedbacks.length === 0 && (
-                      <div className="text-center py-20">
-                        <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-50 to-teal-50 flex items-center justify-center shadow-xl border border-gray-200/50"
-                          style={{
-                            background: `linear-gradient(135deg, ${Theme.colors.primary}10, ${Theme.colors.secondary}20)`,
-                            borderColor: `${Theme.colors.primary}30`
-                          }}
-                        >
-                          <MessageSquare size={48} className="text-blue-400" style={{ color: Theme.colors.primary }} />
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-800 mb-3" style={{ color: Theme.colors.textDark }}>No feedback found</h3>
-                        <p className="text-sm text-gray-500 max-w-md mx-auto">There are currently no feedbacks to display.</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-                
-              {activeTab === "contact" && (
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-                      <div className="p-4 rounded-lg border"
-                        style={{
-                          backgroundColor: `${Theme.colors.primary}10`,
-                          borderColor: `${Theme.colors.primary}30`
-                        }}
-                      >
-                        <div className="text-2xl font-bold" style={{ color: Theme.colors.primary }}>{contacts.length}</div>
-                        <div className="text-sm" style={{ color: Theme.colors.primary }}>Total Contacts</div>
-                      </div>
-                      <div className="p-4 rounded-lg border"
-                        style={{
-                          backgroundColor: Theme.colors.emerald50,
-                          borderColor: Theme.colors.emerald100
-                        }}
-                      >
-                        <div className="text-2xl font-bold" style={{ color: Theme.colors.emerald600 }}>{contacts.filter(c => c.status === 'pending').length}</div>
-                        <div className="text-sm" style={{ color: Theme.colors.emerald600 }}>Pending</div>
-                      </div>
-                    </div>
-                    
-                    
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-sm">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th className="p-4">Contact Info</th>
-                            <th className="p-4">Message</th>
-                            <th className="p-4">Status</th>
-                            <th className="p-4">Date</th>
-                            <th className="p-4 text-right">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {contacts
-                            .map((c) => (
-                            <tr key={c._id} className="border-b">
-                              <td className="p-4">
-                                <div className="font-bold">{c.name}</div>
-                                <div className="text-xs text-gray-400">{c.email}</div>
-                                {c.phone && <div className="text-xs text-gray-400">{c.phone}</div>}
-                              </td>
-                              <td className="p-4">
-                                <div className="text-xs max-w-xs truncate" title={c.message}>{c.message}</div>
-                              </td>
-                              <td className="p-4">
-                                <span className={`px-2 py-1 text-xs rounded-full capitalize`}
-                                  style={{
-                                    backgroundColor: c.status === 'pending' ? `${Theme.colors.secondary}20` :
-                                                   c.status === 'reviewed' ? Theme.colors.emerald50 : 
-                                                   c.status === 'replied' ? `${Theme.colors.primary}20` : `${Theme.colors.secondary}20`,
-                                    color: c.status === 'pending' ? Theme.colors.primary :
-                                           c.status === 'reviewed' ? Theme.colors.emerald600 : 
-                                           c.status === 'replied' ? Theme.colors.primary : Theme.colors.primary,
-                                    borderColor: c.status === 'reviewed' ? Theme.colors.emerald600 : 
-                                                   c.status === 'replied' ? Theme.colors.primary : 'transparent'
-                                  }}
-                                >
-                                  {c.status || 'pending'}
-                                </span>
-                              </td>
-                              <td className="p-4 text-xs text-gray-500">{new Date(c.createdAt || Date.now()).toLocaleDateString()}</td>
-                              <td className="p-4 text-right">
-                                <div className="flex gap-2 justify-end">
-                                  <CButton 
-                                    variant="primary" 
-                                    className="py-1 px-3 text-xs text-white border relative"
-                                    style={{
-                                      backgroundColor: Theme.colors.primary,
-                                      borderColor: Theme.colors.primary
-                                    }}
-                                    onClick={() => openReplyModal(c)}
-                                  >
-                                    <Mail size={14} className="mr-1" />
-                                    View/Reply
-                                  </CButton>
-                                  <CButton 
-                                    variant="danger" 
-                                    className="py-1 px-3 text-xs" 
-                                    onClick={() => deleteContact(c._id)}
-                                  >
-                                    Delete
-                                  </CButton>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                      {contacts.length === 0 && (
-                        <div className="text-center py-8 text-gray-500">
-                          No contact requests found.
-                        </div>
+                        ))
                       )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Package Management */}
+        {activeTab === "packages" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">Package Management</h3>
+                <p className="text-sm text-gray-600 mt-1">Manage test packages and bundles</p>
+              </div>
+              <div className="flex justify-end">
+                <CButton
+                  variant="primary"
+                  fullWidth={false}
+                  className="px-4 py-3 text-sm rounded-md"
+                  size="lg"
+                  onClick={() => setShowPackageForm(true)}
+                >
+                  <Plus size={16} className="mr-2" />
+                  Add New Package
+                </CButton>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-between items-center">
+              <div className="text-sm text-gray-600">
+                {packageLoading ? 'Loading...' : `${packages.length} packages found`}
+              </div>
+            </div>
+
+            {/* Packages Table */}
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+              <div className="overflow-x-auto max-w-full">
+                <div className="min-w-[700px] lg:min-w-full">
+                  <table className="w-full table-responsive-stack">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Icon</th>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px]">Name</th>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Price</th>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {packageLoading ? (
+                        <tr>
+                          <td colSpan="4" className="px-4 py-8 text-center text-gray-500">
+                            Loading packages...
+                          </td>
+                        </tr>
+                      ) : packages.length === 0 ? (
+                        <tr>
+                          <td colSpan="4" className="px-4 py-8 text-center text-gray-500">
+                            No packages found
+                          </td>
+                        </tr>
+                      ) : (
+                        packages.map((pkg) => (
+                          <tr key={pkg._id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-3 py-3 whitespace-nowrap" data-label="Icon">
+                              <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
+                                <Package size={16} className="text-gray-500" />
+                              </div>
+                            </td>
+                            <td className="px-3 py-3" data-label="Name">
+                              <div className="text-sm font-medium text-gray-900" title={pkg.name || pkg.title}>{pkg.name || pkg.title}</div>
+                              {pkg.description && (
+                                <div className="text-xs text-gray-500 mt-1 line-clamp-2" title={pkg.description}>{pkg.description}</div>
+                              )}
+                            </td>
+                            <td className="px-3 py-3 text-sm text-gray-900" data-label="Price">
+                              ₹{pkg.price}
+                              {pkg.originalPrice && pkg.originalPrice > pkg.price && (
+                                <span className="text-xs text-gray-500 line-through ml-2">₹{pkg.originalPrice}</span>
+                              )}
+                            </td>
+                            <td className="px-3 py-3 text-sm font-medium" data-label="Actions">
+                              <div className="flex flex-col sm:flex-row gap-2">
+                                <CButton
+                                  className="text-green-600 hover:text-green-900 p-1"
+                                  onClick={() => fetchPackageDetails(pkg._id)}
+                                  variant="outline"
+                                  title="View Details"
+                                >
+                                  <FileText size={16} />
+                                </CButton>
+                                <CButton
+                                  className="p-1"
+                                  onClick={async () => {
+                                    console.log('=== EDIT PACKAGE DEBUG START ===');
+                                    console.log('Editing package clicked:', JSON.stringify(pkg, null, 2));
+                                    console.log('Current tests before fetch:', tests.map(t => t._id));
+
+                                    setEditingPackage(pkg);
+
+                                    // Refresh tests data to ensure we have latest valid test IDs
+                                    await fetchTests();
+                                    // Wait a moment for state to update
+                                    await new Promise(resolve => setTimeout(resolve, 100));
+
+                                    console.log('Tests after fetch:', tests.map(t => t._id));
+                                    // Filter test IDs to only include valid ones
+                                    const validTestIds = tests.map(test => test._id);
+                                    const originalTestIds = pkg.testsIncluded || pkg.includedTests || [];
+                                    console.log('Original test IDs from package:', originalTestIds);
+
+                                    // Handle both string IDs and object arrays
+                                    let normalizedTestIds = [];
+                                    if (Array.isArray(originalTestIds)) {
+                                      normalizedTestIds = originalTestIds.map(id => 
+                                        typeof id === 'object' ? id._id : id
+                                      );
+                                    }
+                                    console.log('Normalized test IDs:', normalizedTestIds);
+
+                                    const filteredTestIds = normalizedTestIds.filter(id => {
+                                      const isValid = validTestIds.includes(id);
+                                      if (!isValid) {
+                                        console.warn(`Invalid test ID filtered out during edit: ${id}`);
+                                      }
+                                      return isValid;
+                                    });
+                                    console.log('Filtered test IDs:', filteredTestIds);
+
+                                    // Warn if some tests were filtered out
+                                    if (normalizedTestIds.length > 0 && filteredTestIds.length === 0) {
+                                      console.warn('All tests in this package are no longer valid');
+                                    } else if (filteredTestIds.length < normalizedTestIds.length) {
+                                      console.warn(`Filtered out ${normalizedTestIds.length - filteredTestIds.length} invalid test IDs`);
+                                    }
+
+                                    const formData = {
+                                      name: pkg.name || pkg.title || '',
+                                      description: pkg.description || '',
+                                      icon: pkg.icon || pkg.imageUrl || '',
+                                      includedTests: filteredTestIds,
+                                      price: pkg.price?.toString() || '',
+                                      requiredSamples: pkg.sampleTypes || ['Blood'],
+                                      category: pkg.category || 'general',
+                                      duration: pkg.duration || '',
+                                      fastingRequired: pkg.fastingRequired || false,
+                                      benefits: pkg.benefits || [],
+                                      suitableFor: pkg.suitableFor || [],
+                                      isActive: pkg.isActive !== undefined ? pkg.isActive : true,
+                                      isPopular: pkg.isPopular !== undefined ? pkg.isPopular : false,
+                                      isRecommended: pkg.isRecommended !== undefined ? pkg.isRecommended : false,
+                                      tags: pkg.tags || [],
+                                      originalPrice: pkg.originalPrice?.toString() || '',
+                                      discount: pkg.discount?.toString() || '',
+                                      includes: pkg.includes || [],
+                                      preparation: pkg.preparation || ''
+                                    };
+
+                                    console.log('Setting form data:', JSON.stringify(formData, null, 2));
+                                    setPackageFormData(formData);
+                                    setShowPackageForm(true);
+                                    console.log('=== EDIT PACKAGE DEBUG END ===');
+                                  }}
+                                  variant="outline"
+                                  title="Edit Package"
+                                >
+                                  <Edit2 size={16} />
+                                </CButton>
+                                <CButton
+                                  className="text-red-600 hover:text-red-900 p-1"
+                                  onClick={() => handleDeletePackage(pkg._id)}
+                                  variant="outline"
+                                  title="Delete Package"
+                                >
+                                  <Trash2 size={16} />
+                                </CButton>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Health Concerns Management */}
+        {activeTab === "health-concerns" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">Health Concerns Management</h3>
+                <p className="text-sm text-gray-600 mt-1">Manage health concerns and their configurations</p>
+              </div>
+              <div className="flex gap-2">
+                <CButton
+                  variant="primary"
+                  fullWidth={false}
+                  className="px-4 py-3 text-sm rounded-md"
+                  size="lg"
+                  onClick={() => {
+                    setEditingHealthConcern(null);
+                    resetHealthConcernForm();
+                    setShowHealthConcernForm(true);
+                  }}
+                >
+                  <Plus size={16} className="mr-2" />
+                  Add Health Concern
+                </CButton>
+              </div>
+            </div>
+
+            {/* Health Concern Form */}
+            {showHealthConcernForm && (
+              <div className="border rounded-lg p-6 bg-white shadow-sm">
+                <h5 className="font-semibold mb-4">
+                  {editingHealthConcern ? 'Edit Health Concern' : 'Add New Health Concern'}
+                </h5>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  saveHealthConcern(healthConcernFormData);
+                }} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Title *
+                      </label>
+                      <input
+                        type="text"
+                        value={healthConcernFormData.title}
+                        onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, title: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g., Liver"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Icon Key *
+                      </label>
+                      <select
+                        value={healthConcernFormData.iconKey}
+                        onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, iconKey: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="FlaskConical">Flask</option>
+                        <option value="Activity">Activity</option>
+                        <option value="Droplets">Droplets</option>
+                        <option value="Heart">Heart</option>
+                        <option value="Brain">Brain</option>
+                        <option value="Stethoscope">Stethoscope</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Order *
+                      </label>
+                      <input
+                        type="number"
+                        value={healthConcernFormData.order}
+                        onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, order: e.target.value }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Display order"
+                        min="0"
+                        required
+                      />
                     </div>
                   </div>
-                )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Description *
+                    </label>
+                    <textarea
+                      value={healthConcernFormData.description}
+                      onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, description: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Health concern description"
+                      rows={3}
+                      required
+                    />
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="isActive"
+                      checked={healthConcernFormData.isActive}
+                      onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, isActive: e.target.checked }))}
+                      className="mr-2"
+                    />
+                    <label htmlFor="isActive" className="text-sm font-medium text-gray-700">
+                      Active
+                    </label>
+                  </div>
+                  <div className="flex gap-2 pt-4">
+                    <CButton
+                      type="submit"
+                      variant="primary"
+                      className="px-4 py-2"
+                    >
+                      {editingHealthConcern ? 'Update' : 'Save'}
+                    </CButton>
+                    <CButton
+                      type="button"
+                      variant="outline"
+                      className="px-4 py-2"
+                      onClick={() => {
+                        setShowHealthConcernForm(false);
+                        setEditingHealthConcern(null);
+                        resetHealthConcernForm();
+                      }}
+                    >
+                      Cancel
+                    </CButton>
+                  </div>
+                </form>
+              </div>
+            )}
 
-              {/* Test Management */}
-              {activeTab === "tests" && (
+            {/* Health Concerns Table */}
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+              <div className="overflow-x-auto max-w-full">
+                <div className="min-w-[700px] lg:min-w-full">
+                  <table className="w-full table-responsive-stack">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Icon</th>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">Title</th>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">Description</th>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Order</th>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Status</th>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {healthConcerns.length === 0 ? (
+                        <tr>
+                          <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                            No health concerns found
+                          </td>
+                        </tr>
+                      ) : (
+                        healthConcerns.map((concern) => (
+                          <tr key={concern._id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-3 py-3 whitespace-nowrap" data-label="Icon">
+                              <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                                {renderHealthConcernIcon(concern.iconKey)}
+                              </div>
+                            </td>
+                            <td className="px-3 py-3 font-medium text-gray-900" data-label="Title">
+                              {concern.title}
+                            </td>
+                            <td className="px-3 py-3 text-sm text-gray-600" data-label="Description">
+                              <div className="max-w-xs truncate" title={concern.description}>
+                                {concern.description}
+                              </div>
+                            </td>
+                            <td className="px-3 py-3 text-sm text-gray-600" data-label="Order">
+                              {concern.order}
+                            </td>
+                            <td className="px-3 py-3" data-label="Status">
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${concern.isActive
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                                }`}>
+                                {concern.isActive ? 'Active' : 'Inactive'}
+                              </span>
+                            </td>
+                            <td className="px-3 py-3 text-sm font-medium" data-label="Actions">
+                              <div className="flex flex-col sm:flex-row gap-2">
+                                <CButton
+                                  className="p-1"
+                                  onClick={() => handleEditHealthConcern(concern)}
+                                  variant="outline"
+                                  title="Edit Health Concern"
+                                >
+                                  <Edit2 size={16} />
+                                </CButton>
+                                <CButton
+                                  className="text-red-600 hover:text-red-900 p-1"
+                                  onClick={() => deleteHealthConcern(concern._id)}
+                                  variant="outline"
+                                  title="Delete Health Concern"
+                                >
+                                  <Trash2 size={16} />
+                                </CButton>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Home Content Management */}
+        {activeTab === "home-content" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">Home Page Content Management</h3>
+                <p className="text-sm text-gray-600 mt-1">Manage homepage sections and content</p>
+              </div>
+              <div className="flex gap-2">
+              </div>
+            </div>
+
+            {/* Sub-tabs Navigation */}
+            <div className="border-b border-gray-200">
+              <nav className="flex space-x-8">
+                <button
+                  onClick={switchToWhyBookTab}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${homeContentSubTab === 'why-book'
+                    ? 'text-[#2a7a8e] border-[#2a7a8e]'
+                    : 'border-transparent text-gray-500 hover:text-[#2a7a8e] hover:border-[#2a7a8e]'
+                    }`}
+                >
+                  Why Book With Us
+                </button>
+                <button
+                  onClick={switchToHowItWorksTab}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${homeContentSubTab === 'how-it-works'
+                    ? 'text-[#2a7a8e] border-[#2a7a8e]'
+                    : 'border-transparent text-gray-500 hover:text-[#2a7a8e] hover:border-[#2a7a8e]'
+                    }`}
+                >
+                  How It Works
+                </button>
+              </nav>
+            </div>
+
+            {/* Tab Content */}
+            <div className="mt-6">
+              {/* Why Book With Us Tab */}
+              {homeContentSubTab === 'why-book' && (
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold">Test Management</h3>
-                      <p className="text-sm text-gray-600 mt-1">Manage laboratory tests and pricing</p>
-                    </div>
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-lg font-medium">Why Book With Us</h4>
                     <div className="flex justify-end">
                       <CButton
                         variant="primary"
                         fullWidth={false}
                         className="px-4 py-3 text-sm rounded-md"
                         size="lg"
-                        onClick={() => setShowTestForm(true)}
+                        onClick={() => setShowWhyBookForm(true)}
                       >
                         <Plus size={16} className="mr-2" />
-                        Add New Test
-                      </CButton>
-                    </div>
-                  </div>
-                  
-                  {/* Actions */}
-                  <div className="flex justify-between items-center">
-                    <div className="text-sm text-gray-600">
-                      {testLoading ? 'Loading...' : `${tests.length} tests found`}
-                    </div>
-                  </div>
-
-                  {/* Tests Table */}
-                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
-                    <div className="overflow-x-auto max-w-full">
-                      <div className="min-w-[600px] lg:min-w-full">
-                        <table className="w-full table-responsive-stack">
-                        <thead className="bg-gray-50 border-b border-gray-200">
-                          <tr>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Icon</th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">Name</th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Price</th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {testLoading ? (
-                            <tr>
-                              <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
-                                Loading tests...
-                              </td>
-                            </tr>
-                          ) : tests.length === 0 ? (
-                            <tr>
-                              <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
-                                No tests found
-                              </td>
-                            </tr>
-                          ) : (
-                            tests.map((test) => (
-                              <tr key={test._id} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-3 py-3" data-label="Icon">
-                                  <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
-                                    <TestTube size={16} className="text-gray-500" />
-                                  </div>
-                                </td>
-                                <td className="px-3 py-3" data-label="Name">
-                                  <div className="text-sm font-medium text-gray-900" title={typeof test.name === 'string' ? test.name : test.name?.name || test.name?.title || 'Test'}>
-                                    {typeof test.name === 'string' ? test.name : test.name?.name || test.name?.title || JSON.stringify(test.name)}
-                                  </div>
-                                  {test.description && (
-                                    <div className="text-xs text-gray-500 mt-1 line-clamp-2" title={test.description}>{test.description}</div>
-                                  )}
-                                </td>
-                                <td className="px-3 py-3 text-sm text-gray-900" data-label="Price">
-                                  ₹{test.price}
-                                </td>
-                                <td className="px-3 py-3 text-sm font-medium" data-label="Actions">
-                                  <div className="flex flex-col sm:flex-row gap-2">
-                                    <CButton 
-                                      className="text-green-600 hover:text-green-900 p-1"
-                                      onClick={() => fetchTestDetails(test._id)}
-                                      variant="outline"
-                                      title="View Details"
-                                    >
-                                      <FileText size={16} />
-                                    </CButton>
-                                    <CButton 
-                                      className="p-1"
-                                      onClick={() => {
-                                        setEditingTest(test);
-                                        setTestFormData({
-                                          name: test.name || '',
-                                          description: test.description || '',
-                                          price: test.price?.toString() || '',
-                                          category: test.category || '',
-                                          duration: test.duration || '',
-                                          sampleType: test.sampleType || 'Blood',
-                                          preTestRequirements: test.preparation || 'No specific requirements.' // Map preparation to preTestRequirements for form
-                                        });
-                                        setShowTestForm(true);
-                                      }}
-                                      variant="outline"
-                                      title="Edit Test"
-                                    >
-                                      <Edit2 size={16} />
-                                    </CButton>
-                                    <CButton 
-                                      className="text-red-600 hover:text-red-900 p-1" 
-                                      onClick={() => handleDeleteTest(test._id)}
-                                      variant="outline"
-                                      title="Delete Test"
-                                    >
-                                      <Trash2 size={16} />
-                                    </CButton>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Package Management */}
-              {activeTab === "packages" && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold">Package Management</h3>
-                      <p className="text-sm text-gray-600 mt-1">Manage test packages and bundles</p>
-                    </div>
-                    <div className="flex justify-end">
-                      <CButton
-                        variant="primary"
-                        fullWidth={false}
-                        className="px-4 py-3 text-sm rounded-md"
-                        size="lg"
-                        onClick={() => setShowPackageForm(true)}
-                      >
-                        <Plus size={16} className="mr-2" />
-                        Add New Package
-                      </CButton>
-                    </div>
-                  </div>
-                  
-                  {/* Actions */}
-                  <div className="flex justify-between items-center">
-                    <div className="text-sm text-gray-600">
-                      {packageLoading ? 'Loading...' : `${packages.length} packages found`}
-                    </div>
-                  </div>
-
-                  {/* Packages Table */}
-                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
-                    <div className="overflow-x-auto max-w-full">
-                      <div className="min-w-[700px] lg:min-w-full">
-                        <table className="w-full table-responsive-stack">
-                        <thead className="bg-gray-50 border-b border-gray-200">
-                          <tr>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Icon</th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[140px]">Name</th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Price</th>
-                            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {packageLoading ? (
-                            <tr>
-                              <td colSpan="4" className="px-4 py-8 text-center text-gray-500">
-                                Loading packages...
-                              </td>
-                            </tr>
-                          ) : packages.length === 0 ? (
-                            <tr>
-                              <td colSpan="4" className="px-4 py-8 text-center text-gray-500">
-                                No packages found
-                              </td>
-                            </tr>
-                          ) : (
-                            packages.map((pkg) => (
-                              <tr key={pkg._id} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-3 py-3 whitespace-nowrap" data-label="Icon">
-                                  <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
-                                    <Package size={16} className="text-gray-500" />
-                                  </div>
-                                </td>
-                                <td className="px-3 py-3" data-label="Name">
-                                  <div className="text-sm font-medium text-gray-900" title={pkg.name || pkg.title}>{pkg.name || pkg.title}</div>
-                                  {pkg.description && (
-                                    <div className="text-xs text-gray-500 mt-1 line-clamp-2" title={pkg.description}>{pkg.description}</div>
-                                  )}
-                                </td>
-                                <td className="px-3 py-3 text-sm text-gray-900" data-label="Price">
-                                  ₹{pkg.price}
-                                  {pkg.originalPrice && pkg.originalPrice > pkg.price && (
-                                    <span className="text-xs text-gray-500 line-through ml-2">₹{pkg.originalPrice}</span>
-                                  )}
-                                </td>
-                                <td className="px-3 py-3 text-sm font-medium" data-label="Actions">
-                                  <div className="flex flex-col sm:flex-row gap-2">
-                                    <CButton 
-                                      className="text-green-600 hover:text-green-900 p-1"
-                                      onClick={() => fetchPackageDetails(pkg._id)}
-                                      variant="outline"
-                                      title="View Details"
-                                    >
-                                      <FileText size={16} />
-                                    </CButton>
-                                    <CButton 
-                                      className="p-1"
-                                      onClick={async () => {
-                                        console.log('=== EDIT PACKAGE DEBUG START ===');
-                                        console.log('Editing package clicked:', JSON.stringify(pkg, null, 2));
-                                        console.log('Current tests before fetch:', tests.map(t => t._id));
-                                        
-                                        setEditingPackage(pkg);
-                                        
-                                        // Refresh tests data to ensure we have latest valid test IDs
-                                        await fetchTests();
-                                        // Wait a moment for state to update
-                                        await new Promise(resolve => setTimeout(resolve, 100));
-                                        
-                                        console.log('Tests after fetch:', tests.map(t => t._id));
-                                        // Filter test IDs to only include valid ones
-                                        const validTestIds = tests.map(test => test._id);
-                                        const originalTestIds = pkg.testsIncluded || pkg.includedTests || [];
-                                        console.log('Original test IDs from package:', originalTestIds);
-                                        
-                                        const filteredTestIds = originalTestIds.filter(id => {
-                                          const isValid = validTestIds.includes(id);
-                                          if (!isValid) {
-                                            console.warn(`Invalid test ID filtered out during edit: ${id}`);
-                                          }
-                                          return isValid;
-                                        });
-                                        console.log('Filtered test IDs:', filteredTestIds);
-                                        
-                                        // Warn if some tests were filtered out
-                                        if (originalTestIds.length > 0 && filteredTestIds.length === 0) {
-                                          console.warn('All tests in this package are no longer valid');
-                                        } else if (filteredTestIds.length < originalTestIds.length) {
-                                          console.warn(`Filtered out ${originalTestIds.length - filteredTestIds.length} invalid test IDs`);
-                                        }
-                                          
-                                        const formData = {
-                                          name: pkg.name || pkg.title || '',
-                                          description: pkg.description || '',
-                                          icon: pkg.icon || pkg.imageUrl || '',
-                                          includedTests: filteredTestIds,
-                                          price: pkg.price?.toString() || '',
-                                          requiredSamples: pkg.sampleTypes || ['Blood'],
-                                          category: pkg.category || 'general',
-                                          duration: pkg.duration || '',
-                                          fastingRequired: pkg.fastingRequired || false,
-                                          benefits: pkg.benefits || [],
-                                          suitableFor: pkg.suitableFor || [],
-                                          isActive: pkg.isActive !== undefined ? pkg.isActive : true,
-                                          isPopular: pkg.isPopular !== undefined ? pkg.isPopular : false,
-                                          isRecommended: pkg.isRecommended !== undefined ? pkg.isRecommended : false,
-                                          tags: pkg.tags || [],
-                                          originalPrice: pkg.originalPrice?.toString() || '',
-                                          discount: pkg.discount?.toString() || '',
-                                          includes: pkg.includes || [],
-                                          preparation: pkg.preparation || ''
-                                        };
-                                        
-                                        console.log('Setting form data:', JSON.stringify(formData, null, 2));
-                                        setPackageFormData(formData);
-                                        setShowPackageForm(true);
-                                        console.log('=== EDIT PACKAGE DEBUG END ===');
-                                      }}
-                                      variant="outline"
-                                      title="Edit Package"
-                                    >
-                                      <Edit2 size={16} />
-                                    </CButton>
-                                    <CButton 
-                                      className="text-red-600 hover:text-red-900 p-1" 
-                                      onClick={() => handleDeletePackage(pkg._id)}
-                                      variant="outline"
-                                      title="Delete Package"
-                                    >
-                                      <Trash2 size={16} />
-                                    </CButton>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))
-                          )}
-                        </tbody>
-                      </table>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Health Concerns Management */}
-              {activeTab === "health-concerns" && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold">Health Concerns Management</h3>
-                      <p className="text-sm text-gray-600 mt-1">Manage health concerns and their configurations</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <CButton 
-                        variant="primary"
-                        fullWidth={false}
-                        className="px-4 py-3 text-sm rounded-md"
-                        size="lg"
-                        onClick={() => {
-                          setEditingHealthConcern(null);
-                          resetHealthConcernForm();
-                          setShowHealthConcernForm(true);
-                        }}
-                      >
-                        <Plus size={16} className="mr-2" />
-                        Add Health Concern
+                        Add Item
                       </CButton>
                     </div>
                   </div>
 
-                  {/* Health Concern Form */}
-                  {showHealthConcernForm && (
+                  {/* Why Book With Us Form */}
+                  {showWhyBookForm && (
                     <div className="border rounded-lg p-6 bg-white shadow-sm">
                       <h5 className="font-semibold mb-4">
-                        {editingHealthConcern ? 'Edit Health Concern' : 'Add New Health Concern'}
+                        {editingWhyBookItem ? 'Edit Item' : 'Add New Item'}
                       </h5>
-                      <form onSubmit={(e) => {
-                        e.preventDefault();
-                        saveHealthConcern(healthConcernFormData);
-                      }} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Title *
-                            </label>
-                            <input
-                              type="text"
-                              value={healthConcernFormData.title}
-                              onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, title: e.target.value }))}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder="e.g., Liver"
-                              required
-                            />
-                          </div>
+                      <form onSubmit={handleWhyBookFormSubmit} className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Icon Key *
+                              Icon
                             </label>
                             <select
-                              value={healthConcernFormData.iconKey}
-                              onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, iconKey: e.target.value }))}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              value={whyBookFormData.iconKey}
+                              onChange={(e) => setWhyBookFormData(prev => ({ ...prev, iconKey: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
                             >
-                              <option value="FlaskConical">Flask</option>
-                              <option value="Activity">Activity</option>
-                              <option value="Droplets">Droplets</option>
-                              <option value="Heart">Heart</option>
-                              <option value="Brain">Brain</option>
-                              <option value="Stethoscope">Stethoscope</option>
+                              <option value="Home">Home</option>
+                              <option value="CheckCircle">CheckCircle</option>
+                              <option value="Users">Users</option>
+                              <option value="FileText">FileText</option>
+                              <option value="Clock">Clock</option>
                             </select>
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Order *
+                              Title
                             </label>
                             <input
-                              type="number"
-                              value={healthConcernFormData.order}
-                              onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, order: e.target.value }))}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder="Display order"
-                              min="0"
+                              type="text"
+                              value={whyBookFormData.title}
+                              onChange={(e) => setWhyBookFormData(prev => ({ ...prev, title: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
+                              placeholder="Enter title"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Description
+                            </label>
+                            <textarea
+                              value={whyBookFormData.desc}
+                              onChange={(e) => setWhyBookFormData(prev => ({ ...prev, desc: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
+                              placeholder="Enter description"
+                              rows="3"
                               required
                             />
                           </div>
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Description *
-                          </label>
+                        <div className="flex gap-3">
+                          <CButton type="submit" variant="primary">
+                            {editingWhyBookItem ? 'Update' : 'Add Item'}
+                          </CButton>
+                          <CButton type="button" variant="secondary" onClick={resetWhyBookForm}>
+                            Cancel
+                          </CButton>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+
+                  {/* Why Book With Us Items List */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {homeContent.whyBook.map((item, index) => (
+                      <div key={item._id || item.id || index} className="border rounded-lg p-4 bg-gray-50 hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center gap-2">
+                            {(() => {
+                              const Icon = IconConfig[item.iconKey] || IconConfig.Home;
+                              return Icon ? <Icon size={20} className="text-primary" /> : <Home size={20} className="text-primary" />;
+                            })()}
+                            <h5 className="font-semibold text-sm">{item.title}</h5>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-3">{item.desc || item.description}</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => startEditWhyBookItem(item)}
+                            className="text-sm font-medium"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => deleteHomeWhyBookItem(item.id)}
+                            className="text-red-600 hover:text-red-800 text-sm font-medium"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {homeContent.whyBook.length === 0 && (
+                      <div className="col-span-full text-center py-12 bg-gray-50 rounded-lg">
+                        <p className="text-gray-500">No items added yet</p>
+                        <div className="flex justify-end">
+                          <CButton
+                            variant="primary"
+                            fullWidth={false}
+                            className="px-4 py-3 text-sm rounded-md"
+                            size="lg"
+                            onClick={() => setShowWhyBookForm(true)}
+                          >
+                            <Plus size={16} className="mr-2" />
+                            Add Your First Item
+                          </CButton>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* How It Works Tab */}
+              {homeContentSubTab === 'how-it-works' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-lg font-medium">How It Works</h4>
+                    <div className="flex justify-end">
+                      <CButton
+                        variant="primary"
+                        fullWidth={false}
+                        className="px-4 py-3 text-sm rounded-md"
+                        size="lg"
+                        onClick={() => setShowHowItWorksForm(true)}
+                      >
+                        <Plus size={16} className="mr-2" />
+                        Add Step
+                      </CButton>
+                    </div>
+                  </div>
+
+                  {/* How It Works Form */}
+                  {showHowItWorksForm && (
+                    <div className="border rounded-lg p-6 bg-white shadow-sm">
+                      <h5 className="font-semibold mb-4">
+                        {editingHowItWorksItem ? 'Edit Step' : 'Add New Step'}
+                      </h5>
+                      <form onSubmit={handleHowItWorksFormSubmit} className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Step Number
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={howItWorksFormData.stepNumber}
+                              onChange={(e) => setHowItWorksFormData(prev => ({ ...prev, stepNumber: parseInt(e.target.value) || 1 }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
+                              placeholder="Enter step number"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Icon
+                            </label>
+                            <select
+                              value={howItWorksFormData.iconKey}
+                              onChange={(e) => setHowItWorksFormData(prev => ({ ...prev, iconKey: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
+                            >
+                              <option value="Search">Search</option>
+                              <option value="CreditCard">CreditCard</option>
+                              <option value="Home">Home</option>
+                              <option value="FileText">FileText</option>
+                              <option value="CheckCircle">CheckCircle</option>
+                              <option value="Clock">Clock</option>
+                              <option value="Users">Users</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Title
+                            </label>
+                            <input
+                              type="text"
+                              value={howItWorksFormData.title}
+                              onChange={(e) => setHowItWorksFormData(prev => ({ ...prev, title: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
+                              placeholder="Enter title"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Description
+                            </label>
+                            <textarea
+                              value={howItWorksFormData.desc}
+                              onChange={(e) => setHowItWorksFormData(prev => ({ ...prev, desc: e.target.value }))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
+                              placeholder="Enter description"
+                              rows="3"
+                              required
+                            />
+                          </div>
+                        </div>
+                        <div className="flex gap-3">
+                          <CButton type="submit" variant="primary">
+                            {editingHowItWorksItem ? 'Update' : 'Add Step'}
+                          </CButton>
+                          <CButton type="button" variant="secondary" onClick={resetHowItWorksForm}>
+                            Cancel
+                          </CButton>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+
+                  {/* How It Works Items List */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {homeContent.howItWorks.map((item, index) => (
+                      <div key={item._id || item.id || index} className="border rounded-lg p-4 bg-gray-50 hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center gap-2">
+                            {(() => {
+                              const Icon = IconConfig[item.iconKey] || IconConfig.Home;
+                              return Icon ? <Icon size={20} className="text-primary" /> : <Home size={20} className="text-primary" />;
+                            })()}
+                            <h5 className="font-semibold text-sm">{item.title}</h5>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-3">{item.desc || item.description}</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => startEditHowItWorksItem(item)}
+                            className="text-sm font-medium"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => deleteHomeHowItWorksItem(item.id)}
+                            className="text-red-600 hover:text-red-800 text-sm font-medium"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {homeContent.howItWorks.length === 0 && (
+                      <div className="col-span-full text-center py-12 bg-gray-50 rounded-lg">
+                        <p className="text-gray-500">No steps added yet</p>
+                        <div className="flex justify-end">
+                          <CButton
+                            variant="primary"
+                            fullWidth={false}
+                            className="px-4 py-3 text-sm rounded-md"
+                            size="lg"
+                            onClick={() => setShowHowItWorksForm(true)}
+                          >
+                            <Plus size={16} className="mr-2" />
+                            Add Your First Step
+                          </CButton>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Service Content Management */}
+        {activeTab === "service-content" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">Service Content Management</h3>
+                <p className="text-sm text-gray-600 mt-1">Manage service features and highlights</p>
+              </div>
+            </div>
+
+            {/* Tabs Navigation */}
+            <div className="border-b border-gray-200">
+              <nav className="-mb-px flex space-x-8">
+                <button
+                  onClick={switchToFeaturesTab}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${serviceContentSubTab === 'features'
+                    ? 'text-[#2a7a8e] border-[#2a7a8e]'
+                    : 'border-transparent text-gray-500 hover:text-[#2a7a8e] hover:border-[#2a7a8e]'
+                    }`}
+                >
+                  Service Features
+                </button>
+                <button
+                  onClick={switchToHighlightsTab}
+                  className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${serviceContentSubTab === 'highlights'
+                    ? 'text-[#2a7a8e] border-[#2a7a8e]'
+                    : 'border-transparent text-gray-500 hover:text-[#2a7a8e] hover:border-[#2a7a8e]'
+                    }`}
+                >
+                  Service Highlights
+                </button>
+              </nav>
+            </div>
+
+            {/* Tab Content */}
+            <div className="mt-6">
+              {/* Service Features Tab */}
+              {serviceContentSubTab === 'features' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-lg font-medium">Service Features</h4>
+                    <div className="flex justify-end">
+                      <CButton
+                        variant="primary"
+                        fullWidth={false}
+                        className="px-4 py-3 text-sm rounded-md"
+                        size="lg"
+                        onClick={() => setShowServiceForm(true)}
+                      >
+                        <Plus size={16} className="mr-2" />
+                        Add Feature
+                      </CButton>
+                    </div>
+                  </div>
+
+                  {/* Service Features Form */}
+                  {showServiceForm && (
+                    <div className="border rounded-lg p-6 bg-white shadow-sm">
+                      <h5 className="font-semibold mb-4">
+                        {editingServiceItem ? 'Edit Feature' : 'Add New Feature'}
+                      </h5>
+                      <form onSubmit={async (e) => {
+                        e.preventDefault();
+                        let success = false;
+
+                        if (editingServiceItem) {
+                          success = await updateServiceFeature(editingServiceItem._id, serviceFormData);
+                        } else {
+                          success = await createServiceFeature(serviceFormData);
+                        }
+
+                        if (success) {
+                          resetServiceForm();
+                        } else {
+                          await Swal.fire({
+                            icon: 'error',
+                            title: 'Failed to save feature',
+                            text: 'Please try again.',
+                            confirmButtonColor: Theme.colors.primary
+                          });
+                        }
+                      }}>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Title</label>
+                            <input
+                              type="text"
+                              value={serviceFormData.title}
+                              onChange={(e) => setServiceFormData(prev => ({ ...prev, title: e.target.value }))}
+                              className="w-full p-2 border rounded-lg"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Icon Key</label>
+                            <select
+                              value={serviceFormData.iconKey}
+                              onChange={(e) => setServiceFormData(prev => ({ ...prev, iconKey: e.target.value }))}
+                              className="w-full p-2 border rounded-lg"
+                            >
+                              <option value="FlaskConical">FlaskConical</option>
+                              <option value="CalendarCheck">CalendarCheck</option>
+                              <option value="Users2">Users2</option>
+                              <option value="BellRing">BellRing</option>
+                              <option value="BarChart4">BarChart4</option>
+                              <option value="Globe">Globe</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="mt-4">
+                          <label className="block text-sm font-medium mb-1">Description</label>
                           <textarea
-                            value={healthConcernFormData.description}
-                            onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, description: e.target.value }))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Health concern description"
+                            value={serviceFormData.description}
+                            onChange={(e) => setServiceFormData(prev => ({ ...prev, description: e.target.value }))}
+                            className="w-full p-2 border rounded-lg"
                             rows={3}
                             required
                           />
                         </div>
-                        <div className="flex items-center">
-                          <input
-                            type="checkbox"
-                            id="isActive"
-                            checked={healthConcernFormData.isActive}
-                            onChange={(e) => setHealthConcernFormData(prev => ({ ...prev, isActive: e.target.checked }))}
-                            className="mr-2"
-                          />
-                          <label htmlFor="isActive" className="text-sm font-medium text-gray-700">
-                            Active
-                          </label>
-                        </div>
-                        <div className="flex gap-2 pt-4">
-                          <CButton
-                            type="submit"
-                            variant="primary"
-                            className="px-4 py-2"
-                          >
-                            {editingHealthConcern ? 'Update' : 'Save'}
+                        <div className="flex gap-2 mt-4">
+                          <CButton type="submit" variant="primary">
+                            {editingServiceItem ? 'Update' : 'Create'}
                           </CButton>
                           <CButton
                             type="button"
                             variant="outline"
-                            className="px-4 py-2"
-                            onClick={() => {
-                              setShowHealthConcernForm(false);
-                              setEditingHealthConcern(null);
-                              resetHealthConcernForm();
-                            }}
+                            onClick={resetServiceForm}
                           >
                             Cancel
                           </CButton>
@@ -5085,1092 +5705,38 @@ export default function AdminDashboardIndex() {
                     </div>
                   )}
 
-                  {/* Health Concerns Table */}
-                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
-                    <div className="overflow-x-auto max-w-full">
-                      <div className="min-w-[700px] lg:min-w-full">
-                        <table className="w-full table-responsive-stack">
-                          <thead className="bg-gray-50 border-b border-gray-200">
-                            <tr>
-                              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Icon</th>
-                              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[120px]">Title</th>
-                              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">Description</th>
-                              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Order</th>
-                              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Status</th>
-                              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
-                            </tr>
-                          </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
-                            {healthConcerns.length === 0 ? (
-                              <tr>
-                                <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
-                                  No health concerns found
-                                </td>
-                              </tr>
-                            ) : (
-                              healthConcerns.map((concern) => (
-                                <tr key={concern._id} className="hover:bg-gray-50 transition-colors">
-                                  <td className="px-3 py-3 whitespace-nowrap" data-label="Icon">
-                                    <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
-                                      {renderHealthConcernIcon(concern.iconKey)}
-                                    </div>
-                                  </td>
-                                  <td className="px-3 py-3 font-medium text-gray-900" data-label="Title">
-                                    {concern.title}
-                                  </td>
-                                  <td className="px-3 py-3 text-sm text-gray-600" data-label="Description">
-                                    <div className="max-w-xs truncate" title={concern.description}>
-                                      {concern.description}
-                                    </div>
-                                  </td>
-                                  <td className="px-3 py-3 text-sm text-gray-600" data-label="Order">
-                                    {concern.order}
-                                  </td>
-                                  <td className="px-3 py-3" data-label="Status">
-                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                      concern.isActive 
-                                        ? 'bg-green-100 text-green-800' 
-                                        : 'bg-red-100 text-red-800'
-                                    }`}>
-                                      {concern.isActive ? 'Active' : 'Inactive'}
-                                    </span>
-                                  </td>
-                                  <td className="px-3 py-3 text-sm font-medium" data-label="Actions">
-                                    <div className="flex flex-col sm:flex-row gap-2">
-                                      <CButton 
-                                        className="p-1"
-                                        onClick={() => handleEditHealthConcern(concern)}
-                                        variant="outline"
-                                        title="Edit Health Concern"
-                                      >
-                                        <Edit2 size={16} />
-                                      </CButton>
-                                      <CButton 
-                                        className="text-red-600 hover:text-red-900 p-1" 
-                                        onClick={() => deleteHealthConcern(concern._id)}
-                                        variant="outline"
-                                        title="Delete Health Concern"
-                                      >
-                                        <Trash2 size={16} />
-                                      </CButton>
-                                    </div>
-                                  </td>
-                                </tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Home Content Management */}
-              {activeTab === "home-content" && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold">Home Page Content Management</h3>
-                      <p className="text-sm text-gray-600 mt-1">Manage homepage sections and content</p>
-                    </div>
-                    <div className="flex gap-2">
-                    </div>
-                  </div>
-                  
-                  {/* Sub-tabs Navigation */}
-                  <div className="border-b border-gray-200">
-                    <nav className="flex space-x-8">
-                      <button
-                        onClick={switchToWhyBookTab}
-                        className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                          homeContentSubTab === 'why-book'
-                            ? 'text-[#2a7a8e] border-[#2a7a8e]'
-                            : 'border-transparent text-gray-500 hover:text-[#2a7a8e] hover:border-[#2a7a8e]'
-                        }`}
-                      >
-                        Why Book With Us
-                      </button>
-                      <button
-                        onClick={switchToHowItWorksTab}
-                        className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                          homeContentSubTab === 'how-it-works'
-                            ? 'text-[#2a7a8e] border-[#2a7a8e]'
-                            : 'border-transparent text-gray-500 hover:text-[#2a7a8e] hover:border-[#2a7a8e]'
-                        }`}
-                      >
-                        How It Works
-                      </button>
-                    </nav>
-                  </div>
-
-                  {/* Tab Content */}
-                  <div className="mt-6">
-                    {/* Why Book With Us Tab */}
-                    {homeContentSubTab === 'why-book' && (
-                      <div className="space-y-6">
-                        <div className="flex justify-between items-center">
-                          <h4 className="text-lg font-medium">Why Book With Us</h4>
-                          <div className="flex justify-end">
-                            <CButton 
-                              variant="primary"
-                              fullWidth={false}
-                              className="px-4 py-3 text-sm rounded-md"
-                              size="lg"
-                              onClick={() => setShowWhyBookForm(true)}
-                            >
-                              <Plus size={16} className="mr-2" />
-                              Add Item
-                            </CButton>
-                          </div>
-                        </div>
-
-                        {/* Why Book With Us Form */}
-                        {showWhyBookForm && (
-                          <div className="border rounded-lg p-6 bg-white shadow-sm">
-                            <h5 className="font-semibold mb-4">
-                              {editingWhyBookItem ? 'Edit Item' : 'Add New Item'}
-                            </h5>
-                            <form onSubmit={handleWhyBookFormSubmit} className="space-y-4">
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Icon
-                                  </label>
-                                  <select 
-                                    value={whyBookFormData.iconKey}
-                                    onChange={(e) => setWhyBookFormData(prev => ({ ...prev, iconKey: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
-                                  >
-                                    <option value="Home">Home</option>
-                                    <option value="CheckCircle">CheckCircle</option>
-                                    <option value="Users">Users</option>
-                                    <option value="FileText">FileText</option>
-                                    <option value="Clock">Clock</option>
-                                  </select>
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Title
-                                  </label>
-                                  <input 
-                                    type="text"
-                                    value={whyBookFormData.title}
-                                    onChange={(e) => setWhyBookFormData(prev => ({ ...prev, title: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
-                                    placeholder="Enter title"
-                                    required
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Description
-                                  </label>
-                                  <textarea 
-                                    value={whyBookFormData.desc}
-                                    onChange={(e) => setWhyBookFormData(prev => ({ ...prev, desc: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
-                                    placeholder="Enter description"
-                                    rows="3"
-                                    required
-                                  />
-                                </div>
-                              </div>
-                              <div className="flex gap-3">
-                                <CButton type="submit" variant="primary">
-                                  {editingWhyBookItem ? 'Update' : 'Add Item'}
-                                </CButton>
-                                <CButton type="button" variant="secondary" onClick={resetWhyBookForm}>
-                                  Cancel
-                                </CButton>
-                              </div>
-                            </form>
-                          </div>
-                        )}
-
-                        {/* Why Book With Us Items List */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {homeContent.whyBook.map((item, index) => (
-                            <div key={item._id || item.id || index} className="border rounded-lg p-4 bg-gray-50 hover:shadow-md transition-shadow">
-                              <div className="flex justify-between items-start mb-3">
-                                <div className="flex items-center gap-2">
-                                  {(() => {
-                                    const Icon = IconConfig[item.iconKey] || IconConfig.Home;
-                                    return Icon ? <Icon size={20} className="text-primary" /> : <Home size={20} className="text-primary" />;
-                                  })()}
-                                  <h5 className="font-semibold text-sm">{item.title}</h5>
-                                </div>
-                              </div>
-                              <p className="text-sm text-gray-600 mb-3">{item.desc || item.description}</p>
-                              <div className="flex gap-2">
-                                <button 
-                                  onClick={() => startEditWhyBookItem(item)}
-                                  className="text-sm font-medium"
-                                >
-                                  Edit
-                                </button>
-                                <button 
-                                  onClick={() => deleteHomeWhyBookItem(item.id)}
-                                  className="text-red-600 hover:text-red-800 text-sm font-medium"
-                                >
-                                  Delete
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                          {homeContent.whyBook.length === 0 && (
-                            <div className="col-span-full text-center py-12 bg-gray-50 rounded-lg">
-                              <p className="text-gray-500">No items added yet</p>
-                              <div className="flex justify-end">
-                                <CButton 
-                                  variant="primary"
-                                  fullWidth={false}
-                                  className="px-4 py-3 text-sm rounded-md"
-                                  size="lg"
-                                  onClick={() => setShowWhyBookForm(true)}
-                                >
-                                  <Plus size={16} className="mr-2" />
-                                  Add Your First Item
-                                </CButton>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* How It Works Tab */}
-                    {homeContentSubTab === 'how-it-works' && (
-                      <div className="space-y-6">
-                        <div className="flex justify-between items-center">
-                          <h4 className="text-lg font-medium">How It Works</h4>
-                          <div className="flex justify-end">
-                            <CButton 
-                              variant="primary"
-                              fullWidth={false}
-                              className="px-4 py-3 text-sm rounded-md"
-                              size="lg"
-                              onClick={() => setShowHowItWorksForm(true)}
-                            >
-                              <Plus size={16} className="mr-2" />
-                              Add Step
-                            </CButton>
-                          </div>
-                        </div>
-
-                        {/* How It Works Form */}
-                        {showHowItWorksForm && (
-                          <div className="border rounded-lg p-6 bg-white shadow-sm">
-                            <h5 className="font-semibold mb-4">
-                              {editingHowItWorksItem ? 'Edit Step' : 'Add New Step'}
-                            </h5>
-                            <form onSubmit={handleHowItWorksFormSubmit} className="space-y-4">
-                              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Step Number
-                                  </label>
-                                  <input 
-                                    type="number"
-                                    min="1"
-                                    value={howItWorksFormData.stepNumber}
-                                    onChange={(e) => setHowItWorksFormData(prev => ({ ...prev, stepNumber: parseInt(e.target.value) || 1 }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
-                                    placeholder="Enter step number"
-                                    required
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Icon
-                                  </label>
-                                  <select 
-                                    value={howItWorksFormData.iconKey}
-                                    onChange={(e) => setHowItWorksFormData(prev => ({ ...prev, iconKey: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
-                                  >
-                                    <option value="Search">Search</option>
-                                    <option value="CreditCard">CreditCard</option>
-                                    <option value="Home">Home</option>
-                                    <option value="FileText">FileText</option>
-                                    <option value="CheckCircle">CheckCircle</option>
-                                    <option value="Clock">Clock</option>
-                                    <option value="Users">Users</option>
-                                  </select>
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Title
-                                  </label>
-                                  <input 
-                                    type="text"
-                                    value={howItWorksFormData.title}
-                                    onChange={(e) => setHowItWorksFormData(prev => ({ ...prev, title: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
-                                    placeholder="Enter title"
-                                    required
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Description
-                                  </label>
-                                  <textarea 
-                                    value={howItWorksFormData.desc}
-                                    onChange={(e) => setHowItWorksFormData(prev => ({ ...prev, desc: e.target.value }))}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-blue-500"
-                                    placeholder="Enter description"
-                                    rows="3"
-                                    required
-                                  />
-                                </div>
-                              </div>
-                              <div className="flex gap-3">
-                                <CButton type="submit" variant="primary">
-                                  {editingHowItWorksItem ? 'Update' : 'Add Step'}
-                                </CButton>
-                                <CButton type="button" variant="secondary" onClick={resetHowItWorksForm}>
-                                  Cancel
-                                </CButton>
-                              </div>
-                            </form>
-                          </div>
-                        )}
-
-                        {/* How It Works Items List */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {homeContent.howItWorks.map((item, index) => (
-                            <div key={item._id || item.id || index} className="border rounded-lg p-4 bg-gray-50 hover:shadow-md transition-shadow">
-                              <div className="flex justify-between items-start mb-3">
-                                <div className="flex items-center gap-2">
-                                  {(() => {
-                                    const Icon = IconConfig[item.iconKey] || IconConfig.Home;
-                                    return Icon ? <Icon size={20} className="text-primary" /> : <Home size={20} className="text-primary" />;
-                                  })()}
-                                  <h5 className="font-semibold text-sm">{item.title}</h5>
-                                </div>
-                              </div>
-                              <p className="text-sm text-gray-600 mb-3">{item.desc || item.description}</p>
-                              <div className="flex gap-2">
-                                <button 
-                                  onClick={() => startEditHowItWorksItem(item)}
-                                  className="text-sm font-medium"
-                                >
-                                  Edit
-                                </button>
-                                <button 
-                                  onClick={() => deleteHomeHowItWorksItem(item.id)}
-                                  className="text-red-600 hover:text-red-800 text-sm font-medium"
-                                >
-                                  Delete
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                          {homeContent.howItWorks.length === 0 && (
-                            <div className="col-span-full text-center py-12 bg-gray-50 rounded-lg">
-                              <p className="text-gray-500">No steps added yet</p>
-                              <div className="flex justify-end">
-                                <CButton 
-                                  variant="primary"
-                                  fullWidth={false}
-                                  className="px-4 py-3 text-sm rounded-md"
-                                  size="lg"
-                                  onClick={() => setShowHowItWorksForm(true)}
-                                >
-                                  <Plus size={16} className="mr-2" />
-                                  Add Your First Step
-                                </CButton>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Service Content Management */}
-              {activeTab === "service-content" && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold">Service Content Management</h3>
-                      <p className="text-sm text-gray-600 mt-1">Manage service features and highlights</p>
-                    </div>
-                  </div>
-
-                  {/* Tabs Navigation */}
-                  <div className="border-b border-gray-200">
-                    <nav className="-mb-px flex space-x-8">
-                      <button
-                        onClick={switchToFeaturesTab}
-                        className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                          serviceContentSubTab === 'features'
-                            ? 'text-[#2a7a8e] border-[#2a7a8e]'
-                            : 'border-transparent text-gray-500 hover:text-[#2a7a8e] hover:border-[#2a7a8e]'
-                        }`}
-                      >
-                        Service Features
-                      </button>
-                      <button
-                        onClick={switchToHighlightsTab}
-                        className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
-                          serviceContentSubTab === 'highlights'
-                            ? 'text-[#2a7a8e] border-[#2a7a8e]'
-                            : 'border-transparent text-gray-500 hover:text-[#2a7a8e] hover:border-[#2a7a8e]'
-                        }`}
-                      >
-                        Service Highlights
-                      </button>
-                    </nav>
-                  </div>
-
-                  {/* Tab Content */}
-                  <div className="mt-6">
-                    {/* Service Features Tab */}
-                    {serviceContentSubTab === 'features' && (
-                      <div className="space-y-6">
-                        <div className="flex justify-between items-center">
-                          <h4 className="text-lg font-medium">Service Features</h4>
-                          <div className="flex justify-end">
-                            <CButton 
-                              variant="primary"
-                              fullWidth={false}
-                              className="px-4 py-3 text-sm rounded-md"
-                              size="lg"
-                              onClick={() => setShowServiceForm(true)}
-                            >
-                              <Plus size={16} className="mr-2" />
-                              Add Feature
-                            </CButton>
-                          </div>
-                        </div>
-
-                        {/* Service Features Form */}
-                        {showServiceForm && (
-                          <div className="border rounded-lg p-6 bg-white shadow-sm">
-                            <h5 className="font-semibold mb-4">
-                              {editingServiceItem ? 'Edit Feature' : 'Add New Feature'}
-                            </h5>
-                            <form onSubmit={async (e) => {
-                              e.preventDefault();
-                              let success = false;
-                              
-                              if (editingServiceItem) {
-                                success = await updateServiceFeature(editingServiceItem._id, serviceFormData);
-                              } else {
-                                success = await createServiceFeature(serviceFormData);
-                              }
-                              
-                              if (success) {
-                                resetServiceForm();
-                              } else {
-                                await Swal.fire({
-                                  icon: 'error',
-                                  title: 'Failed to save feature',
-                                  text: 'Please try again.',
-                                  confirmButtonColor: Theme.colors.primary
-                                });
-                              }
-                            }}>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                  <label className="block text-sm font-medium mb-1">Title</label>
-                                  <input
-                                    type="text"
-                                    value={serviceFormData.title}
-                                    onChange={(e) => setServiceFormData(prev => ({ ...prev, title: e.target.value }))}
-                                    className="w-full p-2 border rounded-lg"
-                                    required
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium mb-1">Icon Key</label>
-                                  <select
-                                    value={serviceFormData.iconKey}
-                                    onChange={(e) => setServiceFormData(prev => ({ ...prev, iconKey: e.target.value }))}
-                                    className="w-full p-2 border rounded-lg"
-                                  >
-                                    <option value="FlaskConical">FlaskConical</option>
-                                    <option value="CalendarCheck">CalendarCheck</option>
-                                    <option value="Users2">Users2</option>
-                                    <option value="BellRing">BellRing</option>
-                                    <option value="BarChart4">BarChart4</option>
-                                    <option value="Globe">Globe</option>
-                                  </select>
-                                </div>
-                              </div>
-                              <div className="mt-4">
-                                <label className="block text-sm font-medium mb-1">Description</label>
-                                <textarea
-                                  value={serviceFormData.description}
-                                  onChange={(e) => setServiceFormData(prev => ({ ...prev, description: e.target.value }))}
-                                  className="w-full p-2 border rounded-lg"
-                                  rows={3}
-                                  required
-                                />
-                              </div>
-                              <div className="flex gap-2 mt-4">
-                                <CButton type="submit" variant="primary">
-                                  {editingServiceItem ? 'Update' : 'Create'}
-                                </CButton>
-                                <CButton 
-                                  type="button" 
-                                  variant="outline" 
-                                  onClick={resetServiceForm}
-                                >
-                                  Cancel
-                                </CButton>
-                              </div>
-                            </form>
-                          </div>
-                        )}
-
-                        {/* Service Features Items List */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {serviceContent.features.map((feature, index) => (
-                            <div key={feature._id || feature.id || index} className="border rounded-lg p-4 bg-gray-50 hover:shadow-md transition-shadow">
-                              <div className="flex justify-between items-start mb-3">
-                                <div className="flex items-center gap-2">
-                                  {(() => {
-                                    const Icon = IconConfig[feature.iconKey] || IconConfig.FileText;
-                                    return Icon ? <Icon size={20} className="text-primary" /> : <FileText size={20} className="text-primary" />;
-                                  })()}
-                                  <h5 className="font-semibold text-sm">{feature.title}</h5>
-                                </div>
-                                <div className={`w-2 h-2 rounded-full ${feature.isActive ? 'bg-green-500' : 'bg-gray-300'}`} />
-                              </div>
-                              <p className="text-sm text-gray-600 mb-3">{feature.description}</p>
-                              <div className="flex gap-2">
-                                <button 
-                                  onClick={() => {
-                                    setEditingServiceItem(feature);
-                                    setServiceFormData({
-                                      title: feature.title,
-                                      description: feature.description,
-                                      iconKey: feature.iconKey
-                                    });
-                                    setShowServiceForm(true);
-                                  }}
-                                  className="text-sm font-medium"
-                                >
-                                  Edit
-                                </button>
-                                <button 
-                                  onClick={() => deleteServiceFeature(feature._id)}
-                                  className="text-red-600 hover:text-red-800 text-sm font-medium"
-                                >
-                                  Delete
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                          {serviceContent.features.length === 0 && (
-                            <div className="col-span-full text-center py-12 bg-gray-50 rounded-lg">
-                              <p className="text-gray-500">No features added yet</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Service Highlights Tab */}
-                    {serviceContentSubTab === 'highlights' && (
-                      <div className="space-y-6">
-                        <div className="flex justify-between items-center">
-                          <h4 className="text-lg font-medium">Service Highlights</h4>
-                          <div className="flex justify-end">
-                            <CButton 
-                              variant="primary"
-                              fullWidth={false}
-                              className="px-4 py-3 text-sm rounded-md"
-                              size="lg"
-                              onClick={() => setShowHighlightForm(true)}
-                            >
-                              <Plus size={16} className="mr-2" />
-                              Add Highlight
-                            </CButton>
-                          </div>
-                        </div>
-
-                        {/* Service Highlights Form */}
-                        {showHighlightForm && (
-                          <div className="border rounded-lg p-6 bg-white shadow-sm">
-                            <h5 className="font-semibold mb-4">
-                              {editingHighlightItem ? 'Edit Highlight' : 'Add New Highlight'}
-                            </h5>
-                            <form onSubmit={async (e) => {
-                              e.preventDefault();
-                              let success = false;
-                              
-                              if (editingHighlightItem) {
-                                const highlightId = editingHighlightItem._id || editingHighlightItem.id;
-                                success = await updateHighlight(highlightId, highlightFormData);
-                              } else {
-                                success = await createHighlight(highlightFormData);
-                              }
-                              
-                              if (success) {
-                                resetHighlightForm();
-                              } else {
-                                await Swal.fire({
-                                  icon: 'error',
-                                  title: 'Failed to save highlight',
-                                  text: 'Please try again.',
-                                  confirmButtonColor: Theme.colors.primary
-                                });
-                              }
-                            }}>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                  <label className="block text-sm font-medium mb-1">Title</label>
-                                  <input
-                                    type="text"
-                                    value={highlightFormData.title}
-                                    onChange={(e) => setHighlightFormData(prev => ({ ...prev, title: e.target.value }))}
-                                    className="w-full p-2 border rounded-lg"
-                                    required
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium mb-1">Icon Key</label>
-                                  <select
-                                    value={highlightFormData.iconKey}
-                                    onChange={(e) => setHighlightFormData(prev => ({ ...prev, iconKey: e.target.value }))}
-                                    className="w-full p-2 border rounded-lg"
-                                  >
-                                    <option value="Zap">Zap</option>
-                                    <option value="ShieldCheck">ShieldCheck</option>
-                                    <option value="Clock">Clock</option>
-                                    <option value="Handshake">Handshake</option>
-                                    <option value="Rocket">Rocket</option>
-                                  </select>
-                                </div>
-                              </div>
-                              <div className="mt-4">
-                                <label className="block text-sm font-medium mb-1">Description</label>
-                                <textarea
-                                  value={highlightFormData.description}
-                                  onChange={(e) => setHighlightFormData(prev => ({ ...prev, description: e.target.value }))}
-                                  className="w-full p-2 border rounded-lg"
-                                  rows={3}
-                                  required
-                                />
-                              </div>
-                              <div className="flex gap-2 mt-4">
-                                <CButton type="submit" variant="primary">
-                                  {editingHighlightItem ? 'Update' : 'Create'}
-                                </CButton>
-                                <CButton 
-                                  type="button" 
-                                  variant="outline" 
-                                  onClick={resetHighlightForm}
-                                >
-                                  Cancel
-                                </CButton>
-                              </div>
-                            </form>
-                          </div>
-                        )}
-
-                        {/* Service Highlights Items List */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                          {serviceContent.highlights.map((highlight, index) => (
-                            <div key={highlight._id || highlight.id || index} className="border rounded-lg p-4 bg-gray-50 hover:shadow-md transition-shadow">
-                              <div className="flex justify-between items-start mb-3">
-                                <div className="flex items-center gap-2">
-                                  {(() => {
-                                    const Icon = IconConfig[highlight.iconKey] || IconConfig.Zap;
-                                    return <Icon size={20} className="text-primary" />;
-                                  })()}
-                                  <h5 className="font-semibold text-sm">{highlight.title}</h5>
-                                </div>
-                                <div className={`w-2 h-2 rounded-full ${highlight.isActive ? 'bg-green-500' : 'bg-gray-300'}`} />
-                              </div>
-                              <p className="text-sm text-gray-600 mb-3">{highlight.description}</p>
-                              <div className="flex gap-2">
-                                <button 
-                                  onClick={() => {
-                                    console.log('Editing highlight:', highlight);
-                                    setEditingHighlightItem(highlight);
-                                    setHighlightFormData({
-                                      title: highlight.title,
-                                      description: highlight.description,
-                                      iconKey: highlight.iconKey
-                                    });
-                                    setShowHighlightForm(true);
-                                  }}
-                                  className="text-sm font-medium"
-                                >
-                                  Edit
-                                </button>
-                                <button 
-                                  onClick={() => {
-                                    const highlightId = highlight._id || highlight.id;
-                                    deleteHighlight(highlightId);
-                                  }}
-                                  className="text-red-600 hover:text-red-800 text-sm font-medium"
-                                >
-                                  Delete
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                          {serviceContent.highlights.length === 0 && (
-                            <div className="col-span-full text-center py-12 bg-gray-50 rounded-lg">
-                              <p className="text-gray-500">No highlights added yet</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* About Content Management */}
-              {activeTab === "about" && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold">About Content Management</h3>
-                      <p className="text-sm text-gray-600 mt-1">Manage about page content and sections</p>
-                    </div>
-                  </div>
-                  
-                  {/* Main Heading */}
-                  <div className="bg-white rounded-lg border p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-md font-medium">Main Heading</h4>
-                      <div className="flex justify-end">
-                        <CButton 
-                          variant="outline"
-                          fullWidth={false}
-                          className="px-3 py-2 text-xs rounded-md"
-                          onClick={() => {
-                            const newHeading = prompt('Enter main heading:', aboutContent.mainHeading);
-                            if (newHeading && newHeading.trim()) {
-                              updateAboutContent({
-                                mainHeading: newHeading.trim(),
-                                sections: aboutContent.sections
-                              });
-                            }
-                          }}
-                        >
-                          <Edit2 size={14} className="mr-1" />
-                          Edit Heading
-                        </CButton>
-                      </div>
-                    </div>
-                    <div className="p-3 bg-gray-50 rounded">
-                      <p className="text-lg font-medium">{aboutContent.mainHeading || 'No heading set'}</p>
-                    </div>
-                  </div>
-
-                  {/* About Sections */}
-                  <div className="bg-white rounded-lg border">
-                    <div className="flex items-center justify-between p-4 border-b">
-                      <h4 className="text-md font-medium">About Sections</h4>
-                      <div className="flex justify-end">
-                        <CButton 
-                          variant="primary"
-                          fullWidth={false}
-                          className="px-3 py-2 text-xs rounded-md"
-                          onClick={() => {
-                            setEditingAboutItem(null);
-                            setAboutFormData({ icon: 'bolt', title: '', description: '' });
-                            setShowAboutForm(true);
-                          }}
-                        >
-                          <Plus size={14} className="mr-1" />
-                          Add Section
-                        </CButton>
-                      </div>
-                    </div>
-                    
-                    {showAboutForm && (
-                      <div className="bg-gray-50 p-4 border-b">
-                        <h5 className="font-medium mb-3">
-                          {editingAboutItem ? 'Edit Section' : 'Add New Section'}
-                        </h5>
-                        <form onSubmit={async (e) => {
-                          e.preventDefault();
-                          let success = false;
-                          
-                          if (editingAboutItem) {
-                            success = await updateAboutSection(editingAboutItem._id, aboutFormData);
-                          } else {
-                            success = await createAboutSection(aboutFormData);
-                          }
-                          
-                          if (success) {
-                            setShowAboutForm(false);
-                            setEditingAboutItem(null);
-                            setAboutFormData({ icon: 'bolt', title: '', description: '' });
-                          } else {
-                            await Swal.fire({
-                              icon: 'error',
-                              title: 'Failed to save section',
-                              text: 'Please try again.',
-                              confirmButtonColor: Theme.colors.primary
-                            });
-                          }
-                        }}>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                              <label className="block text-sm font-medium mb-1">Icon</label>
-                              <select
-                                value={aboutFormData.icon}
-                                onChange={(e) => setAboutFormData(prev => ({ ...prev, icon: e.target.value }))}
-                                className="w-full p-2 border rounded-lg"
-                                required
-                              >
-                                <option value="bolt">Bolt</option>
-                                <option value="heart">Heart</option>
-                                <option value="shield">Shield</option>
-                                <option value="star">Star</option>
-                                <option value="home">Home</option>
-                                <option value="users">Users</option>
-                                <option value="check">Check</option>
-                                <option value="zap">Zap</option>
-                                <option value="cloud">Cloud</option>
-                                <option value="dollar">Dollar</option>
-                              </select>
-                            </div>
-                            <div className="md:col-span-2">
-                              <label className="block text-sm font-medium mb-1">Title</label>
-                              <input
-                                type="text"
-                                value={aboutFormData.title}
-                                onChange={(e) => setAboutFormData(prev => ({ ...prev, title: e.target.value }))}
-                                className="w-full p-2 border rounded-lg"
-                                placeholder="Enter section title"
-                                required
-                              />
-                            </div>
-                          </div>
-                          <div className="mt-4">
-                            <label className="block text-sm font-medium mb-1">Description</label>
-                            <textarea
-                              value={aboutFormData.description}
-                              onChange={(e) => setAboutFormData(prev => ({ ...prev, description: e.target.value }))}
-                              className="w-full p-2 border rounded-lg"
-                              rows={3}
-                              placeholder="Enter section description"
-                              required
-                            />
-                          </div>
-                          <div className="flex gap-2 mt-4">
-                            <CButton type="submit" variant="primary" size="sm">
-                              {editingAboutItem ? 'Update' : 'Create'} Section
-                            </CButton>
-                            <CButton 
-                              type="button" 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => {
-                                setShowAboutForm(false);
-                                setEditingAboutItem(null);
-                                setAboutFormData({ icon: 'bolt', title: '', description: '' });
-                              }}
-                            >
-                              Cancel
-                            </CButton>
-                          </div>
-                        </form>
-                      </div>
-                    )}
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
-                      {aboutContent.sections && aboutContent.sections.length > 0 ? (
-                        aboutContent.sections.map((section, index) => (
-                          <div key={section._id || index} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-4">
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                                  {section.icon === 'bolt' && <Zap size={16} style={{color: Theme.colors.primary}} />}
-                                  {section.icon === 'heart' && <span className="text-red-500">❤️</span>}
-                                  {section.icon === 'shield' && <ShieldCheck size={16} className="text-green-600" />}
-                                  {section.icon === 'star' && <span className="text-yellow-500">⭐</span>}
-                                  {section.icon === 'home' && <Home size={16} className="text-purple-600" />}
-                                  {section.icon === 'users' && <span className="text-blue-500">👥</span>}
-                                  {section.icon === 'check' && <span className="text-green-500">✅</span>}
-                                  {section.icon === 'zap' && <Zap size={16} className="text-yellow-600" />}
-                                  {section.icon === 'cloud' && <Cloud size={16} className="text-blue-500" />}
-                                  {section.icon === 'dollar' && <span className="text-green-600">💰</span>}
-                                </div>
-                                <h5 className="font-medium text-gray-900">{section.title}</h5>
-                              </div>
-                            </div>
-                            <p className="text-gray-600 text-sm mb-4 leading-relaxed">{section.description}</p>
-                            <div className="flex items-center justify-between">
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => {
-                                    setEditingAboutItem(section);
-                                    setAboutFormData({
-                                      icon: section.icon || 'bolt',
-                                      title: section.title,
-                                      description: section.description
-                                    });
-                                    setShowAboutForm(true);
-                                  }}
-                                  className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
-                                >
-                                  <Edit2 size={14} />
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() => deleteAboutSection(section._id)}
-                                  className="text-red-600 hover:text-red-800 text-sm font-medium flex items-center gap-1"
-                                >
-                                  <Trash2 size={14} />
-                                  Delete
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="col-span-full p-8 text-center text-gray-500">
-                          <FileText size={48} className="mx-auto mb-4 text-gray-300" />
-                          <p>No about sections found. Click "Add Section" to create your first section.</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Terms & Conditions Management */}
-              {activeTab === "terms" && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold">Terms & Conditions Management</h3>
-                      <p className="text-sm text-gray-600 mt-1">Manage terms and conditions sections</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <CButton 
-                        variant="primary"
-                        fullWidth={false}
-                        className="px-3 py-2 text-xs rounded-md"
-                        onClick={() => setShowTermsForm(true)}
-                      >
-                        <Plus size={14} className="mr-1" />
-                        Add Section
-                      </CButton>
-                    </div>
-                  </div>
-                  
-                  {showTermsForm && (
-                    <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                      <h5 className="font-medium mb-3">
-                        {editingTermsItem ? 'Edit Section' : 'Add New Section'}
-                      </h5>
-                      <form onSubmit={(e) => {
-                        e.preventDefault();
-                        if (editingTermsItem && editingTermsItem.id) {
-                          updateTermsSection(editingTermsItem.id, termsFormData);
-                        } else {
-                          createTermsSection(termsFormData);
-                        }
-                        setShowTermsForm(false);
-                        setEditingTermsItem(null);
-                        setTermsFormData({ title: '', content: '', sectionNumber: 1, order: 0 });
-                      }}>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-1">Section Number</label>
-                            <input
-                              type="number"
-                              value={termsFormData.sectionNumber}
-                              onChange={(e) => setTermsFormData(prev => ({ ...prev, sectionNumber: parseInt(e.target.value) }))}
-                              className="w-full p-2 border rounded-lg"
-                              required
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-1">Title</label>
-                            <input
-                              type="text"
-                              value={termsFormData.title}
-                              onChange={(e) => setTermsFormData(prev => ({ ...prev, title: e.target.value }))}
-                              className="w-full p-2 border rounded-lg"
-                              required
-                            />
-                          </div>
-                        </div>
-                        <div className="mt-4">
-                          <label className="block text-sm font-medium mb-1">Content</label>
-                          <textarea
-                            value={termsFormData.content}
-                            onChange={(e) => setTermsFormData(prev => ({ ...prev, content: e.target.value }))}
-                            className="w-full p-2 border rounded-lg"
-                            rows={5}
-                            required
-                          />
-                        </div>
-                        <div className="flex gap-2 mt-4">
-                          <CButton type="submit" variant="primary">
-                            {editingTermsItem ? 'Update' : 'Create'}
-                          </CButton>
-                          <CButton 
-                            type="button" 
-                            variant="outline" 
-                            onClick={() => {
-                              setShowTermsForm(false);
-                              setEditingTermsItem(null);
-                              setTermsFormData({ title: '', content: '', sectionNumber: 1, order: 0 });
-                            }}
-                          >
-                            Cancel
-                          </CButton>
-                        </div>
-                      </form>
-                    </div>
-                  )}
-                  
-                  {contentLoading ? (
-                    <div className="text-center py-12 bg-gray-50 rounded-lg">
-                      <p className="text-gray-500">Loading terms data...</p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="space-y-4">
-                        {termsContent.sections.sort((a, b) => a.sectionNumber - b.sectionNumber).map((section, index) => (
-                      <div key={section._id || section.id || index} className="border rounded-lg p-4 bg-white hover:shadow-md transition-shadow">
+                  {/* Service Features Items List */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {serviceContent.features.map((feature, index) => (
+                      <div key={feature._id || feature.id || index} className="border rounded-lg p-4 bg-gray-50 hover:shadow-md transition-shadow">
                         <div className="flex justify-between items-start mb-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-xs text-gray-500 font-medium">Order: {section.order || 0}</span>
-                              <span className="text-xs text-gray-500 font-medium">Section: {section.sectionNumber}</span>
-                            </div>
-                            <h5 className="font-semibold">{section.title}</h5>
+                          <div className="flex items-center gap-2">
+                            {(() => {
+                              const Icon = IconConfig[feature.iconKey] || IconConfig.FileText;
+                              return Icon ? <Icon size={20} className="text-primary" /> : <FileText size={20} className="text-primary" />;
+                            })()}
+                            <h5 className="font-semibold text-sm">{feature.title}</h5>
                           </div>
-                          <div className={`w-2 h-2 rounded-full ${section.isActive ? 'bg-green-500' : 'bg-gray-300'}`} />
+                          <div className={`w-2 h-2 rounded-full ${feature.isActive ? 'bg-green-500' : 'bg-gray-300'}`} />
                         </div>
-                        <p className="text-sm text-gray-600 mb-3 whitespace-pre-wrap">{section.content}</p>
+                        <p className="text-sm text-gray-600 mb-3">{feature.description}</p>
                         <div className="flex gap-2">
-                          <button 
+                          <button
                             onClick={() => {
-                              setEditingTermsItem(section);
-                              setTermsFormData({
-                                title: section.title,
-                                content: section.content,
-                                sectionNumber: section.sectionNumber,
-                                order: section.order || 0
+                              setEditingServiceItem(feature);
+                              setServiceFormData({
+                                title: feature.title,
+                                description: feature.description,
+                                iconKey: feature.iconKey
                               });
-                              setShowTermsForm(true);
+                              setShowServiceForm(true);
                             }}
                             className="text-sm font-medium"
                           >
                             Edit
                           </button>
-                          <button 
-                            onClick={() => deleteTermsSection(section._id)}
+                          <button
+                            onClick={() => deleteServiceFeature(feature._id)}
                             className="text-red-600 hover:text-red-800 text-sm font-medium"
                           >
                             Delete
@@ -6178,277 +5744,150 @@ export default function AdminDashboardIndex() {
                         </div>
                       </div>
                     ))}
-                    {termsContent.sections.length === 0 && (
-                      <div className="text-center py-12 bg-gray-50 rounded-lg">
-                        <p className="text-gray-500">No sections added yet</p>
+                    {serviceContent.features.length === 0 && (
+                      <div className="col-span-full text-center py-12 bg-gray-50 rounded-lg">
+                        <p className="text-gray-500">No features added yet</p>
                       </div>
                     )}
                   </div>
-                    </>
-                  )}
                 </div>
               )}
 
-              {/* Privacy Policy Management */}
-              {activeTab === "privacy" && (
+              {/* Service Highlights Tab */}
+              {serviceContentSubTab === 'highlights' && (
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold">Privacy Policy Management</h3>
-                      <p className="text-sm text-gray-600 mt-1">Manage privacy policy sections and compliance</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <CButton 
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-lg font-medium">Service Highlights</h4>
+                    <div className="flex justify-end">
+                      <CButton
                         variant="primary"
                         fullWidth={false}
-                        className="px-3 py-2 text-xs rounded-md"
-                        onClick={() => setShowPrivacyForm(true)}
+                        className="px-4 py-3 text-sm rounded-md"
+                        size="lg"
+                        onClick={() => setShowHighlightForm(true)}
                       >
-                        <Plus size={14} className="mr-1" />
-                        Add Section
+                        <Plus size={16} className="mr-2" />
+                        Add Highlight
                       </CButton>
                     </div>
                   </div>
-                  
-                  {showPrivacyForm && (
-                    <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                      <h5 className="font-medium mb-3">
-                        {editingPrivacyItem ? 'Edit Section' : 'Add New Section'}
+
+                  {/* Service Highlights Form */}
+                  {showHighlightForm && (
+                    <div className="border rounded-lg p-6 bg-white shadow-sm">
+                      <h5 className="font-semibold mb-4">
+                        {editingHighlightItem ? 'Edit Highlight' : 'Add New Highlight'}
                       </h5>
-                      <form onSubmit={(e) => {
+                      <form onSubmit={async (e) => {
                         e.preventDefault();
-                        if (editingPrivacyItem) {
-                          updatePrivacySection(editingPrivacyItem._id, privacyFormData);
+                        let success = false;
+
+                        if (editingHighlightItem) {
+                          const highlightId = editingHighlightItem._id || editingHighlightItem.id;
+                          success = await updateHighlight(highlightId, highlightFormData);
                         } else {
-                          createPrivacySection(privacyFormData);
+                          success = await createHighlight(highlightFormData);
                         }
-                        setShowPrivacyForm(false);
-                        setEditingPrivacyItem(null);
-                        setPrivacyFormData({ title: '', content: '', sectionNumber: 1 });
+
+                        if (success) {
+                          resetHighlightForm();
+                        } else {
+                          await Swal.fire({
+                            icon: 'error',
+                            title: 'Failed to save highlight',
+                            text: 'Please try again.',
+                            confirmButtonColor: Theme.colors.primary
+                          });
+                        }
                       }}>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm font-medium mb-1">Section Number</label>
-                            <input
-                              type="number"
-                              value={privacyFormData.sectionNumber}
-                              onChange={(e) => setPrivacyFormData(prev => ({ ...prev, sectionNumber: parseInt(e.target.value) }))}
-                              className="w-full p-2 border rounded-lg"
-                              required
-                            />
-                          </div>
-                          <div>
                             <label className="block text-sm font-medium mb-1">Title</label>
                             <input
                               type="text"
-                              value={privacyFormData.title}
-                              onChange={(e) => setPrivacyFormData(prev => ({ ...prev, title: e.target.value }))}
+                              value={highlightFormData.title}
+                              onChange={(e) => setHighlightFormData(prev => ({ ...prev, title: e.target.value }))}
                               className="w-full p-2 border rounded-lg"
                               required
                             />
                           </div>
-                        </div>
-                        <div className="mt-4">
-                          <label className="block text-sm font-medium mb-1">Content</label>
-                          <textarea
-                            value={privacyFormData.content}
-                            onChange={(e) => setPrivacyFormData(prev => ({ ...prev, content: e.target.value }))}
-                            className="w-full p-2 border rounded-lg"
-                            rows={5}
-                            required
-                          />
-                        </div>
-                        <div className="flex gap-2 mt-4">
-                          <CButton type="submit" variant="primary">
-                            {editingPrivacyItem ? 'Update' : 'Create'}
-                          </CButton>
-                          <CButton 
-                            type="button" 
-                            variant="outline" 
-                            onClick={() => {
-                              setShowPrivacyForm(false);
-                              setEditingPrivacyItem(null);
-                              setPrivacyFormData({ title: '', content: '', sectionNumber: 1 });
-                            }}
-                          >
-                            Cancel
-                          </CButton>
-                        </div>
-                      </form>
-                    </div>
-                  )}
-                  
-                  <div className="space-y-4">
-                    {privacyContent.sections.sort((a, b) => a.sectionNumber - b.sectionNumber).map((section, index) => (
-                      <div key={section._id || section.id || index} className="border rounded-lg p-4 bg-white hover:shadow-md transition-shadow">
-                        <div className="flex justify-between items-start mb-3">
                           <div>
-                            <h5 className="font-semibold">Section {section.sectionNumber}: {section.title}</h5>
-                          </div>
-                          <div className={`w-2 h-2 rounded-full ${section.isActive ? 'bg-green-500' : 'bg-gray-300'}`} />
-                        </div>
-                        <p className="text-sm text-gray-600 mb-3 whitespace-pre-wrap">{section.content}</p>
-                        <div className="flex gap-2">
-                          <button 
-                            onClick={() => {
-                              setEditingPrivacyItem(section);
-                              setPrivacyFormData({
-                                title: section.title,
-                                content: section.content,
-                                sectionNumber: section.sectionNumber
-                              });
-                              setShowPrivacyForm(true);
-                            }}
-                            className="text-sm font-medium"
-                          >
-                            Edit
-                          </button>
-                          <button 
-                            onClick={() => deletePrivacySection(section._id)}
-                            className="text-red-600 hover:text-red-800 text-sm font-medium"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                    {privacyContent.sections.length === 0 && (
-                      <div className="text-center py-12 bg-gray-50 rounded-lg">
-                        <p className="text-gray-500">No sections added yet</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* FAQ Management */}
-              {activeTab === "faq" && (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold">FAQ Management</h3>
-                      <p className="text-sm text-gray-600 mt-1">Manage frequently asked questions and answers</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <CButton 
-                        variant="primary"
-                        fullWidth={false}
-                        className="px-3 py-2 text-xs rounded-md"
-                        onClick={() => setShowFAQForm(true)}
-                      >
-                        <Plus size={14} className="mr-1" />
-                        Add FAQ
-                      </CButton>
-                    </div>
-                  </div>
-                  
-                  {/* FAQ List */}
-                  <div className="flex justify-between items-center">
-                    <div className="text-sm text-gray-600">
-                      {faqs?.length || 0} FAQs found
-                    </div>
-                  </div>
-                  
-                  {showFAQForm && (
-                    <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                      <h5 className="font-medium mb-3">
-                        {editingFAQItem ? 'Edit FAQ' : 'Add New FAQ'}
-                      </h5>
-                      <form onSubmit={(e) => {
-                        e.preventDefault();
-                        if (editingFAQItem) {
-                          updateFAQ(editingFAQItem._id, faqFormData);
-                        } else {
-                          createFAQ(faqFormData);
-                        }
-                        setShowFAQForm(false);
-                        setEditingFAQItem(null);
-                        setFaqFormData({ question: '', answer: '', category: 'general', order: 0 });
-                      }}>
-                        <div className="grid grid-cols-1 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium mb-1">Question</label>
-                            <input
-                              type="text"
-                              value={faqFormData.question}
-                              onChange={(e) => setFaqFormData(prev => ({ ...prev, question: e.target.value }))}
+                            <label className="block text-sm font-medium mb-1">Icon Key</label>
+                            <select
+                              value={highlightFormData.iconKey}
+                              onChange={(e) => setHighlightFormData(prev => ({ ...prev, iconKey: e.target.value }))}
                               className="w-full p-2 border rounded-lg"
-                              required
-                            />
-                          </div>
-                        </div>
-                        <div className="mt-4">
-                          <label className="block text-sm font-medium mb-1">Answer</label>
-                          <textarea
-                            value={faqFormData.answer}
-                            onChange={(e) => setFaqFormData(prev => ({ ...prev, answer: e.target.value }))}
-                            className="w-full p-2 border rounded-lg"
-                            rows={4}
-                            required
-                          />
-                        </div>
-                        <div className="flex gap-2 mt-4">
-                          <CButton type="submit" variant="primary">
-                            {editingFAQItem ? 'Update' : 'Create'}
-                          </CButton>
-                          <CButton 
-                            type="button" 
-                            variant="outline" 
-                            onClick={() => {
-                              setShowFAQForm(false);
-                              setEditingFAQItem(null);
-                              setFaqFormData({ question: '', answer: '' });
-                            }}
-                          >
-                            Cancel
-                          </CButton>
-                        </div>
-                      </form>
-                    </div>
-                  )}
-                  
-                  <div className="space-y-4">
-                    {faqs.map((faq) => (
-                      <div key={faq._id} className="border rounded-lg p-4 bg-white hover:shadow-md transition-shadow">
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-xs text-gray-500 font-medium">Order: {faq.order || 0}</span>
-                              <span className="inline-block px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">
-                                {faq.category}
-                              </span>
-                            </div>
-                            <h5 className="font-semibold text-sm">{faq.question}</h5>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${faq.isActive ? 'bg-green-500' : 'bg-gray-300'}`} />
-                            <button 
-                              onClick={() => toggleFAQStatus(faq._id)}
-                              className="text-yellow-600 hover:text-yellow-800 text-sm"
                             >
-                              {faq.isActive ? 'Disable' : 'Enable'}
-                            </button>
+                              <option value="Zap">Zap</option>
+                              <option value="ShieldCheck">ShieldCheck</option>
+                              <option value="Clock">Clock</option>
+                              <option value="Handshake">Handshake</option>
+                              <option value="Rocket">Rocket</option>
+                            </select>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-600 mb-3">{faq.answer}</p>
+                        <div className="mt-4">
+                          <label className="block text-sm font-medium mb-1">Description</label>
+                          <textarea
+                            value={highlightFormData.description}
+                            onChange={(e) => setHighlightFormData(prev => ({ ...prev, description: e.target.value }))}
+                            className="w-full p-2 border rounded-lg"
+                            rows={3}
+                            required
+                          />
+                        </div>
+                        <div className="flex gap-2 mt-4">
+                          <CButton type="submit" variant="primary">
+                            {editingHighlightItem ? 'Update' : 'Create'}
+                          </CButton>
+                          <CButton
+                            type="button"
+                            variant="outline"
+                            onClick={resetHighlightForm}
+                          >
+                            Cancel
+                          </CButton>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+
+                  {/* Service Highlights Items List */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {serviceContent.highlights.map((highlight, index) => (
+                      <div key={highlight._id || highlight.id || index} className="border rounded-lg p-4 bg-gray-50 hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center gap-2">
+                            {(() => {
+                              const Icon = IconConfig[highlight.iconKey] || IconConfig.Zap;
+                              return <Icon size={20} className="text-primary" />;
+                            })()}
+                            <h5 className="font-semibold text-sm">{highlight.title}</h5>
+                          </div>
+                          <div className={`w-2 h-2 rounded-full ${highlight.isActive ? 'bg-green-500' : 'bg-gray-300'}`} />
+                        </div>
+                        <p className="text-sm text-gray-600 mb-3">{highlight.description}</p>
                         <div className="flex gap-2">
-                          <button 
+                          <button
                             onClick={() => {
-                              setEditingFAQItem(faq);
-                              setFaqFormData({
-                                question: faq.question,
-                                answer: faq.answer,
-                                category: faq.category,
-                                order: faq.order || 0
+                              console.log('Editing highlight:', highlight);
+                              setEditingHighlightItem(highlight);
+                              setHighlightFormData({
+                                title: highlight.title,
+                                description: highlight.description,
+                                iconKey: highlight.iconKey
                               });
-                              setShowFAQForm(true);
+                              setShowHighlightForm(true);
                             }}
                             className="text-sm font-medium"
                           >
                             Edit
                           </button>
-                          <button 
-                            onClick={() => deleteFAQ(faq._id)}
+                          <button
+                            onClick={() => {
+                              const highlightId = highlight._id || highlight.id;
+                              deleteHighlight(highlightId);
+                            }}
                             className="text-red-600 hover:text-red-800 text-sm font-medium"
                           >
                             Delete
@@ -6456,38 +5895,676 @@ export default function AdminDashboardIndex() {
                         </div>
                       </div>
                     ))}
-                    {faqs.length === 0 && (
-                      <div className="text-center py-12 bg-gray-50 rounded-lg">
-                        <p className="text-gray-500">No FAQs added yet</p>
+                    {serviceContent.highlights.length === 0 && (
+                      <div className="col-span-full text-center py-12 bg-gray-50 rounded-lg">
+                        <p className="text-gray-500">No highlights added yet</p>
                       </div>
                     )}
                   </div>
                 </div>
               )}
-
             </div>
           </div>
+        )}
 
-          {/* Modals */}
-      <>
+        {/* About Content Management */}
+        {activeTab === "about" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">About Content Management</h3>
+                <p className="text-sm text-gray-600 mt-1">Manage about page content and sections</p>
+              </div>
+            </div>
+
+            {/* Main Heading */}
+            <div className="bg-white rounded-lg border p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-md font-medium">Main Heading</h4>
+                <div className="flex justify-end">
+                  <CButton
+                    variant="outline"
+                    fullWidth={false}
+                    className="px-3 py-2 text-xs rounded-md"
+                    onClick={() => {
+                      const newHeading = prompt('Enter main heading:', aboutContent.mainHeading);
+                      if (newHeading && newHeading.trim()) {
+                        updateAboutContent({
+                          mainHeading: newHeading.trim(),
+                          sections: aboutContent.sections
+                        });
+                      }
+                    }}
+                  >
+                    <Edit2 size={14} className="mr-1" />
+                    Edit Heading
+                  </CButton>
+                </div>
+              </div>
+              <div className="p-3 bg-gray-50 rounded">
+                <p className="text-lg font-medium">{aboutContent.mainHeading || 'No heading set'}</p>
+              </div>
+            </div>
+
+            {/* About Sections */}
+            <div className="bg-white rounded-lg border">
+              <div className="flex items-center justify-between p-4 border-b">
+                <h4 className="text-md font-medium">About Sections</h4>
+                <div className="flex justify-end">
+                  <CButton
+                    variant="primary"
+                    fullWidth={false}
+                    className="px-3 py-2 text-xs rounded-md"
+                    onClick={() => {
+                      setEditingAboutItem(null);
+                      setAboutFormData({ icon: 'bolt', title: '', description: '' });
+                      setShowAboutForm(true);
+                    }}
+                  >
+                    <Plus size={14} className="mr-1" />
+                    Add Section
+                  </CButton>
+                </div>
+              </div>
+
+              {showAboutForm && (
+                <div className="bg-gray-50 p-4 border-b">
+                  <h5 className="font-medium mb-3">
+                    {editingAboutItem ? 'Edit Section' : 'Add New Section'}
+                  </h5>
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    let success = false;
+
+                    if (editingAboutItem) {
+                      success = await updateAboutSection(editingAboutItem._id, aboutFormData);
+                    } else {
+                      success = await createAboutSection(aboutFormData);
+                    }
+
+                    if (success) {
+                      setShowAboutForm(false);
+                      setEditingAboutItem(null);
+                      setAboutFormData({ icon: 'bolt', title: '', description: '' });
+                    } else {
+                      await Swal.fire({
+                        icon: 'error',
+                        title: 'Failed to save section',
+                        text: 'Please try again.',
+                        confirmButtonColor: Theme.colors.primary
+                      });
+                    }
+                  }}>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Icon</label>
+                        <select
+                          value={aboutFormData.icon}
+                          onChange={(e) => setAboutFormData(prev => ({ ...prev, icon: e.target.value }))}
+                          className="w-full p-2 border rounded-lg"
+                          required
+                        >
+                          <option value="bolt">Bolt</option>
+                          <option value="heart">Heart</option>
+                          <option value="shield">Shield</option>
+                          <option value="star">Star</option>
+                          <option value="home">Home</option>
+                          <option value="users">Users</option>
+                          <option value="check">Check</option>
+                          <option value="zap">Zap</option>
+                          <option value="cloud">Cloud</option>
+                          <option value="dollar">Dollar</option>
+                        </select>
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium mb-1">Title</label>
+                        <input
+                          type="text"
+                          value={aboutFormData.title}
+                          onChange={(e) => setAboutFormData(prev => ({ ...prev, title: e.target.value }))}
+                          className="w-full p-2 border rounded-lg"
+                          placeholder="Enter section title"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium mb-1">Description</label>
+                      <textarea
+                        value={aboutFormData.description}
+                        onChange={(e) => setAboutFormData(prev => ({ ...prev, description: e.target.value }))}
+                        className="w-full p-2 border rounded-lg"
+                        rows={3}
+                        placeholder="Enter section description"
+                        required
+                      />
+                    </div>
+                    <div className="flex gap-2 mt-4">
+                      <CButton type="submit" variant="primary" size="sm">
+                        {editingAboutItem ? 'Update' : 'Create'} Section
+                      </CButton>
+                      <CButton
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setShowAboutForm(false);
+                          setEditingAboutItem(null);
+                          setAboutFormData({ icon: 'bolt', title: '', description: '' });
+                        }}
+                      >
+                        Cancel
+                      </CButton>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-4">
+                {aboutContent.sections && aboutContent.sections.length > 0 ? (
+                  aboutContent.sections.map((section, index) => (
+                    <div key={section._id || index} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            {section.icon === 'bolt' && <Zap size={16} style={{ color: Theme.colors.primary }} />}
+                            {section.icon === 'heart' && <span className="text-red-500">❤️</span>}
+                            {section.icon === 'shield' && <ShieldCheck size={16} className="text-green-600" />}
+                            {section.icon === 'star' && <span className="text-yellow-500">⭐</span>}
+                            {section.icon === 'home' && <Home size={16} className="text-purple-600" />}
+                            {section.icon === 'users' && <span className="text-blue-500">👥</span>}
+                            {section.icon === 'check' && <span className="text-green-500">✅</span>}
+                            {section.icon === 'zap' && <Zap size={16} className="text-yellow-600" />}
+                            {section.icon === 'cloud' && <Cloud size={16} className="text-blue-500" />}
+                            {section.icon === 'dollar' && <span className="text-green-600">💰</span>}
+                          </div>
+                          <h5 className="font-medium text-gray-900">{section.title}</h5>
+                        </div>
+                      </div>
+                      <p className="text-gray-600 text-sm mb-4 leading-relaxed">{section.description}</p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingAboutItem(section);
+                              setAboutFormData({
+                                icon: section.icon || 'bolt',
+                                title: section.title,
+                                description: section.description
+                              });
+                              setShowAboutForm(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+                          >
+                            <Edit2 size={14} />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => deleteAboutSection(section._id)}
+                            className="text-red-600 hover:text-red-800 text-sm font-medium flex items-center gap-1"
+                          >
+                            <Trash2 size={14} />
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-full p-8 text-center text-gray-500">
+                    <FileText size={48} className="mx-auto mb-4 text-gray-300" />
+                    <p>No about sections found. Click "Add Section" to create your first section.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Terms & Conditions Management */}
+        {activeTab === "terms" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">Terms & Conditions Management</h3>
+                <p className="text-sm text-gray-600 mt-1">Manage terms and conditions sections</p>
+              </div>
+              <div className="flex gap-2">
+                <CButton
+                  variant="primary"
+                  fullWidth={false}
+                  className="px-3 py-2 text-xs rounded-md"
+                  onClick={() => setShowTermsForm(true)}
+                >
+                  <Plus size={14} className="mr-1" />
+                  Add Section
+                </CButton>
+              </div>
+            </div>
+
+            {showTermsForm && (
+              <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                <h5 className="font-medium mb-3">
+                  {editingTermsItem ? 'Edit Section' : 'Add New Section'}
+                </h5>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  if (editingTermsItem && editingTermsItem.id) {
+                    updateTermsSection(editingTermsItem.id, termsFormData);
+                  } else {
+                    createTermsSection(termsFormData);
+                  }
+                  setShowTermsForm(false);
+                  setEditingTermsItem(null);
+                  setTermsFormData({ title: '', content: '', sectionNumber: 1, order: 0 });
+                }}>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Section Number</label>
+                      <input
+                        type="number"
+                        value={termsFormData.sectionNumber}
+                        onChange={(e) => setTermsFormData(prev => ({ ...prev, sectionNumber: parseInt(e.target.value) }))}
+                        className="w-full p-2 border rounded-lg"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Title</label>
+                      <input
+                        type="text"
+                        value={termsFormData.title}
+                        onChange={(e) => setTermsFormData(prev => ({ ...prev, title: e.target.value }))}
+                        className="w-full p-2 border rounded-lg"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium mb-1">Content</label>
+                    <textarea
+                      value={termsFormData.content}
+                      onChange={(e) => setTermsFormData(prev => ({ ...prev, content: e.target.value }))}
+                      className="w-full p-2 border rounded-lg"
+                      rows={5}
+                      required
+                    />
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <CButton type="submit" variant="primary">
+                      {editingTermsItem ? 'Update' : 'Create'}
+                    </CButton>
+                    <CButton
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowTermsForm(false);
+                        setEditingTermsItem(null);
+                        setTermsFormData({ title: '', content: '', sectionNumber: 1, order: 0 });
+                      }}
+                    >
+                      Cancel
+                    </CButton>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {contentLoading ? (
+              <div className="text-center py-12 bg-gray-50 rounded-lg">
+                <p className="text-gray-500">Loading terms data...</p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  {termsContent.sections.sort((a, b) => a.sectionNumber - b.sectionNumber).map((section, index) => (
+                    <div key={section._id || section.id || index} className="border rounded-lg p-4 bg-white hover:shadow-md transition-shadow">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs text-gray-500 font-medium">Order: {section.order || 0}</span>
+                            <span className="text-xs text-gray-500 font-medium">Section: {section.sectionNumber}</span>
+                          </div>
+                          <h5 className="font-semibold">{section.title}</h5>
+                        </div>
+                        <div className={`w-2 h-2 rounded-full ${section.isActive ? 'bg-green-500' : 'bg-gray-300'}`} />
+                      </div>
+                      <p className="text-sm text-gray-600 mb-3 whitespace-pre-wrap">{section.content}</p>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingTermsItem(section);
+                            setTermsFormData({
+                              title: section.title,
+                              content: section.content,
+                              sectionNumber: section.sectionNumber,
+                              order: section.order || 0
+                            });
+                            setShowTermsForm(true);
+                          }}
+                          className="text-sm font-medium"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => deleteTermsSection(section._id)}
+                          className="text-red-600 hover:text-red-800 text-sm font-medium"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {termsContent.sections.length === 0 && (
+                    <div className="text-center py-12 bg-gray-50 rounded-lg">
+                      <p className="text-gray-500">No sections added yet</p>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Privacy Policy Management */}
+        {activeTab === "privacy" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">Privacy Policy Management</h3>
+                <p className="text-sm text-gray-600 mt-1">Manage privacy policy sections and compliance</p>
+              </div>
+              <div className="flex gap-2">
+                <CButton
+                  variant="primary"
+                  fullWidth={false}
+                  className="px-3 py-2 text-xs rounded-md"
+                  onClick={() => setShowPrivacyForm(true)}
+                >
+                  <Plus size={14} className="mr-1" />
+                  Add Section
+                </CButton>
+              </div>
+            </div>
+
+            {showPrivacyForm && (
+              <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                <h5 className="font-medium mb-3">
+                  {editingPrivacyItem ? 'Edit Section' : 'Add New Section'}
+                </h5>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  if (editingPrivacyItem) {
+                    updatePrivacySection(editingPrivacyItem._id, privacyFormData);
+                  } else {
+                    createPrivacySection(privacyFormData);
+                  }
+                  setShowPrivacyForm(false);
+                  setEditingPrivacyItem(null);
+                  setPrivacyFormData({ title: '', content: '', sectionNumber: 1 });
+                }}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Section Number</label>
+                      <input
+                        type="number"
+                        value={privacyFormData.sectionNumber}
+                        onChange={(e) => setPrivacyFormData(prev => ({ ...prev, sectionNumber: parseInt(e.target.value) }))}
+                        className="w-full p-2 border rounded-lg"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Title</label>
+                      <input
+                        type="text"
+                        value={privacyFormData.title}
+                        onChange={(e) => setPrivacyFormData(prev => ({ ...prev, title: e.target.value }))}
+                        className="w-full p-2 border rounded-lg"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium mb-1">Content</label>
+                    <textarea
+                      value={privacyFormData.content}
+                      onChange={(e) => setPrivacyFormData(prev => ({ ...prev, content: e.target.value }))}
+                      className="w-full p-2 border rounded-lg"
+                      rows={5}
+                      required
+                    />
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <CButton type="submit" variant="primary">
+                      {editingPrivacyItem ? 'Update' : 'Create'}
+                    </CButton>
+                    <CButton
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowPrivacyForm(false);
+                        setEditingPrivacyItem(null);
+                        setPrivacyFormData({ title: '', content: '', sectionNumber: 1 });
+                      }}
+                    >
+                      Cancel
+                    </CButton>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              {privacyContent.sections.sort((a, b) => a.sectionNumber - b.sectionNumber).map((section, index) => (
+                <div key={section._id || section.id || index} className="border rounded-lg p-4 bg-white hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h5 className="font-semibold">Section {section.sectionNumber}: {section.title}</h5>
+                    </div>
+                    <div className={`w-2 h-2 rounded-full ${section.isActive ? 'bg-green-500' : 'bg-gray-300'}`} />
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3 whitespace-pre-wrap">{section.content}</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setEditingPrivacyItem(section);
+                        setPrivacyFormData({
+                          title: section.title,
+                          content: section.content,
+                          sectionNumber: section.sectionNumber
+                        });
+                        setShowPrivacyForm(true);
+                      }}
+                      className="text-sm font-medium"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => deletePrivacySection(section._id)}
+                      className="text-red-600 hover:text-red-800 text-sm font-medium"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {privacyContent.sections.length === 0 && (
+                <div className="text-center py-12 bg-gray-50 rounded-lg">
+                  <p className="text-gray-500">No sections added yet</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* FAQ Management */}
+        {activeTab === "faq" && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-semibold">FAQ Management</h3>
+                <p className="text-sm text-gray-600 mt-1">Manage frequently asked questions and answers</p>
+              </div>
+              <div className="flex gap-2">
+                <CButton
+                  variant="primary"
+                  fullWidth={false}
+                  className="px-3 py-2 text-xs rounded-md"
+                  onClick={() => setShowFAQForm(true)}
+                >
+                  <Plus size={14} className="mr-1" />
+                  Add FAQ
+                </CButton>
+              </div>
+            </div>
+
+            {/* FAQ List */}
+            <div className="flex justify-between items-center">
+              <div className="text-sm text-gray-600">
+                {faqs?.length || 0} FAQs found
+              </div>
+            </div>
+
+            {showFAQForm && (
+              <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                <h5 className="font-medium mb-3">
+                  {editingFAQItem ? 'Edit FAQ' : 'Add New FAQ'}
+                </h5>
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  if (editingFAQItem) {
+                    updateFAQ(editingFAQItem._id, faqFormData);
+                  } else {
+                    createFAQ(faqFormData);
+                  }
+                  setShowFAQForm(false);
+                  setEditingFAQItem(null);
+                  setFaqFormData({ question: '', answer: '', category: 'general', order: 0 });
+                }}>
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Question</label>
+                      <input
+                        type="text"
+                        value={faqFormData.question}
+                        onChange={(e) => setFaqFormData(prev => ({ ...prev, question: e.target.value }))}
+                        className="w-full p-2 border rounded-lg"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium mb-1">Answer</label>
+                    <textarea
+                      value={faqFormData.answer}
+                      onChange={(e) => setFaqFormData(prev => ({ ...prev, answer: e.target.value }))}
+                      className="w-full p-2 border rounded-lg"
+                      rows={4}
+                      required
+                    />
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <CButton type="submit" variant="primary">
+                      {editingFAQItem ? 'Update' : 'Create'}
+                    </CButton>
+                    <CButton
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowFAQForm(false);
+                        setEditingFAQItem(null);
+                        setFaqFormData({ question: '', answer: '' });
+                      }}
+                    >
+                      Cancel
+                    </CButton>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              {faqs.map((faq) => (
+                <div key={faq._id} className="border rounded-lg p-4 bg-white hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs text-gray-500 font-medium">Order: {faq.order || 0}</span>
+                        <span className="inline-block px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">
+                          {faq.category}
+                        </span>
+                      </div>
+                      <h5 className="font-semibold text-sm">{faq.question}</h5>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${faq.isActive ? 'bg-green-500' : 'bg-gray-300'}`} />
+                      <button
+                        onClick={() => toggleFAQStatus(faq._id)}
+                        className="text-yellow-600 hover:text-yellow-800 text-sm"
+                      >
+                        {faq.isActive ? 'Disable' : 'Enable'}
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">{faq.answer}</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setEditingFAQItem(faq);
+                        setFaqFormData({
+                          question: faq.question,
+                          answer: faq.answer,
+                          category: faq.category,
+                          order: faq.order || 0
+                        });
+                        setShowFAQForm(true);
+                      }}
+                      className="text-sm font-medium"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => deleteFAQ(faq._id)}
+                      className="text-red-600 hover:text-red-800 text-sm font-medium"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {faqs.length === 0 && (
+                <div className="text-center py-12 bg-gray-50 rounded-lg">
+                  <p className="text-gray-500">No FAQs added yet</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+
+    {/* Modals */}
+    <>
       {/* Test Form Modal */}
       {showTestForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-              <h3 className="text-lg font-semibold mb-4">
-                {editingTest ? 'Edit Test' : 'Add New Test'}
-              </h3>
-              <form onSubmit={handleTestSubmit}>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Test Name *
-                    </label>
-                    <input
-                      type="text"
+            <h3 className="text-lg font-semibold mb-4">
+              {editingTest ? 'Edit Test' : 'Add New Test'}
+            </h3>
+            <form onSubmit={handleTestSubmit}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Test Name *
+                  </label>
+                  <input
+                    type="text"
                     required
                     value={testFormData.name}
-                    onChange={(e) => setTestFormData({...testFormData, name: e.target.value})}
+                    onChange={(e) => setTestFormData({ ...testFormData, name: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   />
                 </div>
@@ -6497,7 +6574,7 @@ export default function AdminDashboardIndex() {
                   </label>
                   <textarea
                     value={testFormData.description}
-                    onChange={(e) => setTestFormData({...testFormData, description: e.target.value})}
+                    onChange={(e) => setTestFormData({ ...testFormData, description: e.target.value })}
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   />
@@ -6514,7 +6591,7 @@ export default function AdminDashboardIndex() {
                       const value = e.target.value;
                       // Allow empty string, numbers, decimals, currency symbols, and commas
                       if (value === '' || /^[₹$]?\s?\d{1,3}(,\d{3})*(\.\d+)?$/.test(value) || /^\d*\.?\d*$/.test(value)) {
-                        setTestFormData({...testFormData, price: value});
+                        setTestFormData({ ...testFormData, price: value });
                       }
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
@@ -6529,7 +6606,7 @@ export default function AdminDashboardIndex() {
                   <select
                     required
                     value={testFormData.category}
-                    onChange={(e) => setTestFormData({...testFormData, category: e.target.value})}
+                    onChange={(e) => setTestFormData({ ...testFormData, category: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   >
                     <option value="">Select a category</option>
@@ -6550,9 +6627,9 @@ export default function AdminDashboardIndex() {
                   <CButton type="submit" variant="primary">
                     {editingTest ? 'Update Test' : 'Create Test'}
                   </CButton>
-                  <CButton 
-                    type="button" 
-                    variant="secondary" 
+                  <CButton
+                    type="button"
+                    variant="secondary"
                     onClick={() => {
                       setShowTestForm(false);
                       setEditingTest(null);
@@ -6572,7 +6649,7 @@ export default function AdminDashboardIndex() {
           </div>
         </div>
       )}
-      
+
       {/* Contact Reply Modal */}
       {showReplyModal && selectedContact && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -6586,7 +6663,7 @@ export default function AdminDashboardIndex() {
                 <X size={20} />
               </button>
             </div>
-            
+
             {/* Contact Information */}
             <div className="bg-gray-50 rounded-lg p-4 mb-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -6606,22 +6683,21 @@ export default function AdminDashboardIndex() {
                 )}
                 <div>
                   <span className="font-medium text-gray-700">Status:</span>
-                  <span className={`inline-block px-2 py-1 text-xs rounded-full capitalize ${
-                    selectedContact.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                  <span className={`inline-block px-2 py-1 text-xs rounded-full capitalize ${selectedContact.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                     selectedContact.status === 'reviewed' ? 'bg-green-100 text-green-800' :
-                    selectedContact.status === 'replied' ? 'bg-blue-100 text-blue-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
+                      selectedContact.status === 'replied' ? 'bg-blue-100 text-blue-800' :
+                        'bg-gray-100 text-gray-800'
+                    }`}>
                     {selectedContact.status || 'pending'}
                   </span>
                 </div>
               </div>
-              
+
               <div className="mt-4">
                 <span className="font-medium text-gray-700">Subject:</span>
                 <p className="text-gray-900 mt-1">{selectedContact.subject}</p>
               </div>
-              
+
               <div className="mt-4">
                 <span className="font-medium text-gray-700">Original Message:</span>
                 <div className="bg-white border border-gray-200 rounded p-3 mt-1">
@@ -6629,7 +6705,7 @@ export default function AdminDashboardIndex() {
                 </div>
               </div>
             </div>
-            
+
             {/* Reply Form */}
             <div className="space-y-4">
               <div>
@@ -6645,10 +6721,10 @@ export default function AdminDashboardIndex() {
                   disabled={sendingReply}
                 />
               </div>
-              
+
               <div className="flex gap-3 pt-4">
-                <CButton 
-                  variant="primary" 
+                <CButton
+                  variant="primary"
                   onClick={sendReply}
                   disabled={sendingReply || !replyMessage.trim()}
                   className="flex items-center gap-2"
@@ -6668,8 +6744,8 @@ export default function AdminDashboardIndex() {
                     </>
                   )}
                 </CButton>
-                <CButton 
-                  variant="secondary" 
+                <CButton
+                  variant="secondary"
                   onClick={closeReplyModal}
                   disabled={sendingReply}
                 >
@@ -6680,8 +6756,8 @@ export default function AdminDashboardIndex() {
           </div>
         </div>
       )}
-      
-      
+
+
       {/* Package Form Modal */}
       {showPackageForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -6699,7 +6775,7 @@ export default function AdminDashboardIndex() {
                     type="text"
                     required
                     value={packageFormData.name || ''}
-                    onChange={(e) => setPackageFormData({...packageFormData, name: e.target.value})}
+                    onChange={(e) => setPackageFormData({ ...packageFormData, name: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   />
                 </div>
@@ -6709,12 +6785,12 @@ export default function AdminDashboardIndex() {
                   </label>
                   <textarea
                     value={packageFormData.description || ''}
-                    onChange={(e) => setPackageFormData({...packageFormData, description: e.target.value})}
+                    onChange={(e) => setPackageFormData({ ...packageFormData, description: e.target.value })}
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   />
                 </div>
-                                <div>
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Price *
                   </label>
@@ -6726,7 +6802,7 @@ export default function AdminDashboardIndex() {
                       const value = e.target.value;
                       // Allow empty string, numbers, decimals, currency symbols, and commas
                       if (value === '' || /^[₹$]?\s?\d{1,3}(,\d{3})*(\.\d+)?$/.test(value) || /^\d*\.?\d*$/.test(value)) {
-                        setPackageFormData({...packageFormData, price: value});
+                        setPackageFormData({ ...packageFormData, price: value });
                       }
                     }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
@@ -6746,9 +6822,9 @@ export default function AdminDashboardIndex() {
                           onChange={(e) => {
                             const currentSamples = packageFormData.requiredSamples || [];
                             if (e.target.checked) {
-                              setPackageFormData({...packageFormData, requiredSamples: [...currentSamples, sample]});
+                              setPackageFormData({ ...packageFormData, requiredSamples: [...currentSamples, sample] });
                             } else {
-                              setPackageFormData({...packageFormData, requiredSamples: currentSamples.filter(s => s !== sample)});
+                              setPackageFormData({ ...packageFormData, requiredSamples: currentSamples.filter(s => s !== sample) });
                             }
                           }}
                           className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
@@ -6768,7 +6844,7 @@ export default function AdminDashboardIndex() {
                   <select
                     required
                     value={packageFormData.category || ''}
-                    onChange={(e) => setPackageFormData({...packageFormData, category: e.target.value})}
+                    onChange={(e) => setPackageFormData({ ...packageFormData, category: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   >
                     <option value="">Select a category</option>
@@ -6800,10 +6876,19 @@ export default function AdminDashboardIndex() {
                             id={`test-${test._id}`}
                             checked={packageFormData.includedTests?.includes(test._id) || false}
                             onChange={(e) => {
+                              console.log('=== TEST SELECTION DEBUG ===');
+                              console.log('Test ID:', test._id);
+                              console.log('Test Name:', test.name);
+                              console.log('Checkbox checked:', e.target.checked);
+                              console.log('Current includedTests before change:', packageFormData.includedTests);
+                              
                               const updatedTests = e.target.checked
                                 ? [...(packageFormData.includedTests || []), test._id]
                                 : (packageFormData.includedTests || []).filter(id => id !== test._id);
-                              setPackageFormData({...packageFormData, includedTests: updatedTests});
+                              
+                              console.log('Updated includedTests after change:', updatedTests);
+                              setPackageFormData({ ...packageFormData, includedTests: updatedTests });
+                              console.log('=== TEST SELECTION DEBUG END ===');
                             }}
                             className="mr-2"
                           />
@@ -6816,8 +6901,15 @@ export default function AdminDashboardIndex() {
                   </div>
                   {packageFormData.includedTests && packageFormData.includedTests.length > 0 && (
                     <p className="text-xs text-gray-500 mt-1">
-                      {packageFormData.includedTests.length} test(s) selected
+                      {packageFormData.includedTests.length} test(s) selected: {packageFormData.includedTests.join(', ')}
                     </p>
+                  )}
+                  {process.env.NODE_ENV === 'development' && (
+                    <div className="text-xs text-gray-400 mt-1 p-2 bg-gray-100 rounded">
+                      <div>Available Tests: {tests.length}</div>
+                      <div>Selected Tests: {packageFormData.includedTests?.length || 0}</div>
+                      <div>Form Data: {JSON.stringify(packageFormData.includedTests)}</div>
+                    </div>
                   )}
                 </div>
                 <div>
@@ -6829,7 +6921,7 @@ export default function AdminDashboardIndex() {
                     required
                     placeholder="e.g., 24 hours, 2 days"
                     value={packageFormData.duration || ''}
-                    onChange={(e) => setPackageFormData({...packageFormData, duration: e.target.value})}
+                    onChange={(e) => setPackageFormData({ ...packageFormData, duration: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                   />
                 </div>
@@ -6837,7 +6929,7 @@ export default function AdminDashboardIndex() {
                   <input
                     type="checkbox"
                     checked={packageFormData.fastingRequired}
-                    onChange={(e) => setPackageFormData({...packageFormData, fastingRequired: e.target.checked})}
+                    onChange={(e) => setPackageFormData({ ...packageFormData, fastingRequired: e.target.checked })}
                     className="mr-2"
                   />
                   <label className="text-sm font-medium text-gray-700">
@@ -6850,7 +6942,7 @@ export default function AdminDashboardIndex() {
                   </label>
                   <textarea
                     value={packageFormData.benefits?.join(', ') || ''}
-                    onChange={(e) => setPackageFormData({...packageFormData, benefits: e.target.value.split(',').map(b => b.trim()).filter(b => b)})}
+                    onChange={(e) => setPackageFormData({ ...packageFormData, benefits: e.target.value.split(',').map(b => b.trim()).filter(b => b) })}
                     rows={3}
                     placeholder="e.g., Early detection of health issues, Complete health assessment"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
@@ -6862,7 +6954,7 @@ export default function AdminDashboardIndex() {
                   </label>
                   <textarea
                     value={packageFormData.suitableFor?.join(', ') || ''}
-                    onChange={(e) => setPackageFormData({...packageFormData, suitableFor: e.target.value.split(',').map(s => s.trim()).filter(s => s)})}
+                    onChange={(e) => setPackageFormData({ ...packageFormData, suitableFor: e.target.value.split(',').map(s => s.trim()).filter(s => s) })}
                     rows={3}
                     placeholder="e.g., Adults above 30 years, Annual health checkup"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
@@ -6873,9 +6965,9 @@ export default function AdminDashboardIndex() {
                 <CButton type="submit" variant="primary">
                   {editingPackage ? 'Update' : 'Create'} Package
                 </CButton>
-                <CButton 
-                  type="button" 
-                  variant="outline" 
+                <CButton
+                  type="button"
+                  variant="outline"
                   onClick={() => {
                     setShowPackageForm(false);
                     setEditingPackage(null);
@@ -6909,7 +7001,7 @@ export default function AdminDashboardIndex() {
               <div className="flex gap-2">
                 {!editingTestDetails && (
                   <>
-                    <button 
+                    <button
                       onClick={() => {
                         const testId = Object.keys(testDetails)[0];
                         const details = testDetails[testId];
@@ -6931,7 +7023,7 @@ export default function AdminDashboardIndex() {
                     >
                       <Edit2 size={16} />
                     </button>
-                    <button 
+                    <button
                       onClick={async () => {
                         const testId = Object.keys(testDetails)[0];
                         const success = await deleteTestDetails(testId);
@@ -6947,7 +7039,7 @@ export default function AdminDashboardIndex() {
                     </button>
                   </>
                 )}
-                <button 
+                <button
                   onClick={() => {
                     setTestDetails({});
                     setEditingTestDetails(false);
@@ -6983,9 +7075,9 @@ export default function AdminDashboardIndex() {
                         <input
                           type="text"
                           value={testDetailsFormData.requiredSamples.join(', ')}
-                          onChange={(e) => setTestDetailsFormData(prev => ({ 
-                            ...prev, 
-                            requiredSamples: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
+                          onChange={(e) => setTestDetailsFormData(prev => ({
+                            ...prev,
+                            requiredSamples: e.target.value.split(',').map(s => s.trim()).filter(s => s)
                           }))}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                           placeholder="blood, urine, saliva"
@@ -7005,9 +7097,9 @@ export default function AdminDashboardIndex() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Includes (comma-separated)</label>
                         <textarea
                           value={testDetailsFormData.includes?.join(', ') || ''}
-                          onChange={(e) => setTestDetailsFormData(prev => ({ 
-                            ...prev, 
-                            includes: e.target.value.split(',').map(i => i.trim()).filter(i => i) 
+                          onChange={(e) => setTestDetailsFormData(prev => ({
+                            ...prev,
+                            includes: e.target.value.split(',').map(i => i.trim()).filter(i => i)
                           }))}
                           rows={3}
                           placeholder="e.g., Blood glucose measurement, Expert interpretation, Digital report delivery"
@@ -7018,9 +7110,9 @@ export default function AdminDashboardIndex() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Benefits (comma-separated)</label>
                         <textarea
                           value={testDetailsFormData.benefits?.join(', ') || ''}
-                          onChange={(e) => setTestDetailsFormData(prev => ({ 
-                            ...prev, 
-                            benefits: e.target.value.split(',').map(b => b.trim()).filter(b => b) 
+                          onChange={(e) => setTestDetailsFormData(prev => ({
+                            ...prev,
+                            benefits: e.target.value.split(',').map(b => b.trim()).filter(b => b)
                           }))}
                           rows={3}
                           placeholder="e.g., Early detection of health issues, Complete health assessment"
@@ -7031,9 +7123,9 @@ export default function AdminDashboardIndex() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Suitable For (comma-separated)</label>
                         <textarea
                           value={testDetailsFormData.suitableFor?.join(', ') || ''}
-                          onChange={(e) => setTestDetailsFormData(prev => ({ 
-                            ...prev, 
-                            suitableFor: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
+                          onChange={(e) => setTestDetailsFormData(prev => ({
+                            ...prev,
+                            suitableFor: e.target.value.split(',').map(s => s.trim()).filter(s => s)
                           }))}
                           rows={3}
                           placeholder="e.g., Adults above 30 years, Annual health checkup"
@@ -7074,9 +7166,9 @@ export default function AdminDashboardIndex() {
                         <CButton type="submit" variant="primary">
                           Update
                         </CButton>
-                        <CButton 
-                          type="button" 
-                          variant="outline" 
+                        <CButton
+                          type="button"
+                          variant="outline"
                           onClick={() => setEditingTestDetails(false)}
                         >
                           Cancel
@@ -7184,7 +7276,7 @@ export default function AdminDashboardIndex() {
               <div className="flex gap-2">
                 {!editingPackageDetails && (
                   <>
-                    <button 
+                    <button
                       onClick={() => {
                         const packageId = Object.keys(packageDetails)[0];
                         const details = packageDetails[packageId];
@@ -7203,7 +7295,7 @@ export default function AdminDashboardIndex() {
                     >
                       <Edit2 size={16} />
                     </button>
-                    <button 
+                    <button
                       onClick={async () => {
                         const packageId = Object.keys(packageDetails)[0];
                         const success = await deletePackageDetails(packageId);
@@ -7219,7 +7311,7 @@ export default function AdminDashboardIndex() {
                     </button>
                   </>
                 )}
-                <button 
+                <button
                   onClick={() => {
                     setPackageDetails({});
                     setEditingPackageDetails(false);
@@ -7236,10 +7328,10 @@ export default function AdminDashboardIndex() {
                   <form onSubmit={async (e) => {
                     e.preventDefault();
                     const success = await updatePackageDetails(packageId, {
-                        ...packageDetailsFormData,
-                        benefits: packageDetailsFormData.benefits || [],
-                        suitableFor: packageDetailsFormData.suitableFor || []
-                      });
+                      ...packageDetailsFormData,
+                      benefits: packageDetailsFormData.benefits || [],
+                      suitableFor: packageDetailsFormData.suitableFor || []
+                    });
                     if (success) {
                       setEditingPackageDetails(false);
                     }
@@ -7259,9 +7351,9 @@ export default function AdminDashboardIndex() {
                         <input
                           type="text"
                           value={packageDetailsFormData.requiredSamples.join(', ')}
-                          onChange={(e) => setPackageDetailsFormData(prev => ({ 
-                            ...prev, 
-                            requiredSamples: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
+                          onChange={(e) => setPackageDetailsFormData(prev => ({
+                            ...prev,
+                            requiredSamples: e.target.value.split(',').map(s => s.trim()).filter(s => s)
                           }))}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                           placeholder="blood, urine, saliva"
@@ -7314,9 +7406,9 @@ export default function AdminDashboardIndex() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Benefits (comma-separated)</label>
                         <textarea
                           value={packageDetailsFormData.benefits?.join(', ') || ''}
-                          onChange={(e) => setPackageDetailsFormData(prev => ({ 
-                            ...prev, 
-                            benefits: e.target.value.split(',').map(b => b.trim()).filter(b => b) 
+                          onChange={(e) => setPackageDetailsFormData(prev => ({
+                            ...prev,
+                            benefits: e.target.value.split(',').map(b => b.trim()).filter(b => b)
                           }))}
                           rows={3}
                           placeholder="e.g., Early detection of health issues, Complete health assessment"
@@ -7327,22 +7419,22 @@ export default function AdminDashboardIndex() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Suitable For (comma-separated)</label>
                         <textarea
                           value={packageDetailsFormData.suitableFor?.join(', ') || ''}
-                          onChange={(e) => setPackageDetailsFormData(prev => ({ 
-                            ...prev, 
-                            suitableFor: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
+                          onChange={(e) => setPackageDetailsFormData(prev => ({
+                            ...prev,
+                            suitableFor: e.target.value.split(',').map(s => s.trim()).filter(s => s)
                           }))}
                           rows={3}
                           placeholder="e.g., Adults above 30 years, Annual health checkup"
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
                         />
                       </div>
-                                            <div className="flex gap-2">
+                      <div className="flex gap-2">
                         <CButton type="submit" variant="primary">
                           Update
                         </CButton>
-                        <CButton 
-                          type="button" 
-                          variant="outline" 
+                        <CButton
+                          type="button"
+                          variant="outline"
                           onClick={() => setEditingPackageDetails(false)}
                         >
                           Cancel
@@ -7398,7 +7490,7 @@ export default function AdminDashboardIndex() {
                         </div>
                       </div>
                     )}
-                </div>
+                  </div>
                 )}
               </div>
             ))}
@@ -7415,7 +7507,7 @@ export default function AdminDashboardIndex() {
               <div className="flex gap-2">
                 {!editingHealthConcernDetails && (
                   <>
-                    <button 
+                    <button
                       onClick={() => {
                         const concernId = Object.keys(healthConcernDetails)[0];
                         const details = healthConcernDetails[concernId];
@@ -7434,7 +7526,7 @@ export default function AdminDashboardIndex() {
                     >
                       <Edit2 size={16} className="text-blue-600 hover:text-blue-800" />
                     </button>
-                    <button 
+                    <button
                       onClick={async () => {
                         const concernId = Object.keys(healthConcernDetails)[0];
                         const success = await deleteHealthConcernDetails(concernId);
@@ -7450,7 +7542,7 @@ export default function AdminDashboardIndex() {
                     </button>
                   </>
                 )}
-                <button 
+                <button
                   onClick={() => {
                     setHealthConcernDetails({});
                     setEditingHealthConcernDetails(false);
@@ -7518,9 +7610,9 @@ export default function AdminDashboardIndex() {
                         <CButton type="submit" variant="primary">
                           Update
                         </CButton>
-                        <CButton 
-                          type="button" 
-                          variant="outline" 
+                        <CButton
+                          type="button"
+                          variant="outline"
                           onClick={() => setEditingHealthConcernDetails(false)}
                         >
                           Cancel
@@ -7536,9 +7628,8 @@ export default function AdminDashboardIndex() {
                       </div>
                       <div>
                         <h4 className="font-medium text-gray-900 text-lg">{details.title}</h4>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          details.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${details.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                          }`}>
                           {details.isActive ? 'Active' : 'Inactive'}
                         </span>
                       </div>
@@ -7568,7 +7659,7 @@ export default function AdminDashboardIndex() {
                             } else {
                               displayName = 'Unknown Test';
                             }
-                            
+
                             return (
                               <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
                                 {displayName}
@@ -7609,9 +7700,9 @@ export default function AdminDashboardIndex() {
           </div>
         </div>
       )}
-      </>
-        </main>
-      </div>
-    </div>
+    </>
+    </main>
+  </div>
+</div>
   );
 }

@@ -72,17 +72,19 @@ export default function AboutIndex() {
       <Header />
 
       <main className="flex-grow">
-        {/* Hero Section */}
+        {/* Hero Section with Image */}
         <section className="bg-white py-20">
-          <div className="container mx-auto px-4 text-center">
-            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
-              About Lab Booking System
-            </h1>
-            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-              Simplifying laboratory reservations for educational institutions and research facilities with modern technology.
-            </p>
-            {/* Divider using Primary Color */}
-            <div className="w-24 h-1 bg-primary mx-auto mt-6 rounded-full" />
+          <div className="container mx-auto px-4">
+            <div className="text-center max-w-4xl mx-auto">
+              <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
+                About Lab Booking System
+              </h1>
+              <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+                Simplifying laboratory reservations for educational institutions and research facilities with modern technology.
+              </p>
+              {/* Divider using Primary Color */}
+              <div className="w-24 h-1 bg-primary mx-auto mt-6 rounded-full" />
+            </div>
           </div>
         </section>
 

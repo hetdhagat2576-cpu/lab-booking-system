@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Activity, Stethoscope } from 'lucide-react';
+import { Activity, Stethoscope, Loader2 } from 'lucide-react';
 
 const Loader = () => {
   const [loading, setLoading] = useState(true);
@@ -32,10 +32,10 @@ const Loader = () => {
           <Activity className="w-6 h-6 text-secondary animate-pulse" />
         </div>
         
-        <div className="mt-4 flex justify-center space-x-1">
-          <div className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: '0ms', animationDuration: '1s' }}></div>
-          <div className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: '333ms', animationDuration: '1s' }}></div>
-          <div className="w-2 h-2 bg-primary rounded-full animate-pulse" style={{ animationDelay: '666ms', animationDuration: '1s' }}></div>
+        <div className="mt-4 flex justify-center space-x-2">
+          <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0ms', animationDuration: '0.8s' }}></div>
+          <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '200ms', animationDuration: '0.8s' }}></div>
+          <div className="w-3 h-3 bg-primary rounded-full animate-bounce" style={{ animationDelay: '400ms', animationDuration: '0.8s' }}></div>
         </div>
       </div>
     </div>

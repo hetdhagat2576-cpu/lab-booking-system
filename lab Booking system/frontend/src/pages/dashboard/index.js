@@ -8,7 +8,7 @@ import { FileText } from "lucide-react";
 import Theme from "../../config/theam/index.js";
 import IconConfig from "../../components/icon/index.js";
 import CButton from "../../components/cButton";
-import { safeFetch } from "../../config/api";
+import { safeFetch, debouncedApiCall } from "../../config/api";
 import Swal from 'sweetalert2';
 import {
   DASHBOARD_HEALTH_CONCERNS,
@@ -50,89 +50,121 @@ export default function DashboardIndex() {
       setLoadingHealthConcerns(false);
     }
   };
+  // Sequential API calls to prevent concurrent requests
   useEffect(() => {
     const userData = localStorage.getItem("lab_user");
     if (userData) {
       const user = JSON.parse(userData);
-      fetchUserReports(user.token);
-      fetchTests(user.token);
-      fetchHealthConcerns(); // Fetch health concerns from API
-      // Clear old categorized data to force refresh
-      const healthConcerns = ['liver', 'lungs', 'kidney', 'thyroid', 'diabetes', 'fever'];
-      healthConcerns.forEach(concern => {
-        localStorage.removeItem(`health_concern_${concern}_tests`);
-      });
+      
+      // Create a debounced API call function
+      const debouncedCall = debouncedApiCall(500); // 500ms debounce
+      
+      // Sequential API calls to prevent concurrent requests
+      const loadDashboardData = async () => {
+        try {
+          console.log('Starting sequential dashboard data loading...');
+          
+          // First fetch user reports
+          await fetchUserReportsSequential(user.token);
+          
+          // Then fetch tests with a small delay
+          setTimeout(async () => {
+            await fetchTestsSequential(user.token);
+          }, 100);
+          
+          // Finally fetch health concerns with another delay
+          setTimeout(async () => {
+            await fetchHealthConcernsSequential();
+          }, 200);
+          
+          // Clear old categorized data to force refresh
+          const healthConcerns = ['liver', 'lungs', 'kidney', 'thyroid', 'diabetes', 'fever'];
+          healthConcerns.forEach(concern => {
+            localStorage.removeItem(`health_concern_${concern}_tests`);
+          });
+          
+        } catch (error) {
+          console.error('Error loading dashboard data:', error);
+        }
+      };
+      
+      loadDashboardData();
     } else {
       navigate("/user-login");
     }
   }, [navigate]);
-  const handleHealthConcernClick = (id) => {
-    // Store the categorized tests for this health concern
-    const concernTests = categorizedTests[id] || [];
-    localStorage.setItem(`health_concern_${id}_tests`, JSON.stringify(concernTests));
-    navigate(`/health-packages/${id}`);
+  // Sequential version of fetchUserReports
+  const fetchUserReportsSequential = async (token) => {
+    try {
+      setLoadingReports(true);
+      console.log('Fetching user reports sequentially...');
+      const response = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/user`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUserReports(data.data || []);
+        console.log('User reports fetched successfully:', data.data?.length || 0);
+      } else {
+        console.error('Failed to fetch user reports - Status:', response.status);
+        setUserReports([]);
+      }
+    } catch (error) {
+      console.error('Error fetching user reports:', error);
+      setUserReports([]);
+    } finally {
+      setLoadingReports(false);
+    }
   };
-  const fetchTests = async () => {
+
+  // Sequential version of fetchTests
+  const fetchTestsSequential = async (token) => {
     try {
       setLoadingTests(true);
+      console.log('Fetching tests sequentially...');
       const response = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests?isActive=true`);
+      
       if (response.ok) {
         const data = await response.json();
         const apiTests = data.data || [];
         setTests(apiTests);
+        console.log('Tests fetched successfully:', apiTests.length);
+        
         // Categorize tests by health concern
         const categorized = {};
         // Initialize categories
         DASHBOARD_HEALTH_CONCERNS.forEach(concern => {
           categorized[concern.id] = [];
         });
+        
         // Categorize tests based on their category or name
         apiTests.forEach((test, index) => {
           const category = test.category?.toLowerCase() || '';
           const testName = test.name?.toLowerCase() || '';
-          console.log(`Processing test ${index + 1}:`, {
-            name: test.name,
-            category: test.category,
-            _id: test._id
-          });
+          
           // Categorize based on category field or name patterns
           if (category.includes('liver') || testName.includes('liver') || testName.includes('sgpt') || testName.includes('sgot') || testName.includes('alt')) {
-            console.log('✓ Added to liver category:', test.name);
             categorized.liver.push(test);
-          } else if (category.includes('lung') || category.includes('respiratory') || testName.includes('lung') || testName.includes('checkup')) {
-            console.log('✓ Added to lungs category:', test.name);
+          } else if (category.includes('lung') || testName.includes('lung') || testName.includes('chest') || testName.includes('respiratory')) {
             categorized.lungs.push(test);
-          } else if (category.includes('kidney') || category.includes('renal') || testName.includes('kidney') || testName.includes('creatinine') || testName.includes('bun')) {
-            console.log('✓ Added to kidney category:', test.name);
+          } else if (category.includes('kidney') || testName.includes('kidney') || testName.includes('creatinine') || testName.includes('urea')) {
             categorized.kidney.push(test);
           } else if (category.includes('thyroid') || testName.includes('thyroid') || testName.includes('tsh') || testName.includes('t3') || testName.includes('t4')) {
-            console.log('✓ Added to thyroid category:', test.name);
             categorized.thyroid.push(test);
-            console.log('Added to thyroid:', test.name);
-          } else if (category.includes('diabetes') || testName.includes('sugar') || testName.includes('glucose') || testName.includes('hba1c')) {
-            console.log('✓ Added to diabetes category:', test.name);
+          } else if (category.includes('diabetes') || testName.includes('glucose') || testName.includes('hba1c') || testName.includes('sugar')) {
             categorized.diabetes.push(test);
-            console.log('Added to diabetes:', test.name);
-          } else if (category.includes('fever') || testName.includes('fever') || testName.includes('dengue') || testName.includes('malaria') || testName.includes('typhoid')) {
-            console.log('✓ Added to fever category:', test.name);
+          } else if (category.includes('fever') || testName.includes('fever') || testName.includes('temperature') || testName.includes('infection')) {
             categorized.fever.push(test);
-          } else {
-            // Default to liver if no specific category matches
-            console.log('⚠️ Uncategorized test - defaulting to liver:', test.name, 'Category:', test.category);
-            categorized.liver.push(test);
           }
         });
-        console.log('Final categorized tests:', {
-          thyroid: categorized.thyroid.length,
-          diabetes: categorized.diabetes.length,
-          liver: categorized.liver.length,
-          lungs: categorized.lungs.length,
-          kidney: categorized.kidney.length,
-          fever: categorized.fever.length
-        });
+        
         setCategorizedTests(categorized);
       } else {
-        console.error('Failed to fetch tests from API');
+        console.error('Failed to fetch tests - Status:', response.status);
         setTests([]);
         setCategorizedTests({});
       }
@@ -144,6 +176,39 @@ export default function DashboardIndex() {
       setLoadingTests(false);
     }
   };
+
+  // Sequential version of fetchHealthConcerns
+  const fetchHealthConcernsSequential = async () => {
+    try {
+      setLoadingHealthConcerns(true);
+      console.log('Fetching health concerns sequentially...');
+      const response = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns`);
+      
+      if (response.ok) {
+        const result = await response.json();
+        const healthConcernsData = result.data || [];
+        setHealthConcerns(healthConcernsData);
+        console.log('Health concerns fetched successfully:', healthConcernsData.length);
+      } else {
+        console.error('Failed to fetch health concerns - Status:', response.status);
+        // Fallback to static data if API doesn't exist
+        setHealthConcerns(DASHBOARD_HEALTH_CONCERNS);
+      }
+    } catch (error) {
+      console.error('Error fetching health concerns:', error);
+      // Fallback to static data
+      setHealthConcerns(DASHBOARD_HEALTH_CONCERNS);
+    } finally {
+      setLoadingHealthConcerns(false);
+    }
+  };
+  const handleHealthConcernClick = (id) => {
+    // Store the categorized tests for this health concern
+    const concernTests = categorizedTests[id] || [];
+    localStorage.setItem(`health_concern_${id}_tests`, JSON.stringify(concernTests));
+    navigate(`/health-packages/${id}`);
+  };
+
   const fetchUserReports = async () => {
     if (!user?.token) return;
     setLoadingReports(true);
@@ -212,7 +277,7 @@ export default function DashboardIndex() {
     if (user && (!user.role || user.role === "user")) {
       fetchUserBookings();
       fetchUserReports();
-      fetchTests(); // Fetch tests to synchronize with All Tests page
+      // fetchTests() removed - tests are now fetched sequentially in loadDashboardData()
     }
   }, [user]);
   return (

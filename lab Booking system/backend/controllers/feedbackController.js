@@ -50,68 +50,37 @@ const createPublicFeedback = async (req, res) => {
   }
 };
 
-const getReviewedFeedbacks = async (req, res) => {
-  try {
-    // Get all feedbacks since there's no admin approval system
-    const feedbacks = await Feedback.find()
-      .populate('user', 'name')
-      .sort({ createdAt: -1 })
-      .limit(10); // Limit to 10 most recent feedbacks
-
-    // Transform feedback data to include userName for public feedback
-    const transformedFeedbacks = feedbacks.map(feedback => ({
-      _id: feedback._id,
-      userName: feedback.user ? feedback.user.name : (feedback.userName || 'Anonymous'),
-      comment: feedback.comment,
-      status: feedback.status,
-      bookingEaseRating: feedback.bookingEaseRating,
-      staffFriendlinessRating: feedback.staffFriendlinessRating,
-      turnaroundSatisfactionRating: feedback.turnaroundSatisfactionRating,
-      createdAt: feedback.createdAt
-    }));
-
-    res.status(200).json({
-      success: true,
-      count: transformedFeedbacks.length,
-      data: transformedFeedbacks,
-    });
-  } catch (error) {
-    console.error('Get feedbacks error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching feedbacks',
-      error: error.message,
-    });
-  }
-};
-
-// Admin: Get all feedbacks with pagination and filtering
+// Get all feedbacks (Admin only)
 const getAllFeedbacks = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const status = req.query.status;
+    const { page = 1, limit = 10, status, rating } = req.query;
+    const skip = (page - 1) * limit;
     
-    const query = {};
+    let filter = {};
     if (status) {
-      query.status = status;
+      filter.status = status;
     }
-
-    const feedbacks = await Feedback.find(query)
+    if (rating) {
+      filter.bookingEaseRating = parseInt(rating);
+    }
+    
+    const feedbacks = await Feedback.find(filter)
       .populate('user', 'name email')
       .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await Feedback.countDocuments(query);
-
+      .skip(skip)
+      .limit(parseInt(limit));
+    
+    const total = await Feedback.countDocuments(filter);
+    
     res.status(200).json({
       success: true,
-      count: feedbacks.length,
-      total,
-      page,
-      pages: Math.ceil(total / limit),
       data: feedbacks,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
     });
   } catch (error) {
     console.error('Get all feedbacks error:', error);
@@ -123,28 +92,90 @@ const getAllFeedbacks = async (req, res) => {
   }
 };
 
-// Admin: Update feedback status
-const updateFeedbackStatus = async (req, res) => {
+// Get feedback by ID
+const getFeedbackById = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { id } = req.params;
+    const feedback = await Feedback.findById(id).populate('user', 'name email');
     
-    const feedback = await Feedback.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true, runValidators: true }
-    ).populate('user', 'name email');
-
     if (!feedback) {
       return res.status(404).json({
         success: false,
-        message: 'Feedback not found',
+        message: 'Feedback not found'
       });
     }
+    
+    res.status(200).json({
+      success: true,
+      data: feedback
+    });
+  } catch (error) {
+    console.error('Get feedback by ID error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching feedback',
+      error: error.message,
+    });
+  }
+};
 
+// Update feedback (Admin only)
+const updateFeedback = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    
+    const feedback = await Feedback.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+    
+    if (!feedback) {
+      return res.status(404).json({
+        success: false,
+        message: 'Feedback not found'
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: 'Feedback updated successfully',
+      data: feedback
+    });
+  } catch (error) {
+    console.error('Update feedback error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating feedback',
+      error: error.message,
+    });
+  }
+};
+
+// Update feedback status (Admin only)
+const updateFeedbackStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    const feedback = await Feedback.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    ).populate('user', 'name email');
+    
+    if (!feedback) {
+      return res.status(404).json({
+        success: false,
+        message: 'Feedback not found'
+      });
+    }
+    
     res.status(200).json({
       success: true,
       message: 'Feedback status updated successfully',
-      data: feedback,
+      data: feedback
     });
   } catch (error) {
     console.error('Update feedback status error:', error);
@@ -156,21 +187,23 @@ const updateFeedbackStatus = async (req, res) => {
   }
 };
 
-// Admin: Delete feedback
+// Delete feedback (Admin only)
 const deleteFeedback = async (req, res) => {
   try {
-    const feedback = await Feedback.findByIdAndDelete(req.params.id);
-
+    const { id } = req.params;
+    
+    const feedback = await Feedback.findByIdAndDelete(id);
+    
     if (!feedback) {
       return res.status(404).json({
         success: false,
-        message: 'Feedback not found',
+        message: 'Feedback not found'
       });
     }
-
+    
     res.status(200).json({
       success: true,
-      message: 'Feedback deleted successfully',
+      message: 'Feedback deleted successfully'
     });
   } catch (error) {
     console.error('Delete feedback error:', error);
@@ -182,14 +215,29 @@ const deleteFeedback = async (req, res) => {
   }
 };
 
-module.exports = {
-  createPublicFeedback,
-  getReviewedFeedbacks,
-  getAllFeedbacks,
-  updateFeedbackStatus,
-  deleteFeedback,
+// Get reviewed feedbacks (Admin only)
+const getReviewedFeedbacks = async (req, res) => {
+  try {
+    const feedbacks = await Feedback.find({ status: 'reviewed' })
+      .populate('user', 'name email')
+      .sort({ createdAt: -1 });
+    
+    res.status(200).json({
+      success: true,
+      data: feedbacks,
+      count: feedbacks.length
+    });
+  } catch (error) {
+    console.error('Get reviewed feedbacks error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching reviewed feedbacks',
+      error: error.message,
+    });
+  }
 };
 
+// Create feedback from authenticated user
 const createUserFeedback = async (req, res) => {
   try {
     const {
@@ -253,5 +301,14 @@ const getMyFeedbacks = async (req, res) => {
   }
 };
  
-module.exports.createUserFeedback = createUserFeedback;
-module.exports.getMyFeedbacks = getMyFeedbacks;
+module.exports = {
+  createPublicFeedback,
+  getAllFeedbacks,
+  getFeedbackById,
+  updateFeedback,
+  updateFeedbackStatus,
+  deleteFeedback,
+  getReviewedFeedbacks,
+  createUserFeedback,
+  getMyFeedbacks
+};

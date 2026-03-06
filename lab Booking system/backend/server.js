@@ -5,6 +5,7 @@ const connectDB = require('./config/db');
 const http = require('http');
 const WebSocket = require('ws');
 const sessionConfig = require('./middleware/sessionMiddleware');
+const { showLoadingIndicator, hideLoadingIndicator } = require('./middleware/loadingMiddleware');
 
 // Load environment variables
 dotenv.config();

@@ -140,6 +140,17 @@ const createBooking = async (req, res) => {
 
 const getBookings = async (req, res) => {
   try {
+    console.log('DEBUG: req.user =', req.user);
+    console.log('DEBUG: req.user type =', typeof req.user);
+    
+    // Check if user exists
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not authenticated'
+      });
+    }
+    
     // For lab technicians, only show approved bookings
     if (req.user.role === 'labtechnician') {
       const bookings = await Booking.find({ 
@@ -401,10 +412,174 @@ const getInProgressBookings = async (req, res) => {
   }
 };
 
+const getBookingById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const booking = await Booking.findById(id)
+      .populate('user', 'name email')
+      .populate('test', 'name description price')
+      .populate('package', 'name description price');
+    
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      data: booking
+    });
+  } catch (error) {
+    console.error('Get booking by ID error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching booking',
+      error: error.message,
+    });
+  }
+};
+
+// Delete booking (Admin only)
+const deleteBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const booking = await Booking.findByIdAndDelete(id);
+    
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+    
+    // Send notification to user about booking deletion
+    if (booking.user) {
+      await sendNotificationToUser(booking.user, {
+        title: 'Booking Cancelled',
+        message: `Your booking for ${booking.test?.name || booking.package?.name || 'Test'} has been cancelled.`,
+        type: 'booking_cancelled',
+        bookingId: booking._id
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: 'Booking deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete booking error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error deleting booking',
+      error: error.message,
+    });
+  }
+};
+
+// Reschedule booking
+const rescheduleBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newDate, newTime, reason } = req.body;
+    
+    const booking = await Booking.findById(id);
+    
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+    
+    // Store old values for notification
+    const oldDate = booking.date;
+    const oldTime = booking.time;
+    
+    // Update booking
+    booking.date = newDate;
+    booking.time = newTime;
+    booking.rescheduleFrom = { date: oldDate, time: oldTime };
+    booking.rescheduleReason = reason;
+    booking.status = 'rescheduled';
+    
+    await booking.save();
+    
+    // Send notification to user
+    if (booking.user) {
+      await sendNotificationToUser(booking.user, {
+        title: 'Booking Rescheduled',
+        message: `Your booking has been rescheduled from ${oldDate} ${oldTime} to ${newDate} ${newTime}`,
+        type: 'booking_rescheduled',
+        bookingId: booking._id
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: 'Booking rescheduled successfully',
+      data: booking
+    });
+  } catch (error) {
+    console.error('Reschedule booking error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error rescheduling booking',
+      error: error.message,
+    });
+  }
+};
+
+// Get user's bookings
+const getUserBookings = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status } = req.query;
+    const skip = (page - 1) * limit;
+    
+    let filter = { user: req.user._id };
+    if (status) {
+      filter.status = status;
+    }
+    
+    const bookings = await Booking.find(filter)
+      .populate('test', 'name description price')
+      .populate('package', 'name description price')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
+    
+    const total = await Booking.countDocuments(filter);
+    
+    res.status(200).json({
+      success: true,
+      data: bookings,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get user bookings error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching bookings',
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createBooking,
   getBookings,
+  getBookingById,
   updateBookingStatus,
+  deleteBooking,
+  rescheduleBooking,
+  getUserBookings,
   getInProgressBookings,
   setWebSocketServer
 };

@@ -164,10 +164,21 @@ export default function ServiceIndex() {
       {/* Hero Image Section */}
       <div className="w-full relative h-96 bg-slate900 overflow-hidden">
         <img 
-          src={ImageConfig.serviceImage || "https://via.placeholder.com/1920x400"}
-          alt="Services" 
+          src={ImageConfig.serviceImage}
+          alt="Laboratory Services" 
           className="w-full h-full object-cover"
+          onError={(e) => {
+            e.target.src = ImageConfig.serviceImageFallback;
+          }}
         />
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+          <div className="text-center text-white px-4">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">Laboratory Booking Services</h1>
+            <p className="text-lg md:text-xl max-w-2xl mx-auto">
+              Everything you need to manage laboratory bookings smoothly and professionally
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Our Services Section */}
@@ -180,6 +191,7 @@ export default function ServiceIndex() {
         <div className="w-24 h-1 bg-primary mx-auto mt-6 rounded-full" />
       </div>
 
+      
       {/* Comprehensive Features Section */}
       <div className="w-full py-20 bg-white">
         <div className="max-w-6xl mx-auto px-4">

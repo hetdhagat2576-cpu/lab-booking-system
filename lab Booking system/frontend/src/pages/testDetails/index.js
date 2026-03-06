@@ -5,7 +5,7 @@ import Footer from "../../components/footer";
 import Theme from "../../config/theam/index.js";
 import IconConfig from "../../components/icon/index.js";
 import CButton from "../../components/cButton";
-import { safeFetch, createApiUrl } from "../../config/api";
+import { safeFetch, createApiUrl, debouncedApiCall } from "../../config/api";
 import { safeTestName, safeSampleType, safeMap } from "../../services/testSync";
 import {
   RECOMMENDED_TESTS,
@@ -63,7 +63,7 @@ export default function TestDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch test data from API
+  // Fetch test data from API with debouncing to prevent multiple calls
   useEffect(() => {
     const fetchTest = async () => {
       setLoading(true);
@@ -73,7 +73,11 @@ export default function TestDetails() {
         if (id) {
           try {
             console.log(`Fetching test details for ID: ${id}`);
-            const response = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests/${id}`);
+            
+            // Use debounced API call to prevent multiple rapid calls
+            const debouncedCall = debouncedApiCall(300); // 300ms debounce
+            const response = await debouncedCall(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests/${id}`);
+            
             console.log(`API response status: ${response.status}`);
             
             if (response.ok) {
@@ -105,7 +109,8 @@ export default function TestDetails() {
           if (!testData && id) {
             try {
               console.log('Attempting to fetch a valid test as fallback...');
-              const fallbackResponse = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests?isActive=true&limit=1`);
+              const debouncedFallbackCall = debouncedApiCall(300);
+              const fallbackResponse = await debouncedFallbackCall(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests?isActive=true&limit=1`);
               if (fallbackResponse.ok) {
                 const fallbackData = await fallbackResponse.json();
                 if (fallbackData.data && fallbackData.data.length > 0) {
