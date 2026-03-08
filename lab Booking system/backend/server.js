@@ -21,7 +21,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // CORS middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5001'],
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -136,16 +136,18 @@ bookingController.setWebSocketServer(wss);
 
 
 wss.on('connection', (ws, req) => {
-  console.log('New WebSocket connection established');
+  console.log('🔌 New WebSocket connection established');
   
   // Extract user ID and token from query parameters
   const url = new URL(req.url, `http://${req.headers.host}`);
   const userId = url.searchParams.get('userId');
   const token = url.searchParams.get('token');
   
+  console.log(`🔍 WebSocket connection attempt - UserId: ${userId}, HasToken: ${!!token}`);
+  
   // Validate authentication
   if (!userId || !token) {
-    console.log('WebSocket connection rejected: missing userId or token');
+    console.log('❌ WebSocket connection rejected: missing userId or token');
     ws.close(1008, 'Authentication required');
     return;
   }
@@ -154,10 +156,11 @@ wss.on('connection', (ws, req) => {
   // For now, we'll accept the token and associate the connection
   ws.userId = userId;
   ws.token = token;
-  console.log(`WebSocket connection associated with user: ${userId}`);
+  console.log(`✅ WebSocket connection associated with user: ${userId}`);
+  console.log(`📊 Total active WebSocket clients: ${wss.clients.size}`);
   
   ws.on('message', (message) => {
-    console.log('Received:', message);
+    console.log('📨 Received WebSocket message:', message);
     
     try {
       const parsedMessage = JSON.parse(message);
@@ -165,7 +168,7 @@ wss.on('connection', (ws, req) => {
       // Handle user identification
       if (parsedMessage.type === 'authenticate' && parsedMessage.userId) {
         ws.userId = parsedMessage.userId;
-        console.log(`WebSocket re-authenticated for user: ${parsedMessage.userId}`);
+        console.log(`🔄 WebSocket re-authenticated for user: ${parsedMessage.userId}`);
         return;
       }
       
@@ -176,22 +179,35 @@ wss.on('connection', (ws, req) => {
         }
       });
     } catch (error) {
-      console.error('Error parsing WebSocket message:', error);
+      console.error('❌ Error parsing WebSocket message:', error);
     }
   });
 
   ws.on('close', (code, reason) => {
-    console.log(`WebSocket connection closed for user ${userId}, code: ${code}, reason: ${reason}`);
+    console.log(`🔌 WebSocket connection closed for user ${userId}, code: ${code}, reason: ${reason}`);
+    console.log(`📊 Remaining active clients: ${wss.clients.size}`);
   });
 
   ws.on('error', (error) => {
-    console.error(`WebSocket error for user ${userId}:`, error);
+    console.error(`❌ WebSocket error for user ${userId}:`, error);
   });
 });
 
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`WebSocket server running on ws://localhost:${PORT}`);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  process.exit(1);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
 });
 
 module.exports = app;

@@ -260,6 +260,33 @@ const showPaymentSuccess = () => {
     setUser(userData);
   }, []);
 
+  // Show welcome message for reschedule mode
+  useEffect(() => {
+    if (isReschedule) {
+      Swal.fire({
+        title: 'Reschedule Your Booking',
+        html: `
+          <div style="text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 16px;">📅</div>
+            <p style="font-size: 16px; color: #666; margin-bottom: 16px;">
+              Welcome to the reschedule page!
+            </p>
+            <p style="font-size: 14px; color: #888;">
+              Select a new date and time for your appointment.<br>
+              Your original booking will be automatically cancelled.
+            </p>
+          </div>
+        `,
+        icon: false,
+        showConfirmButton: true,
+        confirmButtonColor: Theme.colors.primary,
+        confirmButtonText: 'Got it!',
+        timer: 5000,
+        timerProgressBar: true
+      });
+    }
+  }, [isReschedule]);
+
   // Disable body scroll when modal is open
   useEffect(() => {
     if (showBill) {
@@ -476,7 +503,13 @@ const showPaymentSuccess = () => {
         if (bookingRes.ok && bookingResult.success) {
           setShowBill(false);
           if (isReschedule) {
-            showSuccessAlert('Booking Rescheduled', 'Your appointment has been successfully rescheduled!');
+            showSuccessAlert('Booking Rescheduled', 'Your appointment has been successfully rescheduled!', {
+              timer: 3000,
+              timerProgressBar: true,
+              didClose: () => {
+                navigate('/dashboard');
+              }
+            });
           } else {
             showBookingSuccess();
           }
@@ -576,7 +609,13 @@ const showPaymentSuccess = () => {
             // Only close modal and show success AFTER payment is verified
             setShowBill(false);
             if (isReschedule) {
-              showSuccessAlert('Booking Rescheduled', 'Your appointment has been successfully rescheduled!');
+              showSuccessAlert('Booking Rescheduled', 'Your appointment has been successfully rescheduled!', {
+                timer: 3000,
+                timerProgressBar: true,
+                didClose: () => {
+                  navigate('/dashboard');
+                }
+              });
               // Reset form after reschedule
               setFormData({
                 labAppointment: "",
@@ -677,7 +716,13 @@ const showPaymentSuccess = () => {
             // Only close modal and show success AFTER payment is verified
             setShowBill(false);
             if (isReschedule) {
-              showSuccessAlert('Booking Rescheduled', 'Your appointment has been successfully rescheduled!');
+              showSuccessAlert('Booking Rescheduled', 'Your appointment has been successfully rescheduled!', {
+                timer: 3000,
+                timerProgressBar: true,
+                didClose: () => {
+                  navigate('/dashboard');
+                }
+              });
               // Reset form after reschedule
               setFormData({
                 labAppointment: "",

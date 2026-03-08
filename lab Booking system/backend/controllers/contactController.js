@@ -1,5 +1,5 @@
 const ContactMessage = require('../models/contactMessage');
-const { sendContactReviewEmail } = require('../services/emailService');
+const { sendContactReplyEmail } = require('../services/emailService');
 
 const createContactMessage = async (req, res) => {
   try {
@@ -233,19 +233,18 @@ const replyToContact = async (req, res) => {
     console.log('Contact found:', { id: contact._id, email: contact.email, name: contact.name });
     
     // Send email reply (optional - don't fail if email fails)
-    const { sendContactReplyEmail } = require('../services/emailService');
     let emailResult = { success: false, error: 'Email service not available' };
     
-    // Only try to send email if credentials are properly configured
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-      try {
-        console.log('Attempting to send email reply...');
-        emailResult = await sendContactReplyEmail(
-          contact.email,
-          contact.name,
-          'Contact Message',
-          replyMessage
-        );
+    // Try to send email
+    try {
+      console.log('Attempting to send email reply...');
+      emailResult = await sendContactReplyEmail(
+        contact.email,
+        contact.name,
+        'Contact Message',
+        replyMessage,
+        contact.message
+      );
         console.log('Email service result:', emailResult);
       } catch (emailError) {
         console.error('=== EMAIL SERVICE ERROR ===');
@@ -260,14 +259,6 @@ const replyToContact = async (req, res) => {
           type: emailError.constructor.name
         };
       }
-    } else {
-      console.log('Email credentials not configured - skipping email sending');
-      emailResult = { 
-        success: false, 
-        error: 'Email credentials not configured',
-        code: 'NO_EMAIL_CONFIG'
-      };
-    }
     
     // Always update the status to 'replied' regardless of email success
     try {

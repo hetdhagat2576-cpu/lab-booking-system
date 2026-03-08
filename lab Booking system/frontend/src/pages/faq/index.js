@@ -1,10 +1,23 @@
 import React from 'react';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/header';
 import Footer from '../../components/footer';
 import IconConfig from '../../components/icon/index.js';
 import Theme from '../../config/theam/index.js';
 import { createApiUrl } from '../../config/api.js';
+import {
+  heroTitle,
+  heroSubtitle,
+  heroDescription,
+  sectionReveal,
+  textReveal,
+  AnimatedSection,
+  AnimatedCard,
+  staggerContainer,
+  staggerItem,
+  floating
+} from '../../config/animations';
 
 export default function FAQ() {
   const navigate = useNavigate();
@@ -51,17 +64,41 @@ export default function FAQ() {
       <main className="flex-grow container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto">
           {/* Header Section */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <motion.h1 
+              variants={heroTitle}
+              initial="initial"
+              whileInView="animate"
+              viewport={{ once: true }}
+              className="text-4xl font-bold text-gray-900 mb-4"
+            >
               Frequently Asked Questions
-            </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            </motion.h1>
+            <motion.p 
+              variants={heroDescription}
+              initial="initial"
+              whileInView="animate"
+              viewport={{ once: true }}
+              className="text-lg text-gray-600 max-w-2xl mx-auto"
+            >
               Find answers to common questions about our laboratory booking services. 
               Can't find what you're looking for? Feel free to contact our support team.
-            </p>
+            </motion.p>
             {/* Divider using Primary Color */}
-            <div className="w-24 h-1 bg-primary mx-auto mt-6 rounded-full" />
-          </div>
+            <motion.div 
+              initial={{ width: 0 }}
+              whileInView={{ width: "6rem" }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+              className="h-1 bg-[#2a7a8e] mx-auto mt-6 rounded-full"
+            />
+          </motion.div>
 
           {/* FAQ Items */}
           {error && (
@@ -69,11 +106,15 @@ export default function FAQ() {
               {error}
             </div>
           )}
-          <div className="space-y-4">
-            {(loading ? [] : faqs).map((item) => (
-              <div 
-                key={item._id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-md"
+          <motion.div 
+            variants={staggerContainer}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true }}
+            className="space-y-4"
+          >
+            {(loading ? [] : faqs).map((item, index) => (
+              <AnimatedCard key={item._id} delay={index * 0.1} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-md"
               >
                 <button
                   onClick={() => toggleItem(item._id)}
@@ -98,14 +139,19 @@ export default function FAQ() {
                     </p>
                   </div>
                 )}
-              </div>
+              </AnimatedCard>
             ))}
             {(!loading && faqs.length === 0) && (
-              <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                className="text-center py-12 bg-gray-50 rounded-lg"
+              >
                 <p className="text-gray-500">No FAQs available yet</p>
-              </div>
+              </motion.div>
             )}
-          </div>
+          </motion.div>
 
           {/* Contact Section */}
           <div className="mt-12 text-center rounded-lg p-8" style={{ backgroundColor: `${Theme.colors.primary}10` }}>

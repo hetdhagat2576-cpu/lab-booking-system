@@ -10,7 +10,8 @@ const {
   getPendingReports,
   updateReport,
   deleteReport,
-  downloadReportPDF
+  downloadReportPDF,
+  getUserReports
 } = require('../controllers/reportController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -18,6 +19,9 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 router.post('/', protect, authorize('labtechnician'), createReport);
 router.get('/today/bookings', protect, authorize('labtechnician'), getTodayBookings);
 router.get('/pending/reports', protect, authorize('labtechnician'), getPendingReports);
+
+// User reports route (for authenticated users to get their own reports)
+router.get('/user', protect, getUserReports);
 
 // Specific routes must come before parameterized routes
 router.get('/booking/:bookingId', protect, getReportByBookingId);

@@ -222,9 +222,9 @@ const getHomeWhyBook = async (req, res) => {
   }
 };
 
-const createHomeWhyBookItem = (req, res) => {
+const createHomeWhyBookItem = async (req, res) => {
   try {
-    const { iconKey, title, desc } = req.body;
+    const { iconKey, title, desc, order } = req.body;
     
     if (!iconKey || !title || !desc) {
       return res.status(400).json({
@@ -233,19 +233,19 @@ const createHomeWhyBookItem = (req, res) => {
       });
     }
 
-    const newItem = {
-      id: nextWhyBookId++,
+    const newItem = new HomeWhyBook({
       iconKey,
       title,
-      desc
-    };
+      description: desc,
+      order: order || 0
+    });
 
-    homeWhyBookData.push(newItem);
+    const savedItem = await newItem.save();
 
     res.status(201).json({
       success: true,
       message: 'Why Book item created successfully',
-      data: newItem
+      data: savedItem
     });
   } catch (error) {
     res.status(500).json({
@@ -256,28 +256,29 @@ const createHomeWhyBookItem = (req, res) => {
   }
 };
 
-const updateHomeWhyBookItem = (req, res) => {
+const updateHomeWhyBookItem = async (req, res) => {
   try {
     const { id } = req.params;
-    const { iconKey, title, desc } = req.body;
+    const { iconKey, title, desc, order } = req.body;
 
-    const itemIndex = homeWhyBookData.findIndex(item => item.id === parseInt(id));
+    const updateData = {};
+    if (iconKey) updateData.iconKey = iconKey;
+    if (title) updateData.title = title;
+    if (desc) updateData.description = desc;
+    if (order !== undefined) updateData.order = order;
+
+    const updatedItem = await HomeWhyBook.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
     
-    if (itemIndex === -1) {
+    if (!updatedItem) {
       return res.status(404).json({
         success: false,
         message: 'Why Book item not found'
       });
     }
-
-    const updatedItem = {
-      ...homeWhyBookData[itemIndex],
-      iconKey: iconKey || homeWhyBookData[itemIndex].iconKey,
-      title: title || homeWhyBookData[itemIndex].title,
-      desc: desc || homeWhyBookData[itemIndex].desc
-    };
-
-    homeWhyBookData[itemIndex] = updatedItem;
 
     res.status(200).json({
       success: true,
@@ -293,20 +294,18 @@ const updateHomeWhyBookItem = (req, res) => {
   }
 };
 
-const deleteHomeWhyBookItem = (req, res) => {
+const deleteHomeWhyBookItem = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const itemIndex = homeWhyBookData.findIndex(item => item.id === parseInt(id));
+    const deletedItem = await HomeWhyBook.findByIdAndDelete(id);
     
-    if (itemIndex === -1) {
+    if (!deletedItem) {
       return res.status(404).json({
         success: false,
         message: 'Why Book item not found'
       });
     }
-
-    homeWhyBookData.splice(itemIndex, 1);
 
     res.status(200).json({
       success: true,

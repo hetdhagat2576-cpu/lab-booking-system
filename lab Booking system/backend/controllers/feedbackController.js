@@ -218,7 +218,7 @@ const deleteFeedback = async (req, res) => {
 // Get reviewed feedbacks (Admin only)
 const getReviewedFeedbacks = async (req, res) => {
   try {
-    const feedbacks = await Feedback.find({ status: 'reviewed' })
+    const feedbacks = await Feedback.find({ status: { $in: ['reviewed', 'new', 'pending', 'positive'] } })
       .populate('user', 'name email')
       .sort({ createdAt: -1 });
     

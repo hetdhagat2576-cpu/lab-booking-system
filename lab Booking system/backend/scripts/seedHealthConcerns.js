@@ -3,12 +3,12 @@ const HealthConcern = require('../models/healthConcern');
 require('dotenv').config();
 
 const healthConcernsData = [
-  { title: "Liver", iconKey: "FlaskConical", description: "Liver function tests", isActive: true, order: 1, rating: 4 },
-  {  title: "Lungs", iconKey: "Activity", description: "Respiratory health screening", isActive: true, order: 2, rating: 4 },
-  {  title: "Kidney", iconKey: "Droplets", description: "Kidney function tests", isActive: true, order: 3, rating: 4 },
-  {  title: "Fever", iconKey: "Droplets", description: "Fever and infection tests", isActive: true, order: 4, rating: 3 },
-  {  title: "Thyroid", iconKey: "FlaskConical", description: "Thyroid function tests", isActive: true, order: 5, rating: 4 },
-  {  title: "Diabetes", iconKey: "Droplets", description: "Blood sugar monitoring", isActive: true, order: 6, rating: 5 }
+  { id: "liver", title: "Liver", iconKey: "FlaskConical", description: "Liver function tests", isActive: true, order: 1, rating: 4 },
+  { id: "lungs", title: "Lungs", iconKey: "Activity", description: "Respiratory health screening", isActive: true, order: 2, rating: 4 },
+  { id: "kidney", title: "Kidney", iconKey: "Droplets", description: "Kidney function tests", isActive: true, order: 3, rating: 4 },
+  { id: "fever", title: "Fever", iconKey: "Droplets", description: "Fever and infection tests", isActive: true, order: 4, rating: 3 },
+  { id: "thyroid", title: "Thyroid", iconKey: "FlaskConical", description: "Thyroid function tests", isActive: true, order: 5, rating: 4 },
+  { id: "diabetes", title: "Diabetes", iconKey: "Droplets", description: "Blood sugar monitoring", isActive: true, order: 6, rating: 5 }
 ];
 
 const seedHealthConcerns = async () => {

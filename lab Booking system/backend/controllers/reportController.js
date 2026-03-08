@@ -324,6 +324,44 @@ const getReportByBookingId = async (req, res) => {
   }
 };
 
+// Get reports for the authenticated user
+const getUserReports = async (req, res) => {
+  try {
+    // Check if user is authenticated
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ success: false, message: 'User not authenticated' });
+    }
+
+    const userId = req.user._id;
+    
+    // Find reports where the user is either the patient (through booking) or directly referenced
+    const reports = await Report.find({
+      $or: [
+        { patientId: userId },
+        { userId: userId }
+      ]
+    })
+    .populate([
+      { path: 'patientId', select: 'name email phone' },
+      { path: 'technicianId', select: 'name email' },
+      { path: 'bookingId', select: 'date time labName packageName status adminStatus' }
+    ])
+    .sort({ createdAt: -1 });
+
+    res.status(200).json({ 
+      success: true, 
+      data: reports,
+      count: reports.length 
+    });
+  } catch (error) {
+    console.error('Get user reports error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Error fetching user reports' 
+    });
+  }
+};
+
 module.exports = {
   createReport,
   getAllReports,
@@ -334,5 +372,6 @@ module.exports = {
   getPendingReports,
   updateReport,
   deleteReport,
-  downloadReportPDF
+  downloadReportPDF,
+  getUserReports
 };

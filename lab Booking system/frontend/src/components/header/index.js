@@ -314,7 +314,7 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
             </>
           ) : (
             <>
-              {/* Notification Bell for authenticated users */}
+              {/* Notification Bell for regular users only (not admin or lab technician) */}
               {isAuthenticated && !isAdmin && !isLabTechnician && (
                 <NotificationBell />
               )}

@@ -151,12 +151,8 @@ export default function AdminDashboardIndex() {
     testName: '',
     requiredSamples: [],
     reportingTime: '',
-    includes: [],
     benefits: [],
-    suitableFor: [],
-    clinicalSignificance: '',
-    normalRange: '',
-    abnormalIndicates: ''
+    suitableFor: []
   });
   const [packageDetailsFormData, setPackageDetailsFormData] = useState({
     packageName: '',
@@ -837,7 +833,11 @@ export default function AdminDashboardIndex() {
     }
   }, [user]);
 
-
+  // Clear tests function to remove any duplicate/cached data
+  const clearTestsData = () => {
+    setTests([]);
+    console.log('🗑️ Tests data cleared');
+  };
 
   const handleDeleteTest = async (id) => {
     const result = await Swal.fire({
@@ -1561,6 +1561,88 @@ export default function AdminDashboardIndex() {
       console.error('Error updating test details:', error);
       return false;
     }
+  };
+
+  // Add Benefits and Suitable For Data to Test
+  const addBenefitsAndSuitableForToTest = async (testName) => {
+    if (!user?.token) return false;
+
+    // Find the test by name
+    const test = tests.find(t => 
+      typeof t.name === 'string' ? t.name.toLowerCase() === testName.toLowerCase() : 
+      (t.name?.name || t.name?.title || '').toLowerCase() === testName.toLowerCase()
+    );
+
+    if (!test) {
+      console.error(`Test "${testName}" not found`);
+      return false;
+    }
+
+    // Data from the image
+    const benefitsData = [
+      "Overall health assessment",
+      "Early disease detection", 
+      "Infection detection",
+      "Fever cause identification"
+    ];
+
+    const suitableForData = [
+      "Adults above 25 years",
+      "Annual health checkup",
+      "Patients with fever",
+      "Infection suspicion"
+    ];
+
+    const detailsData = {
+      testName: test.name,
+      requiredSamples: test.requiredSamples || ['Blood'],
+      reportingTime: test.reportingTime || '24-48 hours',
+      benefits: benefitsData,
+      suitableFor: suitableForData,
+      clinicalSignificance: test.clinicalSignificance || '',
+      normalRange: test.normalRange || '',
+      abnormalIndicates: test.abnormalIndicates || ''
+    };
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/test-details/${test._id}/details`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify(detailsData)
+      });
+
+      if (response.ok) {
+        await fetchTestDetails(test._id);
+        await fetchTests();
+        console.log(`Successfully added Benefits and Suitable For to "${testName}"`);
+        return true;
+      } else {
+        console.error('Failed to add test details');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error adding test details:', error);
+      return false;
+    }
+  };
+
+  // Add data to first available test (for testing)
+  const addBenefitsToFirstTest = async () => {
+    if (tests.length > 0) {
+      const firstTest = tests[0];
+      const testName = typeof firstTest.name === 'string' ? firstTest.name : firstTest.name?.name || firstTest.name?.title || 'Test';
+      await addBenefitsAndSuitableForToTest(testName);
+    } else {
+      alert('No tests available. Please add a test first.');
+    }
+  };
+
+  // Add Benefits and Suitable For to CBC Test specifically
+  const addBenefitsToCBCTest = async () => {
+    await addBenefitsAndSuitableForToTest('Complete Blood Count (CBC)');
   };
 
   // Delete Test Details Function
@@ -3217,11 +3299,35 @@ export default function AdminDashboardIndex() {
           rejectedBookings: rejected
         }));
 
+        // Send notification to user
+        const approvedBooking = bookings.find(b => b._id === id);
+        if (approvedBooking && approvedBooking.userId) {
+          try {
+            await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/notifications`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${user.token}`
+              },
+              body: JSON.stringify({
+                userId: approvedBooking.userId,
+                title: 'Booking Approved! 🎉',
+                message: `Your booking for ${approvedBooking.testName || 'Lab Test'} on ${new Date(approvedBooking.date).toLocaleDateString()} has been approved. Please visit the lab at your scheduled time.`,
+                type: 'booking_approved',
+                bookingId: id
+              })
+            });
+            console.log('Notification sent to user for approved booking');
+          } catch (notificationError) {
+            console.error('Failed to send notification:', notificationError);
+          }
+        }
+
         // Show success message
         await Swal.fire({
           icon: 'success',
           title: 'Booking approved successfully!',
-          text: 'The lab technician can now access this booking.',
+          text: 'The lab technician can now access this booking and the user has been notified.',
           confirmButtonColor: Theme.colors.primary
         });
         console.log(`Booking ${id} approved successfully`);
@@ -3313,11 +3419,35 @@ export default function AdminDashboardIndex() {
           rejectedBookings: rejected
         }));
 
+        // Send notification to user
+        const rejectedBooking = bookings.find(b => b._id === id);
+        if (rejectedBooking && rejectedBooking.userId) {
+          try {
+            await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/notifications`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${user.token}`
+              },
+              body: JSON.stringify({
+                userId: rejectedBooking.userId,
+                title: 'Booking Rejected ❌',
+                message: `Your booking for ${rejectedBooking.testName || 'Lab Test'} on ${new Date(rejectedBooking.date).toLocaleDateString()} has been rejected. Reason: ${reason.trim()}. Please contact support for more information.`,
+                type: 'booking_rejected',
+                bookingId: id
+              })
+            });
+            console.log('Notification sent to user for rejected booking');
+          } catch (notificationError) {
+            console.error('Failed to send notification:', notificationError);
+          }
+        }
+
         // Show success message
         await Swal.fire({
           icon: 'success',
           title: 'Booking rejected successfully!',
-          text: 'The user will be notified.',
+          text: 'The user has been notified with the rejection reason.',
           confirmButtonColor: Theme.colors.primary
         });
         console.log(`Booking ${id} rejected successfully`);
@@ -4023,20 +4153,20 @@ export default function AdminDashboardIndex() {
           overflow-y-auto
           max-h-screen md:max-h-none
         `}>
-          {/* System Name Section - Moved from header */}
+          {/* System Name Section - BookMyLab Branding */}
           <div className="p-6 mb-6 border-b border-gray-100/50 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-t-2xl md:rounded-t-none">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: Theme.colors.primary }}>
                 <LayoutDashboard size={24} className="text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">Admin Panel</h2>
-                <p className="text-sm font-medium text-gray-600">Hospital Management System</p>
+                <h2 className="text-2xl font-bold" style={{ color: Theme.colors.primary }}>BookMyLab</h2>
+                <p className="text-sm font-medium text-gray-600">Admin Panel</p>
               </div>
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <ShieldCheck size={14} />
-              <span>Secure Admin Access</span>
+              <span>Laboratory Management System</span>
             </div>
           </div>
 
@@ -4326,10 +4456,33 @@ export default function AdminDashboardIndex() {
                                   </CButton>
                                   <CButton
                                     onClick={() => {
-                                      const reason = prompt('Please enter rejection reason:');
-                                      if (reason) {
-                                        handleRejectWithReason(b._id || b.id, reason);
-                                      }
+                                      Swal.fire({
+                                        title: 'Reject Booking?',
+                                        text: 'Please provide a reason for rejecting this booking.',
+                                        icon: 'warning',
+                                        input: 'textarea',
+                                        inputLabel: 'Rejection Reason',
+                                        inputPlaceholder: 'Enter reason for rejection...',
+                                        inputAttributes: {
+                                          'aria-label': 'Rejection reason'
+                                        },
+                                        showCancelButton: true,
+                                        confirmButtonColor: Theme.colors.primary,
+                                        cancelButtonColor: '#6b7280',
+                                        confirmButtonText: 'Reject Booking',
+                                        cancelButtonText: 'Cancel',
+                                        preConfirm: (reason) => {
+                                          if (!reason || reason.trim() === '') {
+                                            Swal.showValidationMessage('Please provide a reason for rejection');
+                                            return false;
+                                          }
+                                          return reason.trim();
+                                        }
+                                      }).then((result) => {
+                                        if (result.isConfirmed && result.value) {
+                                          handleRejectWithReason(b._id || b.id, result.value);
+                                        }
+                                      });
                                     }}
                                     className="p-2 rounded-full transition-colors"
                                     variant="outline"
@@ -4763,8 +4916,9 @@ export default function AdminDashboardIndex() {
                   <table className="w-full table-responsive-stack">
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
-                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Icon</th>
                         <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[150px]">Name</th>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">Benefits</th>
+                        <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">Suitable For</th>
                         <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-20">Price</th>
                         <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-24">Actions</th>
                       </tr>
@@ -4772,24 +4926,19 @@ export default function AdminDashboardIndex() {
                     <tbody className="bg-white divide-y divide-gray-200">
                       {testLoading ? (
                         <tr>
-                          <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                          <td colSpan="5" className="px-4 py-8 text-center text-gray-500">
                             Loading tests...
                           </td>
                         </tr>
                       ) : tests.length === 0 ? (
                         <tr>
-                          <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
+                          <td colSpan="5" className="px-4 py-8 text-center text-gray-500">
                             No tests found
                           </td>
                         </tr>
                       ) : (
                         tests.map((test) => (
                           <tr key={test._id} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-3 py-3" data-label="Icon">
-                              <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
-                                <TestTube size={16} className="text-gray-500" />
-                              </div>
-                            </td>
                             <td className="px-3 py-3" data-label="Name">
                               <div className="text-sm font-medium text-gray-900" title={typeof test.name === 'string' ? test.name : test.name?.name || test.name?.title || 'Test'}>
                                 {typeof test.name === 'string' ? test.name : test.name?.name || test.name?.title || JSON.stringify(test.name)}
@@ -4797,6 +4946,44 @@ export default function AdminDashboardIndex() {
                               {test.description && (
                                 <div className="text-xs text-gray-500 mt-1 line-clamp-2" title={test.description}>{test.description}</div>
                               )}
+                            </td>
+                            <td className="px-3 py-3" data-label="Benefits">
+                              <div className="text-xs text-gray-600 max-w-xs">
+                                {test.benefits && test.benefits.length > 0 ? (
+                                  <div className="space-y-1">
+                                    {test.benefits.slice(0, 2).map((benefit, index) => (
+                                      <div key={index} className="flex items-center gap-1">
+                                        <div className="w-1 h-1 bg-green-500 rounded-full flex-shrink-0"></div>
+                                        <span className="truncate">{benefit}</span>
+                                      </div>
+                                    ))}
+                                    {test.benefits.length > 2 && (
+                                      <div className="text-gray-400">+{test.benefits.length - 2} more</div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-400">No benefits</span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-3 py-3" data-label="Suitable For">
+                              <div className="text-xs text-gray-600 max-w-xs">
+                                {test.suitableFor && test.suitableFor.length > 0 ? (
+                                  <div className="space-y-1">
+                                    {test.suitableFor.slice(0, 2).map((item, index) => (
+                                      <div key={index} className="flex items-center gap-1">
+                                        <div className="w-1 h-1 bg-blue-500 rounded-full flex-shrink-0"></div>
+                                        <span className="truncate">{item}</span>
+                                      </div>
+                                    ))}
+                                    {test.suitableFor.length > 2 && (
+                                      <div className="text-gray-400">+{test.suitableFor.length - 2} more</div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-400">No data</span>
+                                )}
+                              </div>
                             </td>
                             <td className="px-3 py-3 text-sm text-gray-900" data-label="Price">
                               ₹{test.price}
@@ -6694,11 +6881,6 @@ export default function AdminDashboardIndex() {
               </div>
 
               <div className="mt-4">
-                <span className="font-medium text-gray-700">Subject:</span>
-                <p className="text-gray-900 mt-1">{selectedContact.subject}</p>
-              </div>
-
-              <div className="mt-4">
                 <span className="font-medium text-gray-700">Original Message:</span>
                 <div className="bg-white border border-gray-200 rounded p-3 mt-1">
                   <p className="text-gray-900 whitespace-pre-wrap">{selectedContact.message}</p>
@@ -6870,31 +7052,55 @@ export default function AdminDashboardIndex() {
                       <p className="text-sm text-gray-500">No tests available. Please add tests first.</p>
                     ) : (
                       tests.map((test) => (
-                        <div key={test._id} className="flex items-center mb-2">
+                        <div key={test._id} className="flex items-center mb-2 p-2 border border-gray-200 rounded-md bg-white">
                           <input
                             type="checkbox"
                             id={`test-${test._id}`}
                             checked={packageFormData.includedTests?.includes(test._id) || false}
                             onChange={(e) => {
-                              console.log('=== TEST SELECTION DEBUG ===');
-                              console.log('Test ID:', test._id);
-                              console.log('Test Name:', test.name);
-                              console.log('Checkbox checked:', e.target.checked);
-                              console.log('Current includedTests before change:', packageFormData.includedTests);
-                              
                               const updatedTests = e.target.checked
                                 ? [...(packageFormData.includedTests || []), test._id]
                                 : (packageFormData.includedTests || []).filter(id => id !== test._id);
-                              
-                              console.log('Updated includedTests after change:', updatedTests);
                               setPackageFormData({ ...packageFormData, includedTests: updatedTests });
-                              console.log('=== TEST SELECTION DEBUG END ===');
                             }}
                             className="mr-2"
                           />
-                          <label htmlFor={`test-${test._id}`} className="text-sm text-gray-700 cursor-pointer">
-                            {test.name} - ₹{test.price}
-                          </label>
+                          <div className="flex-1">
+                            <label htmlFor={`test-${test._id}`} className="text-sm font-medium text-gray-900 cursor-pointer">
+                              {test.name} - ₹{test.price}
+                            </label>
+                            {/* Show Benefits and Suitable For if test has details */}
+                            {test.benefits && test.benefits.length > 0 && (
+                              <div className="mt-1 text-xs text-gray-600">
+                                <span className="font-medium text-green-700">Benefits:</span>
+                                <div className="ml-2">
+                                  {test.benefits.slice(0, 2).map((benefit, index) => (
+                                    <span key={index} className="inline-block mr-2">
+                                      • {benefit}
+                                    </span>
+                                  ))}
+                                  {test.benefits.length > 2 && (
+                                    <span className="text-gray-400">+{test.benefits.length - 2} more</span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                            {test.suitableFor && test.suitableFor.length > 0 && (
+                              <div className="mt-1 text-xs text-gray-600">
+                                <span className="font-medium text-blue-700">Suitable For:</span>
+                                <div className="ml-2">
+                                  {test.suitableFor.slice(0, 2).map((item, index) => (
+                                    <span key={index} className="inline-block mr-2">
+                                      • {item}
+                                    </span>
+                                  ))}
+                                  {test.suitableFor.length > 2 && (
+                                    <span className="text-gray-400">+{test.suitableFor.length - 2} more</span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       ))
                     )}
@@ -6938,7 +7144,7 @@ export default function AdminDashboardIndex() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Benefits (comma-separated)
+                    Benefits
                   </label>
                   <textarea
                     value={packageFormData.benefits?.join(', ') || ''}
@@ -6950,7 +7156,7 @@ export default function AdminDashboardIndex() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Suitable For (comma-separated)
+                    Suitable For
                   </label>
                   <textarea
                     value={packageFormData.suitableFor?.join(', ') || ''}
@@ -7009,7 +7215,6 @@ export default function AdminDashboardIndex() {
                           testName: details.testName || '',
                           requiredSamples: details.requiredSamples || [],
                           reportingTime: details.reportingTime || '',
-                          includes: details.includes || [],
                           benefits: details.benefits || [],
                           suitableFor: details.suitableFor || [],
                           clinicalSignificance: details.clinicalSignificance || '',
@@ -7094,20 +7299,7 @@ export default function AdminDashboardIndex() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Includes (comma-separated)</label>
-                        <textarea
-                          value={testDetailsFormData.includes?.join(', ') || ''}
-                          onChange={(e) => setTestDetailsFormData(prev => ({
-                            ...prev,
-                            includes: e.target.value.split(',').map(i => i.trim()).filter(i => i)
-                          }))}
-                          rows={3}
-                          placeholder="e.g., Blood glucose measurement, Expert interpretation, Digital report delivery"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Benefits (comma-separated)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Benefits</label>
                         <textarea
                           value={testDetailsFormData.benefits?.join(', ') || ''}
                           onChange={(e) => setTestDetailsFormData(prev => ({
@@ -7120,7 +7312,7 @@ export default function AdminDashboardIndex() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Suitable For (comma-separated)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Suitable For</label>
                         <textarea
                           value={testDetailsFormData.suitableFor?.join(', ') || ''}
                           onChange={(e) => setTestDetailsFormData(prev => ({
@@ -7130,36 +7322,6 @@ export default function AdminDashboardIndex() {
                           rows={3}
                           placeholder="e.g., Adults above 30 years, Annual health checkup"
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Clinical Significance</label>
-                        <textarea
-                          value={testDetailsFormData.clinicalSignificance || ''}
-                          onChange={(e) => setTestDetailsFormData(prev => ({ ...prev, clinicalSignificance: e.target.value }))}
-                          rows={2}
-                          placeholder="e.g., Primary screening test for diabetes and prediabetes"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Normal Range</label>
-                        <input
-                          type="text"
-                          value={testDetailsFormData.normalRange || ''}
-                          onChange={(e) => setTestDetailsFormData(prev => ({ ...prev, normalRange: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
-                          placeholder="e.g., < 100 mg/dL (normal)"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Abnormal Indicates</label>
-                        <input
-                          type="text"
-                          value={testDetailsFormData.abnormalIndicates || ''}
-                          onChange={(e) => setTestDetailsFormData(prev => ({ ...prev, abnormalIndicates: e.target.value }))}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
-                          placeholder="e.g., Diabetes, impaired fasting glucose"
                         />
                       </div>
                       <div className="flex gap-2">
@@ -7196,69 +7358,6 @@ export default function AdminDashboardIndex() {
                       <h4 className="font-medium text-gray-900">Reporting Time</h4>
                       <p className="text-gray-600">{details.reportingTime}</p>
                     </div>
-                    {/* Includes Section */}
-                    {details.includes && details.includes.length > 0 && (
-                      <div>
-                        <h4 className="font-medium text-gray-900">Includes</h4>
-                        <div className="mt-2 space-y-2">
-                          {details.includes.map((item, index) => (
-                            <div key={index} className="flex items-center gap-2 text-sm">
-                              <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0"></div>
-                              <span className="text-gray-700">{item}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {/* Benefits Section */}
-                    {details.benefits && details.benefits.length > 0 && (
-                      <div>
-                        <h4 className="font-medium text-gray-900">Benefits</h4>
-                        <div className="mt-2 space-y-2">
-                          {details.benefits.map((benefit, index) => (
-                            <div key={index} className="flex items-center gap-2 text-sm">
-                              <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-                              <span className="text-gray-700">{benefit}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {/* Suitable For Section */}
-                    {details.suitableFor && details.suitableFor.length > 0 && (
-                      <div>
-                        <h4 className="font-medium text-gray-900">Suitable For</h4>
-                        <div className="mt-2 space-y-2">
-                          {details.suitableFor.map((item, index) => (
-                            <div key={index} className="flex items-center gap-2 text-sm">
-                              <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                              <span className="text-gray-700">{item}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {/* Clinical Significance */}
-                    {details.clinicalSignificance && (
-                      <div>
-                        <h4 className="font-medium text-gray-900">Clinical Significance</h4>
-                        <p className="text-gray-600 mt-1">{details.clinicalSignificance}</p>
-                      </div>
-                    )}
-                    {/* Normal Range */}
-                    {details.normalRange && (
-                      <div>
-                        <h4 className="font-medium text-gray-900">Normal Range</h4>
-                        <p className="text-gray-600 mt-1">{details.normalRange}</p>
-                      </div>
-                    )}
-                    {/* Abnormal Indicates */}
-                    {details.abnormalIndicates && (
-                      <div>
-                        <h4 className="font-medium text-gray-900">Abnormal Indicates</h4>
-                        <p className="text-gray-600 mt-1">{details.abnormalIndicates}</p>
-                      </div>
-                    )}
                   </>
                 )}
               </div>
@@ -7403,7 +7502,7 @@ export default function AdminDashboardIndex() {
                         )}
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Benefits (comma-separated)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Benefits</label>
                         <textarea
                           value={packageDetailsFormData.benefits?.join(', ') || ''}
                           onChange={(e) => setPackageDetailsFormData(prev => ({
@@ -7416,7 +7515,7 @@ export default function AdminDashboardIndex() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Suitable For (comma-separated)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Suitable For</label>
                         <textarea
                           value={packageDetailsFormData.suitableFor?.join(', ') || ''}
                           onChange={(e) => setPackageDetailsFormData(prev => ({

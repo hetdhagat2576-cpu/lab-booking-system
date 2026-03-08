@@ -1,5 +1,8 @@
 const Booking = require('../models/booking');
-const { createNotification } = require('./notificationController');
+const { 
+  sendBookingApprovalNotification, 
+  sendBookingRejectionNotification 
+} = require('../services/notificationService');
 
 // WebSocket reference - will be set from server.js
 let wss = null;
@@ -195,14 +198,53 @@ const getBookings = async (req, res) => {
 // Update booking status (for lab technicians)
 const updateBookingStatus = async (req, res) => {
   try {
-    const { bookingId } = req.params;
+    console.log('=== BOOKING STATUS UPDATE DEBUG ===');
+    console.log('DEBUG: Full request URL:', req.originalUrl);
+    console.log('DEBUG: Request path:', req.path);
+    console.log('DEBUG: Request params:', req.params);
+    console.log('DEBUG: Request query:', req.query);
+    console.log('DEBUG: Request body:', req.body);
+    console.log('DEBUG: Request headers:', req.headers);
+    console.log('DEBUG: Request method:', req.method);
+    
+    // Test response to verify route is reached
+    console.log('DEBUG: Route updateBookingStatus reached successfully');
+    
+    const { id } = req.params;
     const { status, adminStatus, rejectionReason } = req.body;
 
-    // Validate booking ID
-    if (!bookingId) {
+    console.log('DEBUG: Extracted id:', id);
+    console.log('DEBUG: Extracted status:', status);
+    console.log('DEBUG: Extracted adminStatus:', adminStatus);
+    console.log('DEBUG: Type of id:', typeof id);
+    console.log('DEBUG: Length of id:', id ? id.length : 'undefined');
+
+    if (!id) {
+      console.log('ERROR: No ID found in request params');
+      console.log('ERROR: Available params:', Object.keys(req.params));
       return res.status(400).json({
         success: false,
         message: 'Booking ID is required',
+        debug: {
+          params: req.params,
+          body: req.body,
+          url: req.originalUrl
+        }
+      });
+    }
+
+    // Validate MongoDB ObjectId format
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      console.log('ERROR: Invalid MongoDB ObjectId format:', id);
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid booking ID format',
+        debug: {
+          receivedId: id,
+          idType: typeof id,
+          idLength: id.length
+        }
       });
     }
 
@@ -214,7 +256,7 @@ const updateBookingStatus = async (req, res) => {
       });
     }
 
-    const booking = await Booking.findById(bookingId);
+    const booking = await Booking.findById(id);
     if (!booking) {
       return res.status(404).json({
         success: false,
@@ -255,45 +297,22 @@ const updateBookingStatus = async (req, res) => {
         booking.rejectionReason = rejectionReason;
       }
 
-      // Create notification for the user
+      // Create notification and send email for the user
       try {
-        let notificationData = null;
-        
         console.log(`Creating notification for booking user: ${booking.user}`);
         console.log(`Admin status: ${adminStatus}`);
         
         if (adminStatus === 'approved') {
-          notificationData = await createNotification(
-            booking.user,
-            'Booking Approved',
-            'Your lab booking has been approved!',
-            'success',
-            'booking',
-            booking._id
-          );
-          console.log('✅ Approval notification created:', notificationData._id);
+          // Send approval notification and email
+          await sendBookingApprovalNotification(booking);
+          console.log('✅ Approval notification and email sent');
+          
         } else if (adminStatus === 'rejected') {
-          const message = rejectionReason 
-            ? `Sorry, your lab booking was rejected. Reason: ${rejectionReason}`
-            : 'Sorry, your lab booking was rejected.';
-          notificationData = await createNotification(
-            booking.user,
-            'Booking Rejected',
-            message,
-            'error',
-            'booking',
-            booking._id
-          );
-          console.log('❌ Rejection notification created:', notificationData._id);
+          // Send rejection notification and email
+          await sendBookingRejectionNotification(booking, rejectionReason);
+          console.log('✅ Rejection notification and email sent');
         }
 
-        // Send real-time notification via WebSocket
-        if (notificationData) {
-          console.log(`🔔 Sending WebSocket notification to user: ${booking.user.toString()}`);
-          sendNotificationToUser(booking.user.toString(), notificationData);
-        } else {
-          console.log('⚠️ No notification data to send via WebSocket');
-        }
       } catch (notificationError) {
         console.error('❌ Failed to create notification:', notificationError);
         // Continue with the booking update even if notification fails
@@ -327,7 +346,7 @@ const updateBookingStatus = async (req, res) => {
       console.log('Booking rejection processed');
     }
 
-    // Handle booking status updates (for lab technicians)
+    // Handle booking status updates (for lab technicians and users)
     if (status) {
       const validStatuses = ['pending', 'confirmed', 'in_progress', 'testing', 'completed', 'cancelled'];
       if (!validStatuses.includes(status)) {
@@ -337,15 +356,83 @@ const updateBookingStatus = async (req, res) => {
         });
       }
 
-      // Only allow lab technicians to update status of approved bookings
-      if (req.user.role === 'labtechnician' && booking.adminStatus !== 'approved') {
+      // Handle user cancellation - users can only cancel their own bookings
+      if (req.user.role === 'user' && status === 'cancelled') {
+        // Check if this booking belongs to the user
+        if (booking.user.toString() !== req.user._id.toString()) {
+          return res.status(403).json({
+            success: false,
+            message: 'You can only cancel your own bookings',
+          });
+        }
+
+        // Users can only cancel bookings that are not already completed or cancelled
+        if (booking.status === 'completed') {
+          return res.status(400).json({
+            success: false,
+            message: 'Cannot cancel a completed booking',
+          });
+        }
+
+        if (booking.status === 'cancelled') {
+          return res.status(400).json({
+            success: false,
+            message: 'Booking is already cancelled',
+          });
+        }
+
+        // Users can cancel pending or confirmed bookings
+        if (!['pending', 'confirmed'].includes(booking.status)) {
+          return res.status(400).json({
+            success: false,
+            message: 'Cannot cancel booking that is in progress or testing',
+          });
+        }
+
+        booking.status = status;
+        
+        // Create notification for user about cancellation
+        try {
+          const notificationData = await createNotification(
+            booking.user,
+            'Booking Cancelled',
+            'Your booking has been cancelled successfully.',
+            'info',
+            'booking',
+            booking._id
+          );
+          
+          // Send real-time notification via WebSocket
+          if (notificationData) {
+            sendNotificationToUser(booking.user.toString(), notificationData);
+          }
+        } catch (notificationError) {
+          console.error('Failed to create cancellation notification:', notificationError);
+        }
+      }
+      // Lab technician status updates
+      else if (req.user.role === 'labtechnician') {
+        // Only allow lab technicians to update status of approved bookings
+        if (booking.adminStatus !== 'approved') {
+          return res.status(403).json({
+            success: false,
+            message: 'You can only update approved bookings',
+          });
+        }
+
+        booking.status = status;
+      }
+      // Admin can update any booking status
+      else if (req.user.role === 'admin') {
+        booking.status = status;
+      }
+      // Regular users trying to set other statuses (not allowed)
+      else if (req.user.role === 'user') {
         return res.status(403).json({
           success: false,
-          message: 'You can only update approved bookings',
+          message: 'Users can only cancel bookings, not set other statuses',
         });
       }
-
-      booking.status = status;
     }
 
     await booking.save();
@@ -372,7 +459,7 @@ const updateBookingStatus = async (req, res) => {
       }
     });
 
-    console.log(`Booking ${bookingId} updated by ${req.user.role}:`, { status, adminStatus });
+    console.log(`Booking ${id} updated by ${req.user.role}:`, { status, adminStatus });
     res.status(200).json({
       success: true,
       message: 'Booking updated successfully',
@@ -463,6 +550,21 @@ const deleteBooking = async (req, res) => {
         type: 'booking_cancelled',
         bookingId: booking._id
       });
+    }
+    
+    // Create notification for admin
+    try {
+      await createNotification(
+        req.user._id,
+        'Booking Deleted',
+        `You have deleted booking for ${booking.patientName || booking.user.name}`,
+        'error',
+        'admin_action',
+        booking._id
+      );
+      console.log('✅ Admin deletion notification created');
+    } catch (adminNotificationError) {
+      console.error('Failed to create admin notification:', adminNotificationError);
     }
     
     res.status(200).json({

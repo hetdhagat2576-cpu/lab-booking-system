@@ -43,6 +43,55 @@ export default function ForgotPassword() {
     }
   };
 
+  const handleResendLink = async () => {
+    if (!formData.email) {
+      setError('Email is required');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch(createApiUrl('/api/auth/resend-password-reset'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email.toLowerCase()
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        Swal.fire({
+          icon: 'success',
+          title: 'Reset Link Resent!',
+          text: 'A new password reset link has been sent to your email.',
+          confirmButtonColor: Theme.colors.primary,
+          timer: 3000,
+          timerProgressBar: true,
+          showConfirmButton: false
+        });
+      } else {
+        throw new Error(data.message || 'Failed to resend reset link');
+      }
+    } catch (error) {
+      console.error('Resend link error:', error);
+      setError(error.message || 'Unable to resend reset link. Please try again.');
+      Swal.fire({
+        icon: 'error',
+        title: 'Resend Failed',
+        text: error.message || 'Unable to resend reset link. Please try again.',
+        confirmButtonColor: Theme.colors.primary
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -240,10 +289,25 @@ export default function ForgotPassword() {
                     
                     <div className="space-y-3">
                       <button
-                        onClick={() => setSubmitted(false)}
-                        className="w-full py-3 px-4 rounded-xl font-semibold text-primary border border-primary transition-all duration-200 hover:bg-primary hover:text-white"
+                        onClick={handleResendLink}
+                        disabled={loading}
+                        className="w-full py-3 px-4 rounded-xl font-semibold text-primary border border-primary transition-all duration-200 hover:bg-primary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        Try Again
+                        {loading ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <CircularProgress size={20} className="text-primary" />
+                            <span>Resending...</span>
+                          </div>
+                        ) : (
+                          'Resend Link'
+                        )}
+                      </button>
+                      
+                      <button
+                        onClick={() => setSubmitted(false)}
+                        className="w-full py-3 px-4 rounded-xl font-semibold text-slate-600 border border-slate-300 transition-all duration-200 hover:bg-slate-50"
+                      >
+                        Try Different Email
                       </button>
                       
                       <Link 

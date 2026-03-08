@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { registerUser, loginUser, getProfile, updateProfile, registerUserGet, verifyOtp, resendOtp, forgotPassword, resetPassword } = require('../controllers/authController');
+const { registerUser, loginUser, getProfile, updateProfile, registerUserGet, verifyOtp, resendOtp, forgotPassword, resetPassword, resendPasswordReset } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
 // Register route - saves user into "users" collection of lab_appointment DB
@@ -14,6 +14,7 @@ router.post('/login', loginUser);
 
 // Password reset routes
 router.post('/forgot-password', forgotPassword);
+router.post('/resend-password-reset', resendPasswordReset);
 router.post('/reset-password', resetPassword);
 
 // Profile routes

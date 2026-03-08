@@ -1,11 +1,16 @@
 const User = require('../models/user');
 const OtpCode = require('../models/otpCode');
 const PasswordResetToken = require('../models/passwordResetToken');
+const Booking = require('../models/booking');
+const Feedback = require('../models/feedback');
+const ContactMessage = require('../models/contactMessage');
+const Report = require('../models/Report');
 const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
+const nodemailer = require('nodemailer');
 const { setSessionUser } = require('../utils/sessionUtils');
+const { sendOtpEmail } = require('../services/emailService');
 
 const generateToken = (id) => {
   const jwtSecret = process.env.JWT_SECRET || 'fallback_secret_key_for_development_only';
@@ -24,15 +29,22 @@ const sendPasswordResetEmail = async (email, resetToken, name = 'User') => {
   const pass = process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD;
   const from = process.env.EMAIL_FROM || 'no-reply@labbooking.local';
   
+  // Always create reset link for console fallback
+  const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
+  
+  // DEV MODE: Always show reset link in console for testing
+  console.log('=================================');
+  console.log('🔗 PASSWORD RESET LINK:');
+  console.log('Link:', resetLink);
+  console.log('Email:', email);
+  console.log('Name:', name);
+  console.log('⏰ Expires in 1 hour');
+  console.log('=================================');
+  
   if (!host || !port || !user || !pass) {
     // Development fallback: log reset link to console
-    const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
-    console.log('=================================');
-    console.log('DEV MODE - PASSWORD RESET LINK:', resetLink);
-    console.log('Email:', email);
-    console.log('Name:', name);
-    console.log('=================================');
-    return { sent: false, message: 'Email transport not configured - Reset link logged to console' };
+    console.log('📧 Email transport not configured - Using console fallback');
+    return { sent: false, message: 'Email transport not configured - Reset link available in console' };
   }
   
   const transporter = nodemailer.createTransport({
@@ -48,13 +60,7 @@ const sendPasswordResetEmail = async (email, resetToken, name = 'User') => {
     console.error('SMTP transporter verify failed:', err);
     
     // Development fallback: log reset link to console when email fails
-    const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
-    console.log('=================================');
-    console.log('EMAIL FAILED - PASSWORD RESET LINK:', resetLink);
-    console.log('Email:', email);
-    console.log('Name:', name);
-    console.log('Error:', err.message);
-    console.log('=================================');
+    console.log('📧 EMAIL FAILED - Using console fallback');
     
     // Provide Gmail setup instructions if it's a Gmail auth error
     if (err.code === 'EAUTH' && host.includes('gmail.com')) {
@@ -67,11 +73,9 @@ const sendPasswordResetEmail = async (email, resetToken, name = 'User') => {
       console.log('=============================\n');
     }
     
-    return { sent: false, message: `SMTP verify failed: ${err.message}` };
+    return { sent: false, message: `SMTP verify failed: ${err.message} - Reset link available in console` };
   }
 
-  const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
-  
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; border-radius: 12px;">
       <div style="background: white; padding: 30px; border-radius: 8px; text-align: center;">
@@ -103,112 +107,11 @@ const sendPasswordResetEmail = async (email, resetToken, name = 'User') => {
     });
     return { sent: true };
   } catch (err) {
-    console.error('Error sending password reset email:', err);
     return { sent: false, message: `SendMail failed: ${err.message}` };
   }
 };
 
 
-const sendOtpEmail = async (email, code, name = 'User') => {
-  console.log('\n🔧 SENDING OTP EMAIL...');
-  console.log('=================================');
-  console.log('📧 Email:', email);
-  console.log('👤 Name:', name);
-  console.log('🔢 OTP Code:', code);
-  console.log('⏰ Time:', new Date().toLocaleString());
-  console.log('=================================');
-  
-  const host = process.env.EMAIL_HOST;
-  const port = parseInt(process.env.EMAIL_PORT || '0', 10);
-  const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD;
-  const from = process.env.EMAIL_FROM || 'Lab Booking System <hetdhagat2576@gmail.com>';
-  
-  console.log('📧 Email Configuration Status:');
-  console.log('   Host:', host || 'NOT SET');
-  console.log('   Port:', port || 'NOT SET');
-  console.log('   User:', user || 'NOT SET');
-  console.log('   Pass:', pass ? '***CONFIGURED***' : 'NOT SET');
-  
-  // ALWAYS show OTP in console for development/testing
-  console.log('\n🎯 OTP FOR TESTING (ALWAYS VISIBLE):');
-  console.log('=====================================');
-  console.log('🔢 USE THIS OTP:', code);
-  console.log('📧 For email:', email);
-  console.log('👤 User name:', name);
-  console.log('⏰ Generated at:', new Date().toLocaleString());
-  console.log('⌛ Expires in: 10 minutes');
-  console.log('=====================================\n');
-  
-  if (!host || !port || !user || !pass) {
-    console.log('❌ Email not configured - OTP logged to console only');
-    return { sent: false, message: 'Email transport not configured - OTP logged to console' };
-  }
-  
-  try {
-    console.log('🔄 Attempting to send email...');
-    
-    const transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465,
-      auth: { user, pass },
-    });
-    
-    await transporter.verify();
-    console.log('✅ Email transporter verified');
-    
-    const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; border-radius: 12px;">
-        <div style="background: white; padding: 30px; border-radius: 8px; text-align: center;">
-          <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <h1 style="color: #333; margin-bottom: 10px; font-size: 28px;">Email Verification</h1>
-          <p style="color: #666; margin-bottom: 30px; font-size: 16px;">Hi ${name},</p>
-          <p style="color: #666; margin-bottom: 20px; font-size: 16px;">Use the following OTP to verify your email address:</p>
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 32px; font-weight: bold; letter-spacing: 8px; padding: 20px; border-radius: 8px; margin: 20px 0; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">${code}</div>
-          <p style="color: #999; font-size: 14px; margin-top: 30px;">This code expires in 10 minutes.</p>
-          <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
-            <p style="color: #999; font-size: 12px;">If you didn't request this verification, please ignore this email.</p>
-          </div>
-        </div>
-      </div>
-    `;
-    
-    const result = await transporter.sendMail({
-      from,
-      to: email,
-      subject: 'Verify Your Lab Booking Account',
-      text: `Your OTP is ${code}. It expires in 10 minutes.`,
-      html,
-    });
-    
-    console.log('✅ OTP email sent successfully!');
-    console.log('📬 Message ID:', result.messageId);
-    console.log('📧 Email sent to:', email);
-    
-    return { sent: true };
-    
-  } catch (error) {
-    console.error('❌ Email sending failed:', error.message);
-    
-    if (error.code === 'EAUTH') {
-      console.log('\n🔑 Gmail Authentication Error:');
-      console.log('1. Check if 2-Factor Authentication is enabled');
-      console.log('2. Generate new App Password: https://myaccount.google.com/apppasswords');
-      console.log('3. Update EMAIL_PASS in .env file');
-    }
-    
-    console.log('\n🎯 OTP is still available in console above for testing');
-    return { sent: false, message: `Email failed: ${error.message} - OTP logged to console` };
-  }
-};
-
-  
-  
 const registerUser = async (req, res) => {
   try {
     // Debug: log basic info about incoming registration request to help diagnose 400s
@@ -293,7 +196,7 @@ const registerUser = async (req, res) => {
 
     // Generate OTP for email verification during registration
     const code = String(Math.floor(100000 + Math.random() * 900000));
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes instead of 10
     await OtpCode.create({ userId: user._id, email: user.email, code, expiresAt });
     console.log('\n🚀 USER REGISTRATION COMPLETED');
     console.log('================================');
@@ -310,8 +213,8 @@ const registerUser = async (req, res) => {
     try {
       console.log('📧 Attempting to send OTP email...');
       const result = await sendOtpEmail(user.email, code, user.name);
-      otpSent = !!result.sent;
-      emailMessage = result.message;
+      otpSent = result.success;
+      emailMessage = result.success ? 'OTP sent successfully' : result.error;
       
       console.log('📊 Email Send Result:');
       console.log('   Sent:', otpSent);
@@ -564,6 +467,7 @@ module.exports = {
   deleteUserByAdmin,
   forgotPassword,
   resetPassword,
+  resendPasswordReset,
   deleteAccount,
 };
 
@@ -809,7 +713,7 @@ async function resendOtp(req, res) {
     
     // Generate new OTP
     const code = String(Math.floor(100000 + Math.random() * 900000));
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes instead of 10
     
     // Delete existing unused OTPs
     await OtpCode.deleteMany({ email: email.toLowerCase(), used: false });
@@ -828,15 +732,15 @@ async function resendOtp(req, res) {
     
     try {
       const result = await sendOtpEmail(user.email, code, user.name);
-      otpSent = !!result.sent;
-      if (!result.sent) {
-        emailMessage = result.message;
+      otpSent = result.success;
+      if (!result.success) {
+        emailMessage = result.error;
         // Log OTP to console when email fails
         console.log('=================================');
         console.log('EMAIL FAILED - RESEND OTP CODE:', code);
         console.log('Email:', user.email);
         console.log('Name:', user.name);
-        console.log('Error:', result.message);
+        console.log('Error:', result.error);
         console.log('=================================');
       }
     } catch (error) {
@@ -903,6 +807,84 @@ async function deleteUserByAdmin(req, res) {
   }
 }
 
+async function resendPasswordReset(req, res) {
+  try {
+    console.log('=== DEBUG: Resend Password Reset Request ===');
+    console.log('Request body:', req.body);
+    console.log('============================================');
+    
+    const { email } = req.body || {};
+    
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email is required' 
+      });
+    }
+    
+    // Find user by email
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      // Don't reveal that user doesn't exist for security
+      return res.status(200).json({ 
+        success: true, 
+        message: 'If an account with this email exists, a password reset link has been sent.' 
+      });
+    }
+    
+    // Delete any existing unused reset tokens for this user
+    await PasswordResetToken.deleteMany({ 
+      userId: user._id, 
+      used: false 
+    });
+    
+    // Generate new secure reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+    
+    // Create new reset token
+    await PasswordResetToken.create({
+      userId: user._id,
+      email: email.toLowerCase(),
+      token: resetToken,
+      expiresAt,
+    });
+    
+    // Send password reset email
+    let emailSent = false;
+    let emailMessage = '';
+    
+    try {
+      const result = await sendPasswordResetEmail(user.email, resetToken, user.name);
+      emailSent = !!result.sent;
+      if (!result.sent) {
+        emailMessage = result.message;
+      }
+    } catch (error) {
+      console.error('Email sending error:', error);
+      emailMessage = 'Failed to send password reset email';
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: 'If an account with this email exists, a password reset link has been sent.',
+      data: {
+        email: user.email,
+        emailSent,
+        emailMessage,
+        expiresIn: 3600, // 1 hour in seconds
+      },
+    });
+  } catch (error) {
+    console.error('Resend password reset error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error processing password reset request',
+      error: error.message,
+    });
+  }
+}
+
 async function deleteAccount(req, res) {
   try {
     if (!req.user) {
@@ -910,14 +892,6 @@ async function deleteAccount(req, res) {
     }
 
     const userId = req.user._id;
-    
-    // Delete related user data first
-    const Booking = require('../models/booking');
-    const Feedback = require('../models/feedback');
-    const ContactMessage = require('../models/contactMessage');
-    const Report = require('../models/report');
-    const OtpCode = require('../models/otpCode');
-    const PasswordResetToken = require('../models/passwordResetToken');
     
     // Delete user's bookings
     await Booking.deleteMany({ userId: userId });

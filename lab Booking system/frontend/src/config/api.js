@@ -67,7 +67,8 @@ export const safeFetch = async (url, options = {}) => {
     try {
       const existingResult = await apiCallLocks.get(callKey);
       console.log('Reusing existing API call result:', url);
-      return existingResult;
+      // Clone the response to avoid "body stream already read" error
+      return existingResult.clone();
     } catch (error) {
       // If the existing call failed, allow a new call to be made
       console.log('Existing API call failed, proceeding with new call:', url);

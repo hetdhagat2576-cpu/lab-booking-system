@@ -3,12 +3,16 @@ const ImageConfig = {
   homeImage: "https://wallpaper.dog/large/20552856.jpg",
   homeImageFallback:
     "https://images.unsplash.com/photo-1581091012184-5c1b1be5a4a2?w=1920&h=1080&fit=crop&q=80",
+  homeImageName: "Modern Medical Laboratory with Advanced Equipment",
+  homeImageDescription: "State-of-the-art laboratory facility with modern diagnostic equipment for comprehensive medical testing services",
 
   // Right-side hero image
   heroSideImage:
     "https://images.unsplash.com/photo-1582719471384-894fbb16e074?w=1400&h=1000&fit=crop&q=85",
   heroSideImageFallback:
     "https://images.unsplash.com/photo-1581091012184-5c1b1be5a4a2?w=1400&h=1000&fit=crop&q=85",
+  heroSideImageName: "Professional Lab Technician at Work",
+  heroSideImageDescription: "Certified laboratory professional conducting precise medical tests with advanced diagnostic equipment",
 
   // Register page image
   registerImage: "/images/lab-booking-register.jpg",

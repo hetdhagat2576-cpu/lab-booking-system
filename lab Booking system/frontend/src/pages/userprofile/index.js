@@ -38,6 +38,8 @@ export default function UserProfileIndex() {
   const [reports, setReports] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
   const [bookings, setBookings] = useState([]);
+  const [showAllBookings, setShowAllBookings] = useState(false);
+  const [showAllReports, setShowAllReports] = useState(false);
 
   // Memoized sidebar navigation items to prevent infinite re-render
   const sidebarItems = React.useMemo(() => [
@@ -116,8 +118,8 @@ export default function UserProfileIndex() {
         setBookings(userBookings);
         setStats({
           total: userBookings.length,
-          upcoming: userBookings.filter(b => ["pending", "confirmed"].includes(b.status)).length,
-          completed: userBookings.filter(b => b.status === "completed").length,
+          upcoming: userBookings.filter(b => ["pending", "confirmed"].includes(b.adminStatus || b.status)).length,
+          completed: userBookings.filter(b => (b.adminStatus || b.status) === "completed").length,
         });
       }
     } catch (error) {
@@ -415,22 +417,27 @@ export default function UserProfileIndex() {
 
     if (result.isConfirmed) {
       try {
-        const response = await safeFetch(createApiUrl(`/api/bookings/${bookingId}/status`), {
+        console.log('Attempting to cancel booking:', bookingId);
+        console.log('User token available:', !!user?.token);
+        
+        // Use the new dedicated cancellation route
+        const response = await safeFetch(createApiUrl(`/api/bookings/${bookingId}/cancel`), {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${user?.token || ""}`
-          },
-          body: JSON.stringify({ status: 'cancelled' })
+          }
         });
 
+        console.log('Cancel booking response status:', response.status);
         const data = await response.json();
+        console.log('Cancel booking response data:', data);
 
         if (response.ok && data.success) {
           // Update local state to reflect the change
           setBookings(prev => prev.map(booking => 
             booking._id === bookingId 
-              ? { ...booking, status: 'cancelled' }
+              ? { ...booking, adminStatus: 'cancelled', status: 'cancelled' }
               : booking
           ));
 
@@ -448,6 +455,7 @@ export default function UserProfileIndex() {
             showConfirmButton: false
           });
         } else {
+          console.error('Cancel booking failed:', data);
           throw new Error(data.message || 'Failed to cancel booking');
         }
       } catch (error) {
@@ -463,23 +471,37 @@ export default function UserProfileIndex() {
   };
 
   // Handle reschedule booking
-  const handleRescheduleBooking = (booking) => {
-    // Navigate to booking page with pre-filled data
-    const queryParams = new URLSearchParams();
-    
-    if (booking.packageName) {
-      queryParams.append('name', booking.packageName);
+  const handleRescheduleBooking = async (booking) => {
+    const result = await Swal.fire({
+      title: 'Reschedule Booking?',
+      text: 'Do you want to reschedule this cancelled booking? You can select a new date and time.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: 'Yes',
+      cancelButtonText: 'No',
+      reverseButtons: true
+    });
+
+    if (result.isConfirmed) {
+      // Navigate to booking page with pre-filled data
+      const queryParams = new URLSearchParams();
+      
+      if (booking.packageName) {
+        queryParams.append('name', booking.packageName);
+      }
+      if (booking.packagePrice) {
+        queryParams.append('price', booking.packagePrice);
+      }
+      if (booking.selectedTests && booking.selectedTests.length > 0) {
+        queryParams.append('tests', JSON.stringify(booking.selectedTests));
+      }
+      queryParams.append('reschedule', 'true');
+      queryParams.append('originalBookingId', booking._id);
+      
+      navigate(`/new-booking?${queryParams.toString()}`);
     }
-    if (booking.packagePrice) {
-      queryParams.append('price', booking.packagePrice);
-    }
-    if (booking.selectedTests && booking.selectedTests.length > 0) {
-      queryParams.append('tests', JSON.stringify(booking.selectedTests));
-    }
-    queryParams.append('reschedule', 'true');
-    queryParams.append('originalBookingId', booking._id);
-    
-    navigate(`/new-booking?${queryParams.toString()}`);
   };
   // Handle delete account
   const handleDeleteAccount = async () => {
@@ -1086,20 +1108,38 @@ export default function UserProfileIndex() {
                           variant="outlined"
                         />
                       </div>
-                      <Button 
-                        variant="outlined" 
-                        size="small"
-                        onClick={handleRefreshReports}
-                        sx={{ 
-                          borderRadius: '8px', 
-                          textTransform: 'none',
-                          borderColor: Theme.colors.primary,
-                          color: Theme.colors.primary,
-                          "&:hover": { 
-                            borderColor: Theme.colors.primaryHover, 
-                            color: Theme.colors.primaryHover 
-                          }
-                        }}
+                      <div className="flex gap-2">
+                        {reports.length > 3 && (
+                          <Button
+                            size="small"
+                            variant="text"
+                            onClick={() => setShowAllReports(!showAllReports)}
+                            sx={{
+                              fontSize: '0.875rem',
+                              color: Theme.colors.primary,
+                              textTransform: 'none',
+                              '&:hover': {
+                                backgroundColor: `${Theme.colors.primary}08`
+                              }
+                            }}
+                          >
+                            {showAllReports ? 'View Less' : 'View All'}
+                          </Button>
+                        )}
+                        <Button 
+                          variant="outlined" 
+                          size="small"
+                          onClick={handleRefreshReports}
+                          sx={{ 
+                            borderRadius: '8px', 
+                            textTransform: 'none',
+                            borderColor: Theme.colors.primary,
+                            color: Theme.colors.primary,
+                            "&:hover": { 
+                              borderColor: Theme.colors.primaryHover, 
+                              color: Theme.colors.primaryHover 
+                            }
+                          }}
                         startIcon={<FileText size={16} />}
                       >
                         Refresh
@@ -1121,7 +1161,7 @@ export default function UserProfileIndex() {
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {reports.map((report) => (
+                        {reports.slice(0, showAllReports ? reports.length : 3).map((report) => (
                           <Card key={report._id} elevation={1} className="rounded-xl hover:shadow-md transition-all duration-200 border border-gray-100 bg-white">
                             <CardContent className="p-5">
                               <div className="flex justify-between items-start mb-3">
@@ -1216,6 +1256,7 @@ export default function UserProfileIndex() {
                         ))}
                       </div>
                     )}
+                    </div>
                   </Card>
                 )}
 
@@ -1292,22 +1333,46 @@ export default function UserProfileIndex() {
 
                 {/* Recent Applications/Bookings */}
                 <Card elevation={0} className="rounded-2xl border border-slate-200 p-6 shadow-sm">
-                  <Typography variant="h6" fontWeight="700" className="mb-4" style={{ color: Theme.colors.primary }}>
-                    Recent Bookings
-                  </Typography>
+                  <div className="flex justify-between items-center mb-4">
+                    <Typography variant="h6" fontWeight="700" style={{ color: Theme.colors.primary }}>
+                      Recent Bookings
+                    </Typography>
+                    {bookings.length > 3 && (
+                      <Button
+                        size="small"
+                        variant="text"
+                        onClick={() => setShowAllBookings(!showAllBookings)}
+                        sx={{
+                          fontSize: '0.875rem',
+                          color: Theme.colors.primary,
+                          textTransform: 'none',
+                          '&:hover': {
+                            backgroundColor: `${Theme.colors.primary}08`
+                          }
+                        }}
+                      >
+                        {showAllBookings ? 'View Less' : 'View All'}
+                      </Button>
+                    )}
+                  </div>
                   {bookings.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {bookings.slice(0, 6).map((booking, index) => (
+                      {bookings.slice(0, showAllBookings ? bookings.length : 3).map((booking, index) => (
                         <Card key={index} elevation={1} className="rounded-xl hover:shadow-md transition-all duration-200 border border-gray-100 bg-white">
                           <CardContent className="p-5">
                             <div className="flex justify-between items-start mb-3">
                               <div className="flex-1">
                                 <h3 className="text-lg font-semibold text-teal-600 mb-1">
-                                  Lab Test
+                                  {booking.testName || booking.packageName || "Lab Test"}
                                 </h3>
                                 <p className="text-sm text-gray-500">
-                                  {new Date(booking.date || booking.createdAt).toLocaleDateString()}
+                                  {new Date(booking.date || booking.createdAt).toLocaleDateString()} at {booking.time || 'Scheduled Time'}
                                 </p>
+                                {booking.rescheduledDate && (
+                                  <p className="text-xs text-blue-600 mt-1">
+                                    <strong>Rescheduled to:</strong> {new Date(booking.rescheduledDate).toLocaleDateString()} at {booking.rescheduledTime || booking.time}
+                                  </p>
+                                )}
                               </div>
                               <div className="flex items-center gap-1">
                                 <FileText className="w-4 h-4 text-teal-500" />
@@ -1319,12 +1384,14 @@ export default function UserProfileIndex() {
                                 {booking.testName || booking.packageName || "Lab Test"}
                               </span>
                               <Chip 
-                                label={booking.status || "pending"}
+                                label={booking.adminStatus || booking.status || "pending"}
                                 size="small"
-                                color={booking.status === "completed" ? "success" : 
-                                       booking.status === "confirmed" ? "primary" : 
-                                       booking.status === "cancelled" ? "error" :
-                                       "warning"}
+                                color={
+                                  (booking.adminStatus || booking.status) === "completed" ? "success" : 
+                                  (booking.adminStatus || booking.status) === "approved" || (booking.adminStatus || booking.status) === "confirmed" ? "primary" : 
+                                  (booking.adminStatus || booking.status) === "rejected" || (booking.adminStatus || booking.status) === "cancelled" ? "error" :
+                                  "warning"
+                                }
                                 variant="outlined"
                                 className="font-medium text-xs"
                               />
@@ -1332,11 +1399,16 @@ export default function UserProfileIndex() {
                             
                             <div className="mt-3 pt-3 border-t border-gray-100">
                               <p className="text-sm text-gray-600 mb-3">
-                                {booking.location || "Wellness Center Lab"}
+                                {booking.labName || booking.location || "Wellness Center Lab"}
                               </p>
+                              {booking.rejectionReason && (
+                                <p className="text-xs text-red-600 mb-2">
+                                  <strong>Reason:</strong> {booking.rejectionReason}
+                                </p>
+                              )}
                               
                               {/* Action buttons based on booking status */}
-                              {booking.status === "pending" && (
+                              {(booking.adminStatus || booking.status) === "pending" && (
                                 <div className="flex gap-2">
                                   <Button
                                     size="small"
@@ -1361,8 +1433,8 @@ export default function UserProfileIndex() {
                                 </div>
                               )}
                               
-                              {/* Show Reschedule button only for cancelled bookings */}
-                              {booking.status === "cancelled" && (
+                              {/* Show Reschedule button only for cancelled/rejected bookings */}
+                              {(booking.adminStatus || booking.status) === "cancelled" || (booking.adminStatus || booking.status) === "rejected" ? (
                                 <div className="flex gap-2">
                                   <Button
                                     size="small"
@@ -1385,7 +1457,7 @@ export default function UserProfileIndex() {
                                     Reschedule
                                   </Button>
                                 </div>
-                              )}
+                              ) : null}
                             </div>
                           </CardContent>
                         </Card>

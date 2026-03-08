@@ -1,11 +1,28 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
+import { motion } from 'framer-motion';
 import Header from "../../components/header";
 import Footer from "../../components/footer";
 import Loader from "../../components/loader";
 import ImageConfig from "../../config/image File";
 import IconConfig from "../../components/icon/index.js";
 import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
+import {
+  heroTitle,
+  heroSubtitle,
+  heroDescription,
+  heroButton,
+  sectionReveal,
+  textReveal,
+  AnimatedSection,
+  AnimatedCard,
+  AnimatedButton,
+  AnimatedGridItem,
+  staggerContainer,
+  staggerItem,
+  floating,
+  pulse
+} from '../../config/animations';
 
 const style = document.createElement('style');
 style.textContent = `
@@ -14,7 +31,7 @@ style.textContent = `
       transform: translateX(0);
     }
     100% {
-      transform: translateX(-33.333%);
+      transform: translateX(-50%);
     }
   }
   
@@ -22,12 +39,14 @@ style.textContent = `
     overflow: hidden;
     position: relative;
     width: 100%;
+    mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
   }
   
   .marquee-track {
     display: flex;
-    animation: marquee 30s linear infinite;
-    width: fit-content;
+    animation: marquee 20s linear infinite;
+    width: max-content;
   }
   
   .marquee-track:hover {
@@ -38,12 +57,19 @@ style.textContent = `
     flex-shrink: 0;
     width: 320px;
     margin-right: 24px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, filter 0.3s ease;
+  }
+  
+  .testimonial-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.15), 0 15px 15px -5px rgba(0, 0, 0, 0.08);
+    filter: brightness(1.05);
   }
   
   /* iPhone SE */
   @media (max-width: 320px) {
     .marquee-track {
-      animation: marquee 20s linear infinite;
+      animation: marquee 10s linear infinite;
     }
     
     .testimonial-card {
@@ -55,7 +81,7 @@ style.textContent = `
   /* iPhone 12 Pro */
   @media (min-width: 321px) and (max-width: 375px) {
     .marquee-track {
-      animation: marquee 22s linear infinite;
+      animation: marquee 11s linear infinite;
     }
     
     .testimonial-card {
@@ -67,7 +93,7 @@ style.textContent = `
   /* iPhone 14 Pro Max */
   @media (min-width: 376px) and (max-width: 414px) {
     .marquee-track {
-      animation: marquee 24s linear infinite;
+      animation: marquee 11.5s linear infinite;
     }
     
     .testimonial-card {
@@ -79,7 +105,7 @@ style.textContent = `
   /* iPad Mini */
   @media (min-width: 415px) and (max-width: 768px) {
     .marquee-track {
-      animation: marquee 26s linear infinite;
+      animation: marquee 11.8s linear infinite;
     }
     
     .testimonial-card {
@@ -90,6 +116,10 @@ style.textContent = `
   
   /* iPad Air/Pro */
   @media (min-width: 769px) and (max-width: 1024px) {
+    .marquee-track {
+      animation: marquee 11.9s linear infinite;
+    }
+    
     .testimonial-card {
       width: 310px;
       margin-right: 20px;
@@ -98,6 +128,10 @@ style.textContent = `
   
   /* Larger screens */
   @media (min-width: 1025px) {
+    .marquee-track {
+      animation: marquee 12s linear infinite;
+    }
+    
     .testimonial-card {
       width: 320px;
       margin-right: 24px;
@@ -118,6 +152,7 @@ export default function HomeIndex() {
   // Fetch home content from API
   useEffect(() => {
     const fetchHomeContent = async () => {
+      let reviewedFeedbacks = [];
       try {
         const [whyBookResponse, howItWorksResponse, feedbacksResponse] = await Promise.all([
           fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/why-book`),
@@ -137,7 +172,7 @@ export default function HomeIndex() {
         setHowItWorksData(howItWorksResult.data || []);
         
         // Set reviewed feedbacks - if no real data, show empty (no fake data)
-        const reviewedFeedbacks = feedbacksResult.data || [];
+        reviewedFeedbacks = feedbacksResult.data || [];
         setUserFeedbacks(reviewedFeedbacks);
         
         console.log('Reviewed Feedbacks from API:', reviewedFeedbacks);
@@ -193,8 +228,12 @@ export default function HomeIndex() {
           }
         ]);
         
-        // In case of error, set empty feedbacks array
-        setUserFeedbacks([]);
+        // In case of error or no data, set empty feedbacks array
+        if (reviewedFeedbacks.length === 0) {
+          setUserFeedbacks([]);
+        } else {
+          setUserFeedbacks(reviewedFeedbacks);
+        }
       } finally {
         setLoading(false);
       }
@@ -215,224 +254,467 @@ export default function HomeIndex() {
 
       {/* HERO BANNER */}
       <section className="bg-white">
-        <div className="relative w-full h-96 sm:h-[28rem] md:h-[32rem] lg:h-[40rem] xl:h-screen">
-          <img
+        <div className="relative w-full h-96 sm:h-[28rem] md:h-[32rem] lg:h-[40rem] xl:h-screen overflow-hidden">
+          <motion.img
+            initial={{ scale: 1.2 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
             src={ImageConfig.homeImage}
-            alt="Home laboratory services"
+            alt={ImageConfig.homeImageDescription}
+            title={ImageConfig.homeImageName}
             className="w-full h-full object-cover"
             onError={(e) => {
               e.target.src = ImageConfig.homeImageFallback;
             }}
-            />
-          <div className="absolute inset-0 bg-black/30" /> 
+          />
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: 0.5 }}
+            className="absolute inset-0 bg-black/30" 
+          />
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white px-4 sm:px-6 md:px-8">
-            <p className="text-xs sm:text-sm font-semibold uppercase tracking-widest bg-teal-600 w-fit px-3 sm:px-4 py-2 rounded">
-              Laboratory Booking System
-            </p>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-7xl font-extrabold tracking-tight mt-4 leading-none">
-              Book, Track & Test with
-            </h1>
-            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-light tracking-wide mt-3 text-white/95">
-              Confidence
-            </h2>
-            <p className="mt-4 sm:mt-6 max-w-2xl md:max-w-3xl text-sm sm:text-base md:text-lg text-white/90">
-              Seamless scheduling, trusted diagnostics, and fast digital reports.
-            </p>
+            {/* Image Name Overlay */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.1 }}
+              className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-black shadow-md"
+            >
+              🏥 {ImageConfig.homeImageName || "Medical Laboratory"}
+            </motion.div>
             
-            <button 
+            <motion.p 
+              initial={{ opacity: 0, y: -30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="text-xs sm:text-sm font-semibold uppercase tracking-widest bg-teal-600 w-fit px-3 sm:px-4 py-2 rounded"
+            >
+              Laboratory Booking System
+            </motion.p>
+            <motion.h1 
+              variants={heroTitle}
+              initial="initial"
+              animate="animate"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-7xl font-extrabold tracking-tight mt-4 leading-none"
+            >
+              Book, Track & Test with
+            </motion.h1>
+            <motion.h2 
+              variants={heroSubtitle}
+              initial="initial"
+              animate="animate"
+              className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-light tracking-wide mt-3 text-white/95"
+            >
+              Confidence
+            </motion.h2>
+            <motion.p 
+              variants={heroDescription}
+              initial="initial"
+              animate="animate"
+              className="mt-4 sm:mt-6 max-w-2xl md:max-w-3xl text-sm sm:text-base md:text-lg text-white/90"
+            >
+              Seamless scheduling, trusted diagnostics, and fast digital reports.
+            </motion.p>
+            
+            <AnimatedButton
               onClick={() => navigate("/register")}
               className="mt-6 sm:mt-8 px-6 sm:px-8 md:px-10 lg:px-12 py-3 sm:py-4 bg-white text-primary font-black rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center gap-3 group border-2 border-white/20 backdrop-blur-sm text-sm sm:text-base"
             >
               <span className="hidden xs:inline sm:hidden">Book Home Service</span>
               <span className="xs:hidden sm:inline">Book Now</span>
-              <ArrowRight className="group-hover:translate-x-2 transition-transform duration-300" size={16} />
-            </button>
+              <motion.div
+                whileHover={{ x: 8 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ArrowRight size={16} />
+              </motion.div>
+            </AnimatedButton>
           </div>
         </div>
       </section>
 
       {/* Trusted Laboratory Experts Section */}
-      <section className="bg-white py-8 sm:py-12 md:py-16">
+      <AnimatedSection className="bg-white py-12 sm:py-16 md:py-20 border-b-4 border-gray-300">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <motion.h2 
+            initial={{ opacity: 0, y: -30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-3xl sm:text-4xl md:text-5xl font-bold text-black mb-6"
+          >
             Trusted Laboratory Experts
-          </h2>
-          <p className="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto mb-6">
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: -20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="text-lg sm:text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed mb-8"
+          >
             Our platform connects patients with certified laboratories,
             ensuring transparency, accuracy, and reliable diagnostics
             for every test.
-          </p>
-          <div className="w-16 sm:w-24 h-1 bg-primary mx-auto rounded-full" />
+          </motion.p>
+          {/* Colored horizontal line using primary theme color */}
+          <motion.div 
+            initial={{ width: 0 }}
+            whileInView={{ width: "6rem" }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+            className="h-1 bg-primary mx-auto rounded-full"
+          />
         </div>
-      </section>
+      </AnimatedSection>
 
       
       {/* WHY BOOK WITH US */}
-      <section className="bg-gray-50 py-8 sm:py-12 md:py-16 border-y border-gray-100">
+      <AnimatedSection className="bg-gray-50 py-8 sm:py-12 md:py-16 border-y border-gray-100" delay={0.2}>
         <div className="container mx-auto px-4">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-gray-900 mb-8 sm:mb-12">
+          <motion.h2 
+            variants={textReveal}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true }}
+            className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-gray-900 mb-8 sm:mb-12"
+          >
             Why Book With Us?
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10 max-w-5xl mx-auto">
+          </motion.h2>
+          <motion.div 
+            variants={staggerContainer}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, amount: 0.2 }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10 max-w-5xl mx-auto"
+          >
             {whyBookData.map((item, index) => (
-              <div
+              <AnimatedGridItem
                 key={item._id || index}
+                index={index}
                 className="flex gap-4 sm:gap-6 bg-white p-4 sm:p-6 rounded-2xl shadow-sm hover:shadow-lg transition-all border border-gray-50 group"
               >
-                <div className="p-3 sm:p-4 rounded-lg bg-secondary/20 group-hover:bg-secondary/40 transition-colors h-fit">
+                <motion.div 
+                  animate={floating}
+                  className="p-3 sm:p-4 rounded-lg bg-secondary/20 group-hover:bg-secondary/40 transition-colors h-fit"
+                >
                   {item.iconKey && IconConfig[item.iconKey] ? (
                     React.createElement(IconConfig[item.iconKey], { className: "text-primary", size: 24 })
                   ) : (
                     <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary rounded" />
                   )}
-                </div>
+                </motion.div>
                 <div>
                   <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-800 group-hover:text-primary transition-colors">
                     {item.title}
                   </h3>
                   <p className="text-sm sm:text-base text-gray-600 leading-relaxed">{item.desc || item.description}</p>
                 </div>
-              </div>
+              </AnimatedGridItem>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </AnimatedSection>
 
       {/* HOW IT WORKS */}
-      <section className="bg-white py-8 sm:py-12 md:py-16">
+      <AnimatedSection className="bg-white py-8 sm:py-12 md:py-16" delay={0.4}>
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-8 sm:mb-10">
+          <motion.h2 
+            variants={textReveal}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true }}
+            className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-8 sm:mb-10"
+          >
             How It Works
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8 max-w-6xl mx-auto">
+          </motion.h2>
+          <motion.div 
+            variants={staggerContainer}
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, amount: 0.2 }}
+            className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8 max-w-6xl mx-auto"
+          >
             {howItWorksData.map((item, index) => (
-              <div key={item._id || index} className="space-y-3 sm:space-y-5 group">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-2xl bg-gradient-to-br from-primary to-secondary text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+              <AnimatedGridItem
+                key={item._id || index}
+                index={index}
+                className="space-y-3 sm:space-y-5 group"
+              >
+                <motion.div 
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  transition={{ duration: 0.3 }}
+                  className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-2xl bg-gradient-to-br from-primary to-secondary text-white flex items-center justify-center shadow-lg"
+                >
                   {item.iconKey && IconConfig[item.iconKey] ? (
                     React.createElement(IconConfig[item.iconKey], { size: 24 })
                   ) : (
                     <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded" />
                   )}
-                </div>
+                </motion.div>
                 <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-800">{item.title}</h3>
                 <p className="text-sm sm:text-base text-gray-600">{item.desc || item.description}</p>
-              </div>
+              </AnimatedGridItem>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </AnimatedSection>
 
       {/* MAIN CONTENT SECTION */}
       <main className="flex-grow">
-        <section className="container mx-auto px-4 py-8 sm:py-12 md:py-16">
+        <AnimatedSection className="container mx-auto px-4 py-8 sm:py-12 md:py-16" delay={0.6}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 md:gap-14 items-center">
-            <div className="space-y-6 sm:space-y-8 text-center md:text-left">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <motion.div 
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="space-y-6 sm:space-y-8 text-center md:text-left"
+            >
+              <motion.h1 
+                initial={{ opacity: 0, y: -20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"
+              >
                 BookMyLab
-              </h1>
-              <p className="text-base sm:text-lg md:text-xl text-gray-600 leading-relaxed">
+              </motion.h1>
+              <motion.p 
+                initial={{ opacity: 0, y: -20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="text-base sm:text-lg md:text-xl text-gray-600 leading-relaxed"
+              >
                 Book laboratory tests effortlessly with real-time availability,
                 trusted labs, and instant access to reports.
-              </p>
-              <div className="space-y-3 sm:space-y-4">
+              </motion.p>
+              <motion.div 
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="space-y-3 sm:space-y-4"
+              >
                 {[
                   "Quick & simple booking",
                   "Real-time slot availability",
                   "Access reports anytime",
                 ].map((text, index) => (
-                  <div key={index} className="flex items-center gap-3 justify-center md:justify-start">
-                    <CheckCircle className="text-primary" size={20} />
+                  <motion.div 
+                    key={index} 
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
+                    className="flex items-center gap-3 justify-center md:justify-start"
+                  >
+                    <motion.div
+                      animate={pulse}
+                      className="flex-shrink-0"
+                    >
+                      <CheckCircle className="text-primary" size={20} />
+                    </motion.div>
                     <span className="text-base sm:text-lg text-gray-700 font-medium">{text}</span>
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
 
-            <div className="relative w-full max-w-lg md:max-w-xl lg:max-w-2xl min-h-[320px] sm:min-h-[400px] md:min-h-[480px]">
+            <motion.div 
+              initial={{ opacity: 0, x: 50, scale: 0.8 }}
+              whileInView={{ opacity: 1, x: 0, scale: 1 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
+              className="relative w-full max-w-lg md:max-w-xl lg:max-w-2xl min-h-[320px] sm:min-h-[400px] md:min-h-[480px]"
+            >
               <div className="relative w-full h-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border-4 sm:border-8 border-white">
-                <img
+                {/* Image Name Badge */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                  className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-black shadow-md"
+                >
+                  🔬 {ImageConfig.heroSideImageName}
+                </motion.div>
+                
+                <motion.img
+                  initial={{ scale: 1.1 }}
+                  whileInView={{ scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1, ease: "easeOut" }}
                   src={ImageConfig.heroSideImage}
-                  alt="Lab technician"
+                  alt={ImageConfig.heroSideImageDescription}
+                  title={ImageConfig.heroSideImageName}
                   className="w-full h-full object-cover"
                   onError={(e) => {
                     e.target.src = ImageConfig.heroSideImageFallback;
                   }}
-                  />
-                <div className="absolute inset-0 bg-gradient-to-t from-primary/40 to-transparent" />
+                />
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1, delay: 0.5 }}
+                  className="absolute inset-0 bg-gradient-to-t from-primary/40 to-transparent" 
+                />
               </div>
-            </div>
+            </motion.div>
           </div>
-        </section>
+        </AnimatedSection>
       </main>
 
       {/* WHAT OUR USERS SAY SECTION */}
-        <section className="bg-gradient-to-br from-secondary/20 to-primary/10 py-8 sm:py-12 md:py-16">
+        <AnimatedSection className="bg-gradient-to-br from-[#98d2e0]/20 to-[#2a7a8e]/10 py-8 sm:py-12 md:py-16" delay={0.8}>
           <div className="container mx-auto px-4">
-            <div className="text-center mb-8 sm:mb-12">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-8 sm:mb-12"
+            >
+              <h1 
+                className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-4"
+              >
                 What Our Users Say
-              </h2>
-              <p className="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto">
+              </h1>
+              <p 
+                className="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto"
+              >
                 Real feedback from our valued customers about their experience with our laboratory booking platform.
               </p>
-              <div className="w-16 sm:w-24 h-1 bg-primary mx-auto mt-4 sm:mt-6 rounded-full" />
-            </div>
+              <div 
+                className="h-1 bg-[#2a7a8e] mx-auto mt-4 sm:mt-6 rounded-full w-16"
+              />
+            </motion.div>
             
-            <div className="feedback-section relative overflow-hidden">
+            <motion.div 
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="feedback-section marquee-container"
+            >
               {userFeedbacks.length > 0 ? (
                 <div className="marquee-track">
-                  {/* Create 3 sets of cards for seamless infinite scroll */}
-                  {[...Array(3)].flatMap((_, setIndex) => 
-                    userFeedbacks.map((feedback, index) => (
-                      <div 
-                        key={`${feedback._id || index}-set-${setIndex}`} 
-                        className="testimonial-card"
-                      >
+                  {/* Create 2 sets of cards for seamless infinite scroll */}
+                  {[...userFeedbacks, ...userFeedbacks].map((feedback, index) => (
+                    <motion.div 
+                      key={`${feedback._id || index}-duplicate-${index >= userFeedbacks.length ? '2' : '1'}`} 
+                      className="testimonial-card"
+                      whileHover={{ 
+                        y: -12,
+                        scale: 1.03,
+                        boxShadow: "0 30px 40px -10px rgba(0, 0, 0, 0.2), 0 20px 20px -10px rgba(0, 0, 0, 0.1)"
+                      }}
+                    >
                         <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 h-full flex flex-col">
-                          <div className="flex items-start gap-3 mb-4">
-                            <div className="w-10 h-10 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-full flex items-center justify-center flex-shrink-0">
-                              <MessageSquare className="text-primary" size={16} />
-                            </div>
+                          <motion.div 
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="flex items-start gap-3 mb-4"
+                          >
+                            <motion.div 
+                              animate={floating}
+                              className="w-10 h-10 bg-gradient-to-br from-[#2a7a8e]/20 to-[#98d2e0]/20 rounded-full flex items-center justify-center flex-shrink-0"
+                            >
+                              <MessageSquare className="text-[#2a7a8e]" size={16} />
+                            </motion.div>
                             <div className="min-w-0 flex-1">
                               <h4 className="font-semibold text-gray-800 truncate text-base">{feedback.userName || "Anonymous User"}</h4>
-                              <div className="flex items-center gap-1">
+                              <motion.div 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.4 }}
+                                className="flex items-center gap-1"
+                              >
                                 {[...Array(5)].map((_, i) => (
-                                  <Star 
-                                    key={i} 
-                                    className={`w-4 h-4 flex-shrink-0 ${i < (feedback.bookingEaseRating || 0) ? 'text-amber-400 fill-current' : 'text-gray-300'}`} 
-                                  />
+                                  <motion.div
+                                    key={i}
+                                    initial={{ scale: 0, rotate: -180 }}
+                                    animate={{ scale: 1, rotate: 0 }}
+                                    transition={{ delay: 0.5 + i * 0.1, type: "spring", stiffness: 200 }}
+                                  >
+                                    <Star 
+                                      className={`w-4 h-4 flex-shrink-0 ${i < (feedback.bookingEaseRating || 0) ? 'text-amber-400 fill-current' : 'text-gray-300'}`} 
+                                    />
+                                  </motion.div>
                                 ))}
-                              </div>
+                              </motion.div>
                             </div>
-                          </div>
+                          </motion.div>
                           
-                          <p className="text-gray-600 leading-relaxed mb-4 line-clamp-3 flex-grow text-sm sm:text-base">
+                          <motion.p 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.3 }}
+                            className="text-gray-600 leading-relaxed mb-4 line-clamp-3 flex-grow text-sm sm:text-base"
+                          >
                             "{feedback.comment || 'Great experience with platform!'}"
-                          </p>
+                          </motion.p>
                           
-                          <div className="flex items-center justify-between text-sm text-gray-500 mt-auto">
+                          <motion.div 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.6 }}
+                            className="flex items-center justify-between text-sm text-gray-500 mt-auto"
+                          >
                             <span className="truncate">Overall Experience</span>
-                            <span className="font-medium text-primary flex-shrink-0">{feedback.bookingEaseRating || 5}/5</span>
-                          </div>
+                            <motion.span 
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ delay: 0.7, type: "spring" }}
+                              className="font-medium text-[#2a7a8e] flex-shrink-0"
+                            >
+                              {feedback.bookingEaseRating || 5}/5
+                            </motion.span>
+                          </motion.div>
                         </div>
-                      </div>
-                    ))
-                  )}
+                      </motion.div>
+                    ))}
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6 }}
+                  className="text-center py-12"
+                >
+                  <motion.div 
+                    animate={floating}
+                    className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4"
+                  >
                     <MessageSquare className="text-gray-400" size={32} />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-600 mb-2">No Reviews Yet</h3>
-                  <p className="text-gray-500 max-w-md mx-auto">
+                  </motion.div>
+                  <motion.h3 
+                    initial={{ opacity: 0, y: -10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2 }}
+                    className="text-xl font-semibold text-gray-600 mb-2"
+                  >
+                    No Reviews Yet
+                  </motion.h3>
+                  <motion.p 
+                    initial={{ opacity: 0, y: -10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 }}
+                    className="text-gray-500 max-w-md mx-auto"
+                  >
                     Be the first to share your experience! Our valued customers' reviews will appear here once they are reviewed by our team.
-                  </p>
-                </div>
+                  </motion.p>
+                </motion.div>
               )}
-            </div>
+            </motion.div>
           </div>
-        </section>
+        </AnimatedSection>
 
       <Footer/>
     </div>

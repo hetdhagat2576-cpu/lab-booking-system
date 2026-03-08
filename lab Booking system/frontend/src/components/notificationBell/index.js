@@ -14,11 +14,18 @@ export default function NotificationBell() {
   useEffect(() => {
     if (!isAuthenticated || !user?._id) return;
 
-    const wsUrl = `ws://localhost:5001?userId=${user._id}`;
+    const token = localStorage.getItem('token');
+    if (!token) {
+      console.log('⚠️ No token found for WebSocket connection');
+      return;
+    }
+
+    const wsUrl = `ws://localhost:5001?userId=${user._id}&token=${token}`;
+    console.log('🔗 Connecting to WebSocket:', wsUrl);
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
-      console.log('WebSocket connected for notifications');
+      console.log('✅ WebSocket connected for notifications');
       // Authenticate the WebSocket connection
       ws.send(JSON.stringify({
         type: 'authenticate',
@@ -29,9 +36,10 @@ export default function NotificationBell() {
     ws.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
+        console.log('📨 WebSocket message received:', message);
         
         if (message.type === 'notification') {
-          console.log('Received real-time notification:', message.data);
+          console.log('🔔 Received real-time notification:', message.data);
           
           // Add new notification to the top of the list
           setNotifications(prev => [message.data, ...prev]);
@@ -44,21 +52,26 @@ export default function NotificationBell() {
               icon: '/favicon.ico'
             });
           }
+        } else if (message.type === 'notification_refresh') {
+          console.log('🔄 Received notification refresh signal');
+          // Refresh notifications from server
+          fetchNotifications();
         }
       } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
+        console.error('❌ Error parsing WebSocket message:', error);
       }
     };
 
     ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+      console.error('❌ WebSocket error:', error);
     };
 
-    ws.onclose = () => {
-      console.log('WebSocket connection closed');
+    ws.onclose = (event) => {
+      console.log('🔌 WebSocket connection closed. Code:', event.code, 'Reason:', event.reason);
     };
 
     return () => {
+      console.log('🔌 Closing WebSocket connection');
       ws.close();
     };
   }, [isAuthenticated, user?._id]);
@@ -82,11 +95,11 @@ export default function NotificationBell() {
       
       // Check if token exists
       if (!token) {
-        console.log('� No token found - user may need to login again');
+        console.log('⚠️ No token found - user may need to login again');
         return;
       }
       
-      console.log('�🔔 Fetching notifications...');
+      console.log('🔔 Fetching notifications...');
       
       const response = await fetch('/api/notifications', {
         headers: {
@@ -98,9 +111,24 @@ export default function NotificationBell() {
       
       if (response.ok) {
         const data = await response.json();
-        console.log('✅ Notifications fetched:', data);
+        console.log('✅ Notifications fetched successfully:', {
+          count: data.count,
+          unreadCount: data.unreadCount,
+          notifications: data.data?.length || 0
+        });
         setNotifications(data.data || []);
         setUnreadCount(data.unreadCount || 0);
+        
+        // Log notification details for debugging
+        if (data.data && data.data.length > 0) {
+          console.log('📋 Recent notifications:', data.data.slice(0, 3).map(n => ({
+            id: n._id,
+            title: n.title,
+            type: n.type,
+            isRead: n.isRead,
+            createdAt: n.createdAt
+          })));
+        }
       } else if (response.status === 401) {
         console.log('🔒 Not authorized - user may need to login again');
         // Clear invalid token and redirect to login
@@ -108,6 +136,8 @@ export default function NotificationBell() {
         window.location.href = '/login';
       } else {
         console.error('❌ API error:', response.status, response.statusText);
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ Error details:', errorData);
       }
     } catch (error) {
       console.error('❌ Error fetching notifications:', error);
@@ -226,6 +256,10 @@ export default function NotificationBell() {
         title="Notifications"
       >
         {Bell && <Bell className="w-6 h-6" />}
+        {/* Blue ring indicator only when there are unread notifications */}
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full border-2 border-white"></span>
+        )}
         {unreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full text-xs w-5 h-5 flex items-center justify-center font-bold border-2 border-white">
             {unreadCount > 9 ? '9+' : unreadCount}

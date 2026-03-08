@@ -44,7 +44,7 @@ const sendOtpEmail = async (email, code, name) => {
         <p style="color: #666; margin-bottom: 30px; font-size: 16px;">Hi ${name},</p>
         <p style="color: #666; margin-bottom: 20px; font-size: 16px;">Use the following OTP to verify your email address:</p>
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 32px; font-weight: bold; letter-spacing: 8px; padding: 20px; border-radius: 8px; margin: 20px 0; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">${code}</div>
-        <p style="color: #999; font-size: 14px; margin-top: 30px;">This code expires in 10 minutes.</p>
+        <p style="color: #999; font-size: 14px; margin-top: 30px;">This code expires in 3 minutes.</p>
         <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
           <p style="color: #999; font-size: 12px;">If you didn't request this verification, please ignore this email.</p>
         </div>
@@ -57,7 +57,7 @@ const sendOtpEmail = async (email, code, name) => {
       from,
       to: email,
       subject: 'Verify Your Lab Booking Account',
-      text: `Your OTP is ${code}. It expires in 10 minutes.`,
+      text: `Your OTP is ${code}. It expires in 3 minutes.`,
       html,
     });
     return { sent: true };
@@ -88,7 +88,7 @@ const generateOtp = async (req, res) => {
     
     // Generate 6-digit OTP
     const code = String(Math.floor(100000 + Math.random() * 900000));
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const expiresAt = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes
     
     // Delete any existing unused OTPs for this email
     await OtpCode.deleteMany({ email: email.toLowerCase(), used: false });
@@ -123,7 +123,7 @@ const generateOtp = async (req, res) => {
         email: user.email,
         otpSent,
         emailMessage,
-        expiresIn: 600, // 10 minutes in seconds
+        expiresIn: 180, // 3 minutes in seconds
       },
     });
   } catch (error) {
@@ -225,7 +225,7 @@ const resendOtp = async (req, res) => {
     
     // Generate new OTP
     const code = String(Math.floor(100000 + Math.random() * 900000));
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + 3 * 60 * 1000);
     
     // Delete existing unused OTPs
     await OtpCode.deleteMany({ email: email.toLowerCase(), used: false });
@@ -260,7 +260,7 @@ const resendOtp = async (req, res) => {
         email: user.email,
         otpSent,
         emailMessage,
-        expiresIn: 600,
+        expiresIn: 180,
       },
     });
   } catch (error) {

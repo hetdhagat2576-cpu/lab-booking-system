@@ -115,13 +115,15 @@ export default function Footer() {
             <ul className="space-y-1 sm:space-y-2">
               {quickLinks.map((link) => (
                 <li key={link.path}>
-                  {link.name === "Contact Us" ? (
-                    <button
-                      onClick={() => navigate(link.path)}
-                      className={location.pathname === link.path ? activeFooterLinkStyles : footerLinkStyles}
+                  {link.name === "Contact Us" || link.name === "Feedback" ? (
+                    <a
+                      href={link.path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={footerLinkStyles}
                     >
                       {link.name}
-                    </button>
+                    </a>
                   ) : (
                     <a
                       href={link.path}

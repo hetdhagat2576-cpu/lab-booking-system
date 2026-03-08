@@ -179,7 +179,7 @@ export default function ContactUsIndex() {
         <section className="bg-white py-16">
           <div className="container mx-auto px-4 max-w-3xl">
             <h2 className="text-3xl font-bold text-center mb-10 text-gray-800">Send Us a Message</h2>
-            <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-2xl p-8 border border-secondary/30" novalidate>
+            <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-2xl p-8 border border-secondary/30" noValidate>
               <div className="grid md:grid-cols-2 gap-6 mb-6">
                 <div>
                   <CInput name="name" label="Full Name" value={formData.name} onChange={handleChange} onBlur={handleBlur} error={errors.name} />
