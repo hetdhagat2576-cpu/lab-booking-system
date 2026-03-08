@@ -23,7 +23,36 @@ export default function NewBooking() {
   const testsParam = searchParams.get("tests");
   const { Calendar, ArrowLeft, Send, CheckCircle2, User, Receipt, X } = IconConfig;
 
-  // Find package by ID across all package categories
+  // State for dynamic package data
+  const [dynamicPackageData, setDynamicPackageData] = useState(null);
+  const [packageLoading, setPackageLoading] = useState(false);
+
+  // Fetch package data from API when packageId is provided
+  const fetchPackageData = async (id) => {
+    if (!id) return null;
+    
+    setPackageLoading(true);
+    try {
+      const response = await safeFetch(createApiUrl(`/api/packages/${id}`));
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('Fetched package data:', result.data);
+        setDynamicPackageData(result.data);
+        return result.data;
+      } else {
+        console.error('Failed to fetch package data:', response.status);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching package data:', error);
+      return null;
+    } finally {
+      setPackageLoading(false);
+    }
+  };
+
+  // Find package by ID across all package categories (fallback)
   const findPackageById = (id) => {
     const allPackages = [
       ...FULL_BODY_PACKAGES,
@@ -37,8 +66,37 @@ export default function NewBooking() {
     return allPackages.find(pkg => pkg.id === parseInt(id));
   };
 
+  // Fetch package data on component mount
+  useEffect(() => {
+    if (packageId) {
+      fetchPackageData(packageId);
+    }
+  }, [packageId]);
+
+  // Update form data when dynamic package data changes
+  useEffect(() => {
+    if (dynamicPackageData) {
+      setFormData(prev => ({
+        ...prev,
+        packageName: dynamicPackageData.name || dynamicPackageData.title,
+        packagePrice: dynamicPackageData.price
+      }));
+      // Also update packageData for display
+      setPackageData(dynamicPackageData);
+    }
+  }, [dynamicPackageData]);
+
   // Get initial package details
   const getInitialPackageDetails = () => {
+    // First try dynamic package data from API
+    if (dynamicPackageData) {
+      return {
+        name: dynamicPackageData.name || dynamicPackageData.title,
+        price: dynamicPackageData.price
+      };
+    }
+    
+    // Fallback to static data
     if (packageId) {
       const packageData = findPackageById(packageId);
       if (packageData) {
@@ -281,7 +339,7 @@ const showPaymentSuccess = () => {
         showConfirmButton: true,
         confirmButtonColor: Theme.colors.primary,
         confirmButtonText: 'Got it!',
-        timer: 5000,
+        timer: 5001,
         timerProgressBar: true
       });
     }
@@ -332,7 +390,7 @@ const showPaymentSuccess = () => {
         
         // If not found in static data, try API (for MongoDB packages)
         try {
-          const response = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages/${packageId}`);
+          const response = await safeFetch(createApiUrl(`/api/packages/${packageId}`));
           if (response.ok) {
             const json = await response.json();
             if (json.success && json.data) {
@@ -835,36 +893,43 @@ const showPaymentSuccess = () => {
                   {(packageId || testNameParam) && (
                     <Card sx={{ bgcolor: Theme.colors.secondary, color: Theme.colors.primary, p: 2 }}>
                       <CardContent sx={{ p: "16px !important" }}>
-                        <Box sx={{ display: "flex", alignItems: "flex-start", gap: 3 }}>
-                          {/* Package Image */}
-                          {packageData && packageData.image && (
-                            <Box
-                              component="img"
-                              src={packageData.image}
-                              alt={formData.packageName}
-                              sx={{
-                                width: 80,
-                                height: 80,
-                                borderRadius: 2,
-                                objectFit: "cover",
-                                flexShrink: 0
-                              }}
-                            />
-                          )}
-                          
-                          {/* Package Info */}
-                          <Box sx={{ flex: 1 }}>
-                            <Typography variant="h6" fontWeight="bold" mb={1}>
-                              {packageId ? "Selected Package" : "Selected Test"}
-                            </Typography>
-                            <Typography variant="body1" fontWeight="medium">
-                              {formData.packageName}
-                            </Typography>
-                            <Typography variant="h6" fontWeight="bold" mt={1}>
-                              ₹{formData.packagePrice} per patient
-                            </Typography>
+                        {packageLoading ? (
+                          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", py: 2 }}>
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-2"></div>
+                            <Typography variant="body1">Loading package details...</Typography>
                           </Box>
-                        </Box>
+                        ) : (
+                          <Box sx={{ display: "flex", alignItems: "flex-start", gap: 3 }}>
+                            {/* Package Image */}
+                            {packageData && packageData.image && (
+                              <Box
+                                component="img"
+                                src={packageData.image}
+                                alt={formData.packageName}
+                                sx={{
+                                  width: 80,
+                                  height: 80,
+                                  borderRadius: 2,
+                                  objectFit: "cover",
+                                  flexShrink: 0
+                                }}
+                              />
+                            )}
+                           
+                            {/* Package Info */}
+                            <Box sx={{ flex: 1 }}>
+                              <Typography variant="h6" fontWeight="bold" mb={1}>
+                                {packageId ? "Selected Package" : "Selected Test"}
+                              </Typography>
+                              <Typography variant="body1" fontWeight="medium">
+                                {formData.packageName}
+                              </Typography>
+                              <Typography variant="h6" fontWeight="bold" mt={1}>
+                                ₹{formData.packagePrice} per patient
+                              </Typography>
+                            </Box>
+                          </Box>
+                        )}
                       </CardContent>
                     </Card>
                   )}

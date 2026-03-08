@@ -10,6 +10,7 @@ import { safeFetch } from "../../config/api";
 import { CONTACT_OPTIONS, CONTACT_FAQ_ITEMS } from "../../config/staticData";
 import { useAuth } from "../../context/authContext";
 import Swal from 'sweetalert2';
+import { createApiUrl } from "../../config/api";
 
 export default function ContactUsIndex() {
   const navigate = useNavigate();
@@ -102,7 +103,7 @@ export default function ContactUsIndex() {
     if (!validateForm()) return;
     
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/contact`, {
+      const res = await fetch(createApiUrl('/api/contact'), {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

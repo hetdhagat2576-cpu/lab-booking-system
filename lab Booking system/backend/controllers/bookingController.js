@@ -3,6 +3,7 @@ const {
   sendBookingApprovalNotification, 
   sendBookingRejectionNotification 
 } = require('../services/notificationService');
+const { createNotification } = require('../controllers/notificationController');
 
 // WebSocket reference - will be set from server.js
 let wss = null;
@@ -304,13 +305,33 @@ const updateBookingStatus = async (req, res) => {
         
         if (adminStatus === 'approved') {
           // Send approval notification and email
-          await sendBookingApprovalNotification(booking);
+          const notificationResult = await sendBookingApprovalNotification(booking);
           console.log('✅ Approval notification and email sent');
+          
+          // Send WebSocket notification to user
+          if (notificationResult.success) {
+            sendNotificationToUser(booking.user, {
+              title: 'Booking Approved! 🎉',
+              message: `Your booking for ${booking.labName || booking.labAppointment} on ${booking.date} at ${booking.time} has been approved.`,
+              type: 'success',
+              relatedBooking: booking._id
+            });
+          }
           
         } else if (adminStatus === 'rejected') {
           // Send rejection notification and email
-          await sendBookingRejectionNotification(booking, rejectionReason);
+          const notificationResult = await sendBookingRejectionNotification(booking, rejectionReason);
           console.log('✅ Rejection notification and email sent');
+          
+          // Send WebSocket notification to user
+          if (notificationResult.success) {
+            sendNotificationToUser(booking.user, {
+              title: 'Booking Rejected ❌',
+              message: `Your booking for ${booking.labName || booking.labAppointment} on ${booking.date} at ${booking.time} has been rejected.${rejectionReason ? ` Reason: ${rejectionReason}` : ''}`,
+              type: 'error',
+              relatedBooking: booking._id
+            });
+          }
         }
 
       } catch (notificationError) {
@@ -393,7 +414,7 @@ const updateBookingStatus = async (req, res) => {
         
         // Create notification for user about cancellation
         try {
-          const notificationData = await createNotification(
+          const notification = await createNotification(
             booking.user,
             'Booking Cancelled',
             'Your booking has been cancelled successfully.',
@@ -403,8 +424,13 @@ const updateBookingStatus = async (req, res) => {
           );
           
           // Send real-time notification via WebSocket
-          if (notificationData) {
-            sendNotificationToUser(booking.user.toString(), notificationData);
+          if (notification) {
+            sendNotificationToUser(booking.user.toString(), {
+              title: notification.title,
+              message: notification.message,
+              type: notification.type,
+              relatedBooking: booking._id
+            });
           }
         } catch (notificationError) {
           console.error('Failed to create cancellation notification:', notificationError);
@@ -554,7 +580,7 @@ const deleteBooking = async (req, res) => {
     
     // Create notification for admin
     try {
-      await createNotification(
+      const notification = await createNotification(
         req.user._id,
         'Booking Deleted',
         `You have deleted booking for ${booking.patientName || booking.user.name}`,

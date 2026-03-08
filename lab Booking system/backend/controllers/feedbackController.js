@@ -53,6 +53,8 @@ const createPublicFeedback = async (req, res) => {
 // Get all feedbacks (Admin only)
 const getAllFeedbacks = async (req, res) => {
   try {
+    console.log('=== DEBUG: getAllFeedbacks called ===');
+    console.log('Feedback model:', Feedback);
     const { page = 1, limit = 10, status, rating } = req.query;
     const skip = (page - 1) * limit;
     
@@ -64,6 +66,9 @@ const getAllFeedbacks = async (req, res) => {
       filter.bookingEaseRating = parseInt(rating);
     }
     
+    console.log('Filter:', filter);
+    console.log('Finding feedbacks...');
+    
     const feedbacks = await Feedback.find(filter)
       .populate('user', 'name email')
       .sort({ createdAt: -1 })
@@ -71,6 +76,9 @@ const getAllFeedbacks = async (req, res) => {
       .limit(parseInt(limit));
     
     const total = await Feedback.countDocuments(filter);
+    
+    console.log('Found feedbacks:', feedbacks.length);
+    console.log('Total count:', total);
     
     res.status(200).json({
       success: true,
@@ -284,8 +292,15 @@ const createUserFeedback = async (req, res) => {
  
 const getMyFeedbacks = async (req, res) => {
   try {
-    const feedbacks = await Feedback.find({ userEmail: req.user.email })
+    // Find feedback linked to this user's ID or matching their email
+    const feedbacks = await Feedback.find({
+      $or: [
+        { user: req.user._id },
+        { userEmail: req.user.email }
+      ]
+    })
       .sort({ createdAt: -1 });
+    
     res.status(200).json({
       success: true,
       count: feedbacks.length,

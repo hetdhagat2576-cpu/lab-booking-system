@@ -8,6 +8,7 @@ import Theme from "../../config/theam/index.js";
 import IconConfig from "../../components/icon/index.js";
 import Swal from "sweetalert2";
 import { useAuth } from "../../context/authContext";
+import { createApiUrl } from "../../config/api";
 
 // Custom SweetAlert helper functions
 const showErrorAlert = (title, message) => {
@@ -155,7 +156,7 @@ export default function FeedbackIndex() {
     }
     setSubmitting(true);
     try {
-      const result = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/feedback/user`, {
+      const result = await fetch(createApiUrl('/api/feedback/user'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

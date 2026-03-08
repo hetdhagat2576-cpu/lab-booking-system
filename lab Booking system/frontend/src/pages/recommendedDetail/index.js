@@ -18,6 +18,7 @@ import {
   PACKAGE_TESTS,
 } from "../../config/staticData";
 import Swal from "sweetalert2";
+import { createApiUrl } from "../../config/api";
 
 const PACKAGE_DATA = {
   "Full Body": FULL_BODY_PACKAGES,
@@ -72,9 +73,9 @@ export default function RecommendedDetail() {
         let apiCategory = "";
 
         if (type === "test" && id) {
-          url = `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests/${id}`;
+          url = createApiUrl('/api/tests/${id}');
         } else if (type === "package" && id) {
-          url = `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages/${id}`;
+          url = createApiUrl('/api/packages/${id}');
         }
 
         if (url) {

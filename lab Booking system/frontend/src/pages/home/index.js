@@ -23,6 +23,7 @@ import {
   floating,
   pulse
 } from '../../config/animations';
+import { createApiUrl } from "../../config/api";
 
 const style = document.createElement('style');
 style.textContent = `
@@ -155,9 +156,9 @@ export default function HomeIndex() {
       let reviewedFeedbacks = [];
       try {
         const [whyBookResponse, howItWorksResponse, feedbacksResponse] = await Promise.all([
-          fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/why-book`),
-          fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/how-it-works`),
-          fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/feedback/reviewed`)
+          fetch(createApiUrl('/api/content/home/why-book')),
+          fetch(createApiUrl('/api/content/home/how-it-works')),
+          fetch(createApiUrl('/api/feedback/reviewed'))
         ]);
         
         const whyBookResult = await whyBookResponse.json();

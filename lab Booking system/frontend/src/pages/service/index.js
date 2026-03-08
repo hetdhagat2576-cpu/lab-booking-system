@@ -6,7 +6,7 @@ import Footer from "../../components/footer";
 import ImageConfig from "../../config/image File";
 import IconConfig from "../../components/icon/index.js";
 import Theme from "../../config/theam/index.js";
-import { safeFetch } from "../../config/api";
+import { safeFetch, createApiUrl } from "../../config/api";
 import {
   heroTitle,
   heroSubtitle,

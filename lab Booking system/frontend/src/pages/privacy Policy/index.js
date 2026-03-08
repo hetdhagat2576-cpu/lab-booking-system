@@ -4,6 +4,7 @@ import Footer from "../../components/footer";
 import IconConfig from "../../components/icon/index.js";
 import Theme from "../../config/theam/index.js";
 import { PRIVACY_POLICY_SECTIONS as STATIC_SECTIONS } from "../../config/staticData";
+import { createApiUrl } from "../../config/api";
 
 export default function PrivacyPolicyIndex() {
   const { ShieldCheck } = IconConfig;
@@ -14,7 +15,7 @@ export default function PrivacyPolicyIndex() {
   useEffect(() => {
     const fetchPrivacyPolicy = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/privacy`);
+        const response = await fetch(createApiUrl('/api/privacy'));
         if (response.ok) {
           const data = await response.json();
           if (data.success) {

@@ -24,6 +24,7 @@ import {
   floating,
   pulse
 } from '../../config/animations';
+import { createApiUrl } from "../../config/api";
 
 export default function AboutIndex() {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export default function AboutIndex() {
   useEffect(() => {
     const fetchAboutData = async () => {
       try {
-        const response = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/about`);
+        const response = await safeFetch(createApiUrl('/api/about'));
         
         if (response.ok) {
           const data = await response.json();

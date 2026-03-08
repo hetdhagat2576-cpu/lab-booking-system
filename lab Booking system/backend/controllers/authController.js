@@ -317,6 +317,47 @@ const loginUser = async (req, res) => {
 
     console.log('✅ Email verified for:', email);
 
+    // Check if any user from the 3 roles is already logged in
+    const activeRoles = ['admin', 'labtechnician', 'doctor'];
+    if (activeRoles.includes(user.role)) {
+      try {
+        // Check if any user with these roles is currently logged in
+        // This is a simple check - in production you might want to use Redis or a proper session store
+        const activeUsers = await User.find({ 
+          role: { $in: activeRoles },
+          lastLogin: { $exists: true }
+        }).sort({ lastLogin: -1 }).limit(10);
+        
+        // Check for recent logins (within last 30 minutes)
+        const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+        const recentlyActiveUsers = activeUsers.filter(u => 
+          u.lastLogin && u.lastLogin > thirtyMinutesAgo && u._id.toString() !== user._id.toString()
+        );
+        
+        if (recentlyActiveUsers.length > 0) {
+          const activeUser = recentlyActiveUsers[0];
+          console.log('❌ Another user with privileged role is already active:', {
+            activeRole: activeUser.role,
+            activeEmail: activeUser.email,
+            lastLogin: activeUser.lastLogin
+          });
+          
+          return res.status(403).json({
+            success: false,
+            message: `Another user with role '${activeUser.role}' (${activeUser.email}) is already logged in. Please wait for them to logout or try again later.`,
+            activeUser: {
+              role: activeUser.role,
+              email: activeUser.email,
+              lastLogin: activeUser.lastLogin
+            }
+          });
+        }
+      } catch (error) {
+        console.warn('⚠️ Error checking active users:', error.message);
+        // Continue with login even if check fails
+      }
+    }
+
     // Check role if specified (more flexible matching)
     if (role && user.role !== role) {
       console.log('❌ Role mismatch:', { expected: role, actual: user.role });
@@ -455,9 +496,54 @@ const registerUserGet = async (req, res) => {
   return registerUser(req, res);
 };
 
+const logoutUser = async (req, res) => {
+  try {
+    console.log('=== DEBUG: Logout Request ===');
+    console.log('User logging out:', req.user?.email, 'Role:', req.user?.role);
+    
+    // Clear lastLogin timestamp for privileged roles to allow other users to login
+    if (req.user && ['admin', 'labtechnician', 'doctor'].includes(req.user.role)) {
+      try {
+        await User.findByIdAndUpdate(req.user._id, { 
+          lastLogin: null 
+        });
+        console.log('✅ Cleared lastLogin for privileged role user');
+      } catch (error) {
+        console.warn('⚠️ Error clearing lastLogin:', error.message);
+      }
+    }
+    
+    // Clear session
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('❌ Session destroy error:', err);
+        return res.status(500).json({
+          success: false,
+          message: 'Error during logout'
+        });
+      }
+      
+      console.log('✅ User logged out successfully');
+      res.status(200).json({
+        success: true,
+        message: 'Logout successful'
+      });
+    });
+    
+  } catch (error) {
+    console.error('❌ Logout error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error during logout',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
+  logoutUser,
   getProfile,
   updateProfile,
   registerUserGet,

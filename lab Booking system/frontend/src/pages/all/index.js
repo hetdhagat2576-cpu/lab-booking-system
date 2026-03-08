@@ -16,6 +16,7 @@ import {
   THYROID_HEALTH_PACKAGES,
   RECOMMENDED_TESTS,
 } from "../../config/staticData/index.js";
+import { createApiUrl } from "../../config/api";
 
 export default function AllHealthPackages() {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ export default function AllHealthPackages() {
 
   const fetchPackages = async () => {
     try {
-      const response = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages?isActive=true`);
+      const response = await safeFetch(createApiUrl('/api/packages?isActive=true'));
       
       if (response.ok) {
         const data = await response.json();

@@ -17,6 +17,7 @@ import {
   staggerItem,
   floating
 } from '../../config/animations';
+import { createApiUrl } from "../../config/api";
 
 export default function PrivacyPage() {
   const [privacyContent, setPrivacyContent] = useState({ sections: [] });
@@ -30,7 +31,7 @@ export default function PrivacyPage() {
   const fetchPrivacyContent = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/privacy`);
+      const response = await fetch(`createApiUrl('/api/privacy'));
       
       if (!response.ok) {
         throw new Error('Failed to fetch privacy content');

@@ -13,7 +13,7 @@ const createTransporter = () => {
     secure: process.env.EMAIL_SECURE === 'true', 
     auth: {
       user: process.env.EMAIL_USER || 'hetdhagat2576@gmail.com',
-      pass: process.env.EMAIL_PASS || 'klqtosidazgxxqj'
+      pass: process.env.EMAIL_PASS
     },
     tls: {
       rejectUnauthorized: false 

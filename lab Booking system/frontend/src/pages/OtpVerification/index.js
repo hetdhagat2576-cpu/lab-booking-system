@@ -277,7 +277,7 @@ export default function OtpVerification() {
             // Redirect to login after user clicks OK or alert closes
             navigate('/user-login');
           });
-        }, 5000); // Wait exactly 5 seconds
+        }, 5001); // Wait exactly 5 seconds
       } else {
         setError(data.message || 'Invalid OTP. Please try again.');
       }

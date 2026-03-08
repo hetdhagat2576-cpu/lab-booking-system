@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import Header from "../../components/header";
 import Footer from "../../components/footer";
 import Theme from "../../config/theam/index.js";
@@ -29,7 +29,7 @@ export default function PackageDetails() {
 
     try {
       // Fetch basic package data
-      const packageResponse = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages/${packageId}`);
+      const packageResponse = await safeFetch(createApiUrl('/api/packages/${packageId}'));
       
       if (packageResponse.ok) {
         const packageResult = await packageResponse.json();
@@ -40,7 +40,7 @@ export default function PackageDetails() {
       }
 
       // Fetch package details with populated tests
-      const detailsResponse = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/package-details/${packageId}`);
+      const detailsResponse = await safeFetch(createApiUrl('/api/package-details/${packageId}'));
       
       if (detailsResponse.ok) {
         const detailsResult = await detailsResponse.json();
@@ -51,7 +51,7 @@ export default function PackageDetails() {
         
         // Fallback: try to get package data with populated tests from packages endpoint
         try {
-          const fallbackResponse = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages/${packageId}?populate=tests`);
+          const fallbackResponse = await safeFetch(createApiUrl('/api/packages/${packageId}?populate=tests'));
           if (fallbackResponse.ok) {
             const fallbackResult = await fallbackResponse.json();
             console.log('Fallback package data:', fallbackResult.data);
@@ -91,7 +91,7 @@ export default function PackageDetails() {
     // Check if user is authenticated and email is verified
     if (user && (user.emailVerified || user.isEmailVerified)) {
       // User is authenticated, navigate to booking page
-      navigate(`/booking/${packageId}`);
+      navigate(`/new-booking?package=${packageId}`);
     } else {
       // User is not authenticated, show SweetAlert prompt
       Swal.fire({
@@ -107,7 +107,7 @@ export default function PackageDetails() {
         if (result.isConfirmed) {
           navigate('/login', { 
             state: { 
-              redirectTo: `/booking/${packageId}`,
+              redirectTo: `/new-booking?package=${packageId}`,
               message: 'Please log in to your account to book this package'
             } 
           });

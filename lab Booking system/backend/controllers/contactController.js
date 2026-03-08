@@ -12,12 +12,20 @@ const createContactMessage = async (req, res) => {
       });
     }
 
-    const saved = await ContactMessage.create({
+    // Link to user if authenticated
+    const contactData = {
       name,
       email,
       phone,
       message,
-    });
+    };
+
+    // If user is authenticated, link the contact message to their account
+    if (req.user && req.user._id) {
+      contactData.user = req.user._id;
+    }
+
+    const saved = await ContactMessage.create(contactData);
 
     return res.status(201).json({
       success: true,
@@ -35,14 +43,23 @@ const createContactMessage = async (req, res) => {
 
 const getContacts = async (req, res) => {
   try {
+    console.log('=== DEBUG: getContacts called ===');
+    console.log('ContactMessage model:', ContactMessage);
+    console.log('Finding all contacts...');
+    
     const contacts = await ContactMessage.find({})
       .sort({ createdAt: -1 });
+    
+    console.log('Found contacts:', contacts.length);
+    console.log('Contacts data:', JSON.stringify(contacts, null, 2));
+    
     return res.status(200).json({
       success: true,
       count: contacts.length,
       data: contacts,
     });
   } catch (error) {
+    console.error('Get contacts error:', error);
     return res.status(500).json({
       success: false,
       message: 'Error fetching contacts',
@@ -167,8 +184,15 @@ const deleteContact = async (req, res) => {
 
 const getContactsForUser = async (req, res) => {
   try {
-    const contacts = await ContactMessage.find({ email: req.user.email })
+    // Find contact messages linked to this user's ID or matching their email
+    const contacts = await ContactMessage.find({
+      $or: [
+        { user: req.user._id },
+        { email: req.user.email }
+      ]
+    })
       .sort({ createdAt: -1 });
+    
     return res.status(200).json({
       success: true,
       count: contacts.length,
@@ -177,7 +201,7 @@ const getContactsForUser = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Error fetching contacts for user',
+      message: 'Error fetching contacts',
       error: error.message,
     });
   }
