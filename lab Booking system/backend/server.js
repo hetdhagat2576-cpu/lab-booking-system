@@ -21,7 +21,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // CORS middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001'],
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001', process.env.FRONTEND_URL],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -125,123 +125,126 @@ app.use('*', (req, res) => {
 
 const PORT = process.env.PORT || 5001;
 
-const server = http.createServer(app);
+// Only start server if not in Vercel environment
+if (process.env.NODE_ENV !== 'production') {
+  const server = http.createServer(app);
 
-// WebSocket setup
-const wss = new WebSocket.Server({ server });
+  // WebSocket setup
+  const wss = new WebSocket.Server({ server });
 
-// Initialize WebSocket server in booking controller for real-time notifications
-const bookingController = require('./controllers/bookingController');
-bookingController.setWebSocketServer(wss);
+  // Initialize WebSocket server in booking controller for real-time notifications
+  const bookingController = require('./controllers/bookingController');
+  bookingController.setWebSocketServer(wss);
 
-wss.on('connection', (ws, req) => {
-  console.log(' New WebSocket connection established');
-  
-  try {
-    // Extract user ID and token from query parameters
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    const userId = url.searchParams.get('userId');
-    const token = url.searchParams.get('token');
+  wss.on('connection', (ws, req) => {
+    console.log(' New WebSocket connection established');
     
-    console.log(` WebSocket connection attempt - UserId: ${userId}, HasToken: ${!!token}`);
-    
-    // Validate authentication
-    if (!userId || !token) {
-      console.log(' WebSocket connection rejected: missing userId or token');
-      ws.close(1008, 'Authentication required');
-      return;
-    }
-    
-    // Here you could add additional token validation logic
-    // For now, we'll accept token and associate connection
-    ws.userId = userId;
-    ws.token = token;
-    ws.isAlive = true; // For heartbeat/ping-pong
-    
-    console.log(` WebSocket connection associated with user: ${userId}`);
-    console.log(` Total active WebSocket clients: ${wss.clients.size}`);
-    
-    // Set up heartbeat/ping-pong
-    ws.on('pong', () => {
-      ws.isAlive = true;
-    });
-    
-    ws.on('message', (message) => {
-      console.log(' Received WebSocket message from user:', userId);
+    try {
+      // Extract user ID and token from query parameters
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const userId = url.searchParams.get('userId');
+      const token = url.searchParams.get('token');
       
-      try {
-        const parsedMessage = JSON.parse(message);
+      console.log(` WebSocket connection attempt - UserId: ${userId}, HasToken: ${!!token}`);
+      
+      // Validate authentication
+      if (!userId || !token) {
+        console.log(' WebSocket connection rejected: missing userId or token');
+        ws.close(1008, 'Authentication required');
+        return;
+      }
+      
+      // Here you could add additional token validation logic
+      // For now, we'll accept token and associate connection
+      ws.userId = userId;
+      ws.token = token;
+      ws.isAlive = true; // For heartbeat/ping-pong
+      
+      console.log(` WebSocket connection associated with user: ${userId}`);
+      console.log(` Total active WebSocket clients: ${wss.clients.size}`);
+      
+      // Set up heartbeat/ping-pong
+      ws.on('pong', () => {
+        ws.isAlive = true;
+      });
+      
+      ws.on('message', (message) => {
+        console.log(' Received WebSocket message from user:', userId);
         
-        // Handle user identification
-        if (parsedMessage.type === 'authenticate' && parsedMessage.userId) {
-          ws.userId = parsedMessage.userId;
-          console.log(` WebSocket re-authenticated for user: ${parsedMessage.userId}`);
-          return;
-        }
-        
-        // Handle ping/pong for connection health
-        if (parsedMessage.type === 'ping') {
-          ws.send(JSON.stringify({ type: 'pong' }));
-          return;
-        }
-        
-        // Broadcast to all connected clients (or specific user logic)
-        wss.clients.forEach((client) => {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(message);
+        try {
+          const parsedMessage = JSON.parse(message);
+          
+          // Handle user identification
+          if (parsedMessage.type === 'authenticate' && parsedMessage.userId) {
+            ws.userId = parsedMessage.userId;
+            console.log(` WebSocket re-authenticated for user: ${parsedMessage.userId}`);
+            return;
           }
-        });
-      } catch (error) {
-        console.error(' Error parsing WebSocket message:', error);
-      }
-    });
+          
+          // Handle ping/pong for connection health
+          if (parsedMessage.type === 'ping') {
+            ws.send(JSON.stringify({ type: 'pong' }));
+            return;
+          }
+          
+          // Broadcast to all connected clients (or specific user logic)
+          wss.clients.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(message);
+            }
+          });
+        } catch (error) {
+          console.error(' Error parsing WebSocket message:', error);
+        }
+      });
 
-    ws.on('close', (code, reason) => {
-      const closeReason = reason ? reason.toString() : 'No reason provided';
-      console.log(` WebSocket connection closed for user ${userId}, code: ${code}, reason: ${closeReason}`);
-      console.log(` Total active clients: ${wss.clients.size}`);
-    });
+      ws.on('close', (code, reason) => {
+        const closeReason = reason ? reason.toString() : 'No reason provided';
+        console.log(` WebSocket connection closed for user ${userId}, code: ${code}, reason: ${closeReason}`);
+        console.log(` Total active clients: ${wss.clients.size}`);
+      });
 
-    ws.on('error', (error) => {
-      console.error(` WebSocket error for user ${userId}:`, error);
+      ws.on('error', (error) => {
+        console.error(` WebSocket error for user ${userId}:`, error);
+        
+        // Handle specific error types
+        if (error.code === 'ECONNRESET') {
+          console.log(' Connection reset by client, will attempt cleanup');
+        }
+      });
       
-      // Handle specific error types
-      if (error.code === 'ECONNRESET') {
-        console.log(' Connection reset by client, will attempt cleanup');
-      }
-    });
-    
-  } catch (error) {
-    console.error(' Error during WebSocket connection setup:', error);
-    ws.close(1011, 'Internal server error');
-  }
-});
-
-// Set up heartbeat interval to detect dead connections
-const heartbeatInterval = setInterval(() => {
-  wss.clients.forEach((ws) => {
-    if (!ws.isAlive) {
-      console.log(' Terminating inactive WebSocket connection');
-      ws.terminate();
-      return;
-    }
-    
-    ws.isAlive = false;
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.ping();
+    } catch (error) {
+      console.error(' Error during WebSocket connection setup:', error);
+      ws.close(1011, 'Internal server error');
     }
   });
-}, 30000); // Check every 30 seconds
 
-// Clean up heartbeat interval on server close
-wss.on('close', () => {
-  clearInterval(heartbeatInterval);
-});
+  // Set up heartbeat interval to detect dead connections
+  const heartbeatInterval = setInterval(() => {
+    wss.clients.forEach((ws) => {
+      if (!ws.isAlive) {
+        console.log(' Terminating inactive WebSocket connection');
+        ws.terminate();
+        return;
+      }
+      
+      ws.isAlive = false;
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.ping();
+      }
+    });
+  }, 30000); // Check every 30 seconds
 
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`WebSocket server running on ws://localhost:${PORT}`);
-});
+  // Clean up heartbeat interval on server close
+  wss.on('close', () => {
+    clearInterval(heartbeatInterval);
+  });
+
+  server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`WebSocket server running on ws://localhost:${PORT}`);
+  });
+}
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
