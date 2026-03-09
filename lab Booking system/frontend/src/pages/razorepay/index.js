@@ -38,7 +38,31 @@ export default function RazorpayPaymentPage() {
   };
 
   const handlePay = useCallback(async () => {
-    if (!isAuthenticated || !user?.token) {
+    if (!isAuthenticated || !user) {
+      navigate("/user-login");
+      return;
+    }
+    
+    // Get token from localStorage since user object might not have it directly
+    const token = localStorage.getItem('token') || user?.token;
+    if (!token) {
+      // Try to get token from stored user data
+      const storedUser = localStorage.getItem('lab_user');
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          if (userData.token) {
+            localStorage.setItem('token', userData.token);
+          }
+        } catch (error) {
+          console.error('Error parsing stored user data:', error);
+        }
+      }
+    }
+    
+    const finalToken = localStorage.getItem('token') || user?.token;
+    if (!finalToken) {
+      setStatus({ type: "error", message: "Authentication required. Please login again." });
       navigate("/user-login");
       return;
     }
@@ -53,7 +77,7 @@ export default function RazorpayPaymentPage() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${user.token}`,
+          Authorization: `Bearer ${finalToken}`,
         },
         body: JSON.stringify({ amount }),
       });
@@ -100,7 +124,7 @@ export default function RazorpayPaymentPage() {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${user.token}`,
+              Authorization: `Bearer ${finalToken}`,
             },
             body: JSON.stringify({
               ...fakeResponse,
@@ -156,7 +180,7 @@ export default function RazorpayPaymentPage() {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${user.token}`,
+                Authorization: `Bearer ${finalToken}`,
               },
               body: JSON.stringify({
                 razorpay_order_id: response.razorpay_order_id,

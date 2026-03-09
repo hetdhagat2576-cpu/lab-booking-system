@@ -23,13 +23,19 @@ export const AuthProvider = ({ children }) => {
         // Only set user if email is verified or if it's a registration flow
         if (userData.emailVerified || userData.isEmailVerified) {
           setUser(userData);
+          // Ensure token is also stored separately
+          if (userData.token) {
+            localStorage.setItem('token', userData.token);
+          }
         } else {
           // Clear unverified user data
           localStorage.removeItem('lab_user');
+          localStorage.removeItem('token');
         }
       } catch (error) {
         console.error('Error parsing user data:', error);
         localStorage.removeItem('lab_user');
+        localStorage.removeItem('token');
       }
     }
     setLoading(false);
@@ -39,16 +45,29 @@ export const AuthProvider = ({ children }) => {
     console.log('AuthContext - Login called with userData:', userData);
     console.log('Token present in userData:', !!userData?.token);
     localStorage.setItem('lab_user', JSON.stringify(userData));
+    
+    // Also store token separately for easy access in payment and other components
+    if (userData.token) {
+      localStorage.setItem('token', userData.token);
+    }
+    
     setUser(userData);
   }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem('lab_user');
+    localStorage.removeItem('token');
     setUser(null);
   }, []);
 
   const updateUser = useCallback((userData) => {
     localStorage.setItem('lab_user', JSON.stringify(userData));
+    
+    // Also update token if present
+    if (userData.token) {
+      localStorage.setItem('token', userData.token);
+    }
+    
     setUser(userData);
   }, []);
 

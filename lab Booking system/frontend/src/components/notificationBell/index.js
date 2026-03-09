@@ -10,69 +10,119 @@ export default function NotificationBell() {
   const [loading, setLoading] = useState(false);
   const { Bell, X, Check } = IconConfig || {};
 
-  // WebSocket connection for real-time notifications
+  // WebSocket connection for real-time notifications with reconnection logic
   useEffect(() => {
     if (!isAuthenticated || !user?._id) return;
 
-    const token = localStorage.getItem('token');
+    // Get token from localStorage or user object
+    let token = localStorage.getItem('token');
+    if (!token && user?.token) {
+      token = user.token;
+      localStorage.setItem('token', token);
+    }
+    
     if (!token) {
       console.log('⚠️ No token found for WebSocket connection');
       return;
     }
 
-    const wsUrl = `ws://localhost:5001?userId=${user._id}&token=${token}`;
-    console.log('🔗 Connecting to WebSocket:', wsUrl);
-    const ws = new WebSocket(wsUrl);
+    let ws;
+    let reconnectAttempts = 0;
+    let reconnectTimeout;
+    const maxReconnectAttempts = 5;
 
-    ws.onopen = () => {
-      console.log('✅ WebSocket connected for notifications');
-      // Authenticate the WebSocket connection
-      ws.send(JSON.stringify({
-        type: 'authenticate',
-        userId: user._id
-      }));
+    const connectWebSocket = () => {
+      const wsUrl = `ws://localhost:5001?userId=${user._id}&token=${token}`;
+      console.log('🔗 Connecting to WebSocket:', wsUrl);
+      
+      try {
+        ws = new WebSocket(wsUrl);
+      } catch (error) {
+        console.error('❌ Failed to create WebSocket connection:', error);
+        handleReconnect();
+        return;
+      }
+
+      ws.onopen = () => {
+        console.log('✅ WebSocket connected for notifications');
+        reconnectAttempts = 0; // Reset reconnect attempts on successful connection
+        
+        // Authenticate WebSocket connection
+        ws.send(JSON.stringify({
+          type: 'authenticate',
+          userId: user._id
+        }));
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          console.log('📨 WebSocket message received:', message);
+          
+          if (message.type === 'notification') {
+            console.log('🔔 Received real-time notification:', message.data);
+            
+            // Add new notification to the top of the list
+            setNotifications(prev => [message.data, ...prev]);
+            setUnreadCount(prev => prev + 1);
+            
+            // Show browser notification if permission granted
+            if (Notification.permission === 'granted') {
+              new Notification(message.data.title, {
+                body: message.data.message,
+                icon: '/favicon.ico'
+              });
+            }
+          } else if (message.type === 'notification_refresh') {
+            console.log('🔄 Received notification refresh signal');
+            // Refresh notifications from server
+            fetchNotifications();
+          }
+        } catch (error) {
+          console.error('❌ Error parsing WebSocket message:', error);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('❌ WebSocket error:', error);
+      };
+
+      ws.onclose = (event) => {
+        console.log('🔌 WebSocket connection closed. Code:', event.code, 'Reason:', event.reason);
+        
+        // Only attempt to reconnect if the connection was not closed intentionally
+        if (event.code !== 1000 && event.code !== 1001) {
+          handleReconnect();
+        }
+      };
     };
 
-    ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        console.log('📨 WebSocket message received:', message);
+    const handleReconnect = () => {
+      if (reconnectAttempts < maxReconnectAttempts) {
+        reconnectAttempts++;
+        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000); // Exponential backoff, max 30 seconds
         
-        if (message.type === 'notification') {
-          console.log('🔔 Received real-time notification:', message.data);
-          
-          // Add new notification to the top of the list
-          setNotifications(prev => [message.data, ...prev]);
-          setUnreadCount(prev => prev + 1);
-          
-          // Show browser notification if permission granted
-          if (Notification.permission === 'granted') {
-            new Notification(message.data.title, {
-              body: message.data.message,
-              icon: '/favicon.ico'
-            });
-          }
-        } else if (message.type === 'notification_refresh') {
-          console.log('🔄 Received notification refresh signal');
-          // Refresh notifications from server
-          fetchNotifications();
-        }
-      } catch (error) {
-        console.error('❌ Error parsing WebSocket message:', error);
+        console.log(`🔄 Attempting to reconnect in ${delay/1000} seconds (attempt ${reconnectAttempts}/${maxReconnectAttempts})`);
+        
+        reconnectTimeout = setTimeout(() => {
+          connectWebSocket();
+        }, delay);
+      } else {
+        console.error('❌ Max reconnection attempts reached. WebSocket connection failed.');
       }
     };
 
-    ws.onerror = (error) => {
-      console.error('❌ WebSocket error:', error);
-    };
-
-    ws.onclose = (event) => {
-      console.log('🔌 WebSocket connection closed. Code:', event.code, 'Reason:', event.reason);
-    };
+    // Initial connection
+    connectWebSocket();
 
     return () => {
-      console.log('🔌 Closing WebSocket connection');
-      ws.close();
+      console.log('🔌 Cleaning up WebSocket connection');
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+      if (ws) {
+        ws.close(1000, 'Component unmounted');
+      }
     };
   }, [isAuthenticated, user?._id]);
 
@@ -91,7 +141,12 @@ export default function NotificationBell() {
     
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
+      // Get token from localStorage or user object
+      let token = localStorage.getItem('token');
+      if (!token && user?.token) {
+        token = user.token;
+        localStorage.setItem('token', token);
+      }
       
       // Check if token exists
       if (!token) {
@@ -101,7 +156,7 @@ export default function NotificationBell() {
       
       console.log('🔔 Fetching notifications...');
       
-      const response = await fetch('/api/notifications', {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/notifications`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -151,8 +206,19 @@ export default function NotificationBell() {
 
   const markAsRead = async (notificationId) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/notifications/${notificationId}/read`, {
+      // Get token from localStorage or user object
+      let token = localStorage.getItem('token');
+      if (!token && user?.token) {
+        token = user.token;
+        localStorage.setItem('token', token);
+      }
+      
+      if (!token) {
+        console.log('⚠️ No token found for marking notification as read');
+        return;
+      }
+      
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/notifications/${notificationId}/read`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -177,8 +243,19 @@ export default function NotificationBell() {
 
   const markAllAsRead = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/notifications/read-all', {
+      // Get token from localStorage or user object
+      let token = localStorage.getItem('token');
+      if (!token && user?.token) {
+        token = user.token;
+        localStorage.setItem('token', token);
+      }
+      
+      if (!token) {
+        console.log('⚠️ No token found for marking all notifications as read');
+        return;
+      }
+      
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/notifications/read-all`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`

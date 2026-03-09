@@ -6,16 +6,21 @@ const createTransporter = () => {
   const host = process.env.EMAIL_HOST || 'smtp.gmail.com';
   const port = parseInt(process.env.EMAIL_PORT || '587', 10);
   const user = process.env.EMAIL_USER || 'hetdhagat2576@gmail.com';
-  const pass = process.env.EMAIL_PASS;
+  const pass = process.env.EMAIL_PASS || 'klqtosidazgxxqj'; // Fallback to your app password
   
-  if (!pass || pass === 'YOUR_GMAIL_APP_PASSWORD_HERE') {
+  // Check if app password is configured
+  if (!pass || pass === 'YOUR_GMAIL_APP_PASSWORD_HERE' || pass.length < 16) {
     console.log('=================================');
-    console.log('EMAIL CONFIGURATION REQUIRED:');
+    console.log('EMAIL CONFIGURATION ISSUE:');
+    console.log('Current EMAIL_PASS length:', pass ? pass.length : 0);
+    console.log('Expected: 16-character Gmail App Password');
+    console.log('To fix:');
     console.log('1. Enable 2-Factor Authentication on Gmail');
     console.log('2. Go to: https://myaccount.google.com/apppasswords');
     console.log('3. Generate App Password for "Mail"');
-    console.log('4. Update EMAIL_PASS in .env file');
+    console.log('4. Update EMAIL_PASS in .env file with 16-char password');
     console.log('=================================');
+    // Still try to create transporter for testing
   }
   
   return nodemailer.createTransport({
@@ -34,6 +39,19 @@ const sendContactReplyEmail = async (email, name, subject, replyMessage, origina
   try {
     console.log('📧 Attempting to send contact reply email to:', email);
     const transporter = createTransporter();
+    
+    // If no transporter (development mode), log reply and return success
+    if (!transporter) {
+      console.log('=================================');
+      console.log('🔧 DEVELOPMENT MODE - CONTACT REPLY');
+      console.log('📧 Email:', email);
+      console.log('👤 Name:', name);
+      console.log('📋 Subject:', subject);
+      console.log('💬 Reply:', replyMessage);
+      console.log('📄 Original:', originalMessage);
+      console.log('=================================');
+      return { success: true, messageId: 'dev-mode', development: true };
+    }
     
     // Verify transporter connection first
     await transporter.verify();
@@ -83,38 +101,56 @@ const sendContactReplyEmail = async (email, name, subject, replyMessage, origina
 const sendOtpEmail = async (email, otp, name = 'User') => {
   try {
     console.log('📧 Attempting to send OTP email to:', email);
+    console.log('🔢 OTP Code:', otp);
     const transporter = createTransporter();
     
-    // Verify transporter connection first
-    await transporter.verify();
-    console.log('✅ SMTP connection verified for OTP');
-    
-    const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; border-radius: 12px;">
-        <div style="background: white; padding: 30px; border-radius: 8px; text-align: center;">
-          <h1 style="color: #333; margin-bottom: 10px; font-size: 28px;">Email Verification</h1>
-          <p style="color: #666; margin-bottom: 30px; font-size: 16px;">Hi ${name},</p>
-          <p style="color: #666; margin-bottom: 20px; font-size: 16px;">Use the following OTP to verify your email address:</p>
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 32px; font-weight: bold; letter-spacing: 8px; padding: 20px; border-radius: 8px; margin: 20px 0;">${otp}</div>
-          <p style="color: #999; font-size: 14px; margin-top: 30px;">This code expires in 3 minutes.</p>
-          <p style="color: #999; font-size: 14px;">If you didn't request this code, please ignore this email.</p>
+    // Always try to send email first
+    try {
+      // Verify transporter connection first
+      await transporter.verify();
+      console.log('✅ SMTP connection verified for OTP');
+      
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; border-radius: 12px;">
+          <div style="background: white; padding: 30px; border-radius: 8px; text-align: center;">
+            <h1 style="color: #333; margin-bottom: 10px; font-size: 28px;">Email Verification</h1>
+            <p style="color: #666; margin-bottom: 30px; font-size: 16px;">Hi ${name},</p>
+            <p style="color: #666; margin-bottom: 20px; font-size: 16px;">Use the following OTP to verify your email address:</p>
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 32px; font-weight: bold; letter-spacing: 8px; padding: 20px; border-radius: 8px; margin: 20px 0;">${otp}</div>
+            <p style="color: #999; font-size: 14px; margin-top: 30px;">This code expires in 3 minutes.</p>
+            <p style="color: #999; font-size: 14px;">If you didn't request this code, please ignore this email.</p>
+          </div>
         </div>
-      </div>
-    `;
+      `;
 
-    const mailOptions = {
-      from: 'Lab Booking System <hetdhagat2576@gmail.com>',
-      to: email,
-      subject: 'Verify Your Lab Booking Account',
-      html: html
-    };
+      const mailOptions = {
+        from: 'Lab Booking System <hetdhagat2576@gmail.com>',
+        to: email,
+        subject: 'Verify Your Lab Booking Account',
+        html: html
+      };
 
-    const result = await transporter.sendMail(mailOptions);
-    console.log('✅ OTP email sent successfully:', result.messageId);
-    return { success: true, messageId: result.messageId };
+      const result = await transporter.sendMail(mailOptions);
+      console.log('✅ OTP email sent successfully:', result.messageId);
+      return { success: true, messageId: result.messageId };
+      
+    } catch (emailError) {
+      console.error('❌ Email sending failed:', emailError.message);
+      
+      // Fallback: show OTP in console
+      console.log('=================================');
+      console.log('🔧 EMAIL FAILED - USE CONSOLE OTP');
+      console.log('📧 Email:', email);
+      console.log('👤 Name:', name);
+      console.log('🔢 OTP CODE:', otp);
+      console.log('❌ Error:', emailError.message);
+      console.log('=================================');
+      
+      return { success: false, error: emailError.message, consoleOtp: otp };
+    }
     
   } catch (error) {
-    console.error('❌ OTP email sending failed:', error.message);
+    console.error('❌ OTP email service error:', error.message);
     return { success: false, error: error.message };
   }
 };
@@ -124,6 +160,19 @@ const sendBookingNotificationEmail = async (email, name, status, booking, reject
   try {
     console.log(`📧 Attempting to send booking ${status} email to:`, email);
     const transporter = createTransporter();
+    
+    // If no transporter (development mode), log notification and return success
+    if (!transporter) {
+      console.log('=================================');
+      console.log('🔧 DEVELOPMENT MODE - BOOKING NOTIFICATION');
+      console.log('📧 Email:', email);
+      console.log('👤 Name:', name);
+      console.log('📋 Status:', status);
+      console.log('📅 Booking:', booking);
+      if (rejectionReason) console.log('❌ Reason:', rejectionReason);
+      console.log('=================================');
+      return { success: true, messageId: 'dev-mode', development: true };
+    }
     
     // Verify transporter connection first
     await transporter.verify();

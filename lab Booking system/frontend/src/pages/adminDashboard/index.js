@@ -7,6 +7,7 @@ import IconConfig from "../../components/icon/index.js";
 import Theme from "../../config/theam/index.js";
 import LogoutConfirmation from "../../components/logoutConfirmation/index.js";
 import Swal from 'sweetalert2';
+import * as XLSX from 'xlsx';
 import { } from "../../config/staticData";
 
 // Icon rendering function for health concerns
@@ -74,13 +75,119 @@ const SidebarItem = ({ id, label, icon: Icon, activeTab, setActiveTab, ChevronRi
   </button>
 );
 
+// Excel Export Utility Functions
+const exportToExcel = (data, filename, sheetName = 'Data') => {
+  try {
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+    return true;
+  } catch (error) {
+    console.error('Error exporting to Excel:', error);
+    return false;
+  }
+};
+
+const exportUsersToExcel = (users) => {
+  const exportData = users.map(user => ({
+    'User ID': user._id || '',
+    'Name': user.name || '',
+    'Email': user.email || '',
+    'Phone': user.phone || '',
+    'Role': user.role || '',
+    'Status': user.status || 'active',
+    'Created Date': user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '',
+    'Last Updated': user.updatedAt ? new Date(user.updatedAt).toLocaleDateString() : ''
+  }));
+  return exportToExcel(exportData, `Users_Export_${new Date().toISOString().split('T')[0]}`, 'Users');
+};
+
+const exportBookingsToExcel = (bookings) => {
+  const exportData = bookings.map(booking => ({
+    'Booking ID': booking._id || '',
+    'User Name': booking.userName || '',
+    'User Email': booking.userEmail || '',
+    'Test Name': booking.testName || '',
+    'Date': booking.date ? new Date(booking.date).toLocaleDateString() : '',
+    'Time Slot': booking.timeSlot || '',
+    'Status': booking.status || '',
+    'Admin Status': booking.adminStatus || '',
+    'Lab Technician': booking.assignedLabTechnician || '',
+    'Created Date': booking.createdAt ? new Date(booking.createdAt).toLocaleDateString() : '',
+    'Price': booking.price || ''
+  }));
+  return exportToExcel(exportData, `Bookings_Export_${new Date().toISOString().split('T')[0]}`, 'Bookings');
+};
+
+const exportFeedbackToExcel = (feedbacks) => {
+  const exportData = feedbacks.map(feedback => ({
+    'Feedback ID': feedback._id || '',
+    'User Name': feedback.userName || '',
+    'User Email': feedback.userEmail || '',
+    'Rating': feedback.rating || '',
+    'Comment': feedback.comment || '',
+    'Status': feedback.status || '',
+    'Admin Reply': feedback.adminReply || '',
+    'Created Date': feedback.createdAt ? new Date(feedback.createdAt).toLocaleDateString() : '',
+    'Replied Date': feedback.repliedAt ? new Date(feedback.repliedAt).toLocaleDateString() : ''
+  }));
+  return exportToExcel(exportData, `Feedback_Export_${new Date().toISOString().split('T')[0]}`, 'Feedback');
+};
+
+const exportContactsToExcel = (contacts) => {
+  const exportData = contacts.map(contact => ({
+    'Contact ID': contact._id || '',
+    'Name': contact.name || '',
+    'Email': contact.email || '',
+    'Phone': contact.phone || '',
+    'Subject': contact.subject || '',
+    'Message': contact.message || '',
+    'Status': contact.status || '',
+    'Admin Reply': contact.reply || '',
+    'Created Date': contact.createdAt ? new Date(contact.createdAt).toLocaleDateString() : '',
+    'Replied Date': contact.repliedAt ? new Date(contact.repliedAt).toLocaleDateString() : ''
+  }));
+  return exportToExcel(exportData, `Contacts_Export_${new Date().toISOString().split('T')[0]}`, 'Contacts');
+};
+
+const exportTestsToExcel = (tests) => {
+  const exportData = tests.map(test => ({
+    'Test ID': test._id || '',
+    'Test Name': test.testName || '',
+    'Category': test.category || '',
+    'Price': test.price || '',
+    'Description': test.description || '',
+    'Preparation': test.preparationInstructions || '',
+    'Duration': test.duration || '',
+    'Status': test.isActive ? 'Active' : 'Inactive',
+    'Created Date': test.createdAt ? new Date(test.createdAt).toLocaleDateString() : ''
+  }));
+  return exportToExcel(exportData, `Tests_Export_${new Date().toISOString().split('T')[0]}`, 'Tests');
+};
+
+const exportPackagesToExcel = (packages) => {
+  const exportData = packages.map(pkg => ({
+    'Package ID': pkg._id || '',
+    'Package Name': pkg.packageName || '',
+    'Description': pkg.description || '',
+    'Price': pkg.price || '',
+    'Discount': pkg.discount || '',
+    'Duration': pkg.duration || '',
+    'Tests Included': pkg.tests ? pkg.tests.map(test => test.testName || test).join(', ') : '',
+    'Status': pkg.isActive ? 'Active' : 'Inactive',
+    'Created Date': pkg.createdAt ? new Date(pkg.createdAt).toLocaleDateString() : ''
+  }));
+  return exportToExcel(exportData, `Packages_Export_${new Date().toISOString().split('T')[0]}`, 'Packages');
+};
+
 export default function AdminDashboardIndex() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const {
     CheckCircle2, XCircle, LayoutDashboard,
     ClipboardList, MessageSquare, PhoneCall, ChevronRight, Menu, X, Trash2, LogOut,
-    FileText, Settings, HelpCircle, ShieldCheck, Globe, Home, TestTube, Package, Plus, Edit2, Calendar, Zap, Cloud, Eye, Lock, Clock, TrendingUp, Mail, Phone, Stethoscope
+    FileText, Settings, HelpCircle, ShieldCheck, Globe, Home, TestTube, Package, Plus, Edit2, Calendar, Zap, Cloud, Eye, Lock, Clock, TrendingUp, Mail, Phone, Stethoscope, Download
   } = IconConfig;
 
   const [activeTab, setActiveTab] = useState("registration");
@@ -119,6 +226,7 @@ export default function AdminDashboardIndex() {
   const [loading, setLoading] = useState(true);
   const [feedbacks, setFeedbacks] = useState([]);
   const [contacts, setContacts] = useState([]);
+  const [appointments, setAppointments] = useState([]);
   const [showReplyModal, setShowReplyModal] = useState(false);
   const [selectedContact, setSelectedContact] = useState(null);
   const [replyMessage, setReplyMessage] = useState('');
@@ -428,6 +536,47 @@ export default function AdminDashboardIndex() {
       setContacts([]);
     }
   }, [user]);
+
+  // Admin: Fetch appointments (now using bookings data)
+  const fetchAppointmentsAdmin = useCallback(async () => {
+    if (!user?.token) return;
+    try {
+      const resp = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/bookings`, {
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
+      if (resp.ok) {
+        const result = await resp.json();
+        // Transform bookings data to match appointment structure
+        const transformedBookings = (result.data || []).map(booking => ({
+          _id: booking._id,
+          user: booking.user,
+          lab: booking.labName || booking.labAppointment,
+          appointmentDate: booking.date,
+          appointmentTime: booking.time,
+          status: booking.adminStatus || booking.status || 'pending',
+          patientName: booking.patientName,
+          purpose: booking.purpose,
+          packageName: booking.packageName,
+          totalAmount: booking.totalAmount,
+          paymentStatus: booking.paymentStatus,
+          createdAt: booking.createdAt,
+          // Add fields that the UI expects
+          name: booking.patientName,
+          email: booking.user?.email,
+          phone: booking.user?.phone
+        }));
+        setAppointments(transformedBookings);
+      } else {
+        console.error('Failed to fetch bookings');
+        setAppointments([]);
+      }
+    } catch (err) {
+      console.error('Error fetching appointments:', err);
+      setAppointments([]);
+    }
+  }, [user, logout, navigate]);
 
   // User Management API Functions
   const fetchUsers = useCallback(async () => {
@@ -1417,6 +1566,43 @@ export default function AdminDashboardIndex() {
       } catch (error) {
         console.error('Error deleting health concern:', error);
         Swal.fire('Error!', 'Failed to delete health concern', 'error');
+      }
+    }
+  };
+
+  const seedHealthConcerns = async () => {
+    if (!user?.token) return;
+
+    const result = await Swal.fire({
+      title: 'Seed Health Concerns Data?',
+      text: 'This will clear all existing health concerns and populate the database with default data. Are you sure?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, seed data!',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns/seed`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${user.token}`
+          }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          await fetchHealthConcerns();
+          Swal.fire('Success!', result.message || 'Health concerns seeded successfully', 'success');
+        } else {
+          throw new Error('Failed to seed health concerns');
+        }
+      } catch (error) {
+        console.error('Error seeding health concerns:', error);
+        Swal.fire('Error!', 'Failed to seed health concerns', 'error');
       }
     }
   };
@@ -3158,6 +3344,7 @@ export default function AdminDashboardIndex() {
       fetchBookings();
       fetchFeedbacksAdmin();
       fetchContactsAdmin();
+      fetchAppointmentsAdmin();
       // fetchUsers() will be called when registration tab is active
     } else {
       console.warn('No user token found - skipping API calls');
@@ -3229,6 +3416,13 @@ export default function AdminDashboardIndex() {
   useEffect(() => {
     if (activeTab === 'contact' && user?.token) {
       fetchContactsAdmin();
+    }
+  }, [activeTab, user]);
+
+  // Fetch appointments when bookings tab is active
+  useEffect(() => {
+    if (activeTab === 'bookings' && user?.token) {
+      fetchAppointmentsAdmin();
     }
   }, [activeTab, user]);
 
@@ -3496,6 +3690,44 @@ export default function AdminDashboardIndex() {
     }
   };
 
+  const updateAppointmentStatus = async (id, newStatus) => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/appointments/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      if (response.ok) {
+        fetchAppointmentsAdmin();
+        await Swal.fire({
+          icon: 'success',
+          title: 'Status Updated',
+          text: `Appointment status has been updated to ${newStatus}`,
+          confirmButtonColor: Theme.colors.primary
+        });
+      } else {
+        console.error('Failed to update appointment status');
+        await Swal.fire({
+          icon: 'error',
+          title: 'Failed to Update Status',
+          text: 'Unable to update appointment status. Please try again.',
+          confirmButtonColor: Theme.colors.primary
+        });
+      }
+    } catch (error) {
+      console.error('Error updating appointment status:', error);
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: error.message,
+        confirmButtonColor: Theme.colors.primary
+      });
+    }
+  };
+
   const markFeedbackAsReviewed = async (id) => {
     setFeedbacks(prevFeedbacks =>
       prevFeedbacks.map(f =>
@@ -3622,7 +3854,7 @@ export default function AdminDashboardIndex() {
     setSendingReply(true);
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/admin/contact-reply/${selectedContact._id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/contact/${selectedContact._id}/reply`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -4131,7 +4363,7 @@ export default function AdminDashboardIndex() {
           className="md:hidden fixed top-20 left-4 z-50 p-3 bg-white rounded-lg shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-200"
           variant="outline"
         >
-          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          {mobileMenuOpen ? <IconConfig.X size={24} /> : <IconConfig.Menu size={24} />}
         </CButton>
 
         {/* Sidebar - Responsive with system name */}
@@ -4157,7 +4389,7 @@ export default function AdminDashboardIndex() {
           <div className="p-6 mb-6 border-b border-gray-100/50 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-t-2xl md:rounded-t-none">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: Theme.colors.primary }}>
-                <LayoutDashboard size={24} className="text-white" />
+                <IconConfig.LayoutDashboard size={24} className="text-white" />
               </div>
               <div>
                 <h2 className="text-2xl font-bold" style={{ color: Theme.colors.primary }}>BookMyLab</h2>
@@ -4165,7 +4397,7 @@ export default function AdminDashboardIndex() {
               </div>
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-500">
-              <ShieldCheck size={14} />
+              <IconConfig.ShieldCheck size={14} />
               <span>Laboratory Management System</span>
             </div>
           </div>
@@ -4175,29 +4407,29 @@ export default function AdminDashboardIndex() {
             {/* Main Management */}
             <div className="mb-4">
               <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Main Management</h3>
-              <SidebarItem id="registration" label="User Registration" icon={LayoutDashboard} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
-              <SidebarItem id="bookings" label="Lab Bookings" icon={ClipboardList} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
-              <SidebarItem id="feedback" label="User Feedback" icon={MessageSquare} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
-              <SidebarItem id="contact" label="Contact Requests" icon={PhoneCall} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="registration" label="User Registration" icon={IconConfig.LayoutDashboard} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="bookings" label="Lab Bookings" icon={IconConfig.ClipboardList} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="feedback" label="User Feedback" icon={IconConfig.MessageSquare} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="contact" label="Contact Requests" icon={IconConfig.PhoneCall} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
             </div>
 
             {/* Content Management */}
             <div className="mb-4">
               <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Content Management</h3>
-              <SidebarItem id="tests" label="Test Management" icon={TestTube} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
-              <SidebarItem id="packages" label="Package Management" icon={Package} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
-              <SidebarItem id="health-concerns" label="Health Concerns" icon={Stethoscope} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="tests" label="Test Management" icon={IconConfig.TestTube} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="packages" label="Package Management" icon={IconConfig.Package} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="health-concerns" label="Health Concerns" icon={IconConfig.Stethoscope} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
             </div>
 
             {/* System Settings */}
             <div className="mb-4">
               <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">System Settings</h3>
-              <SidebarItem id="service-content" label="Service Content" icon={Globe} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
-              <SidebarItem id="about" label="About Content" icon={FileText} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
-              <SidebarItem id="home-content" label="Home Content" icon={Home} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
-              <SidebarItem id="terms" label="Terms & Conditions" icon={FileText} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
-              <SidebarItem id="privacy" label="Privacy Policy" icon={ShieldCheck} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
-              <SidebarItem id="faq" label="FAQ Management" icon={HelpCircle} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="service-content" label="Service Content" icon={IconConfig.Globe} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="about" label="About Content" icon={IconConfig.FileText} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="home-content" label="Home Content" icon={IconConfig.Home} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="terms" label="Terms & Conditions" icon={IconConfig.FileText} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="privacy" label="Privacy Policy" icon={IconConfig.ShieldCheck} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
+              <SidebarItem id="faq" label="FAQ Management" icon={IconConfig.HelpCircle} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
             </div>
           </div>
         </aside>
@@ -4236,7 +4468,7 @@ export default function AdminDashboardIndex() {
                     className="p-2 bg-white/20 backdrop-blur-sm rounded-lg border border-white/30"
                     variant="outline"
                   >
-                    <Menu size={20} className="text-white" />
+                    <IconConfig.Menu size={20} className="text-white" />
                   </CButton>
                 </div>
               </div>
@@ -4245,6 +4477,33 @@ export default function AdminDashboardIndex() {
             <div className="p-6 md:p-8 space-y-6">
               {activeTab === "registration" && (
                 <div className="space-y-6">
+                  {/* Export Button */}
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => {
+                        const success = exportUsersToExcel(getFilteredUsers());
+                        if (success) {
+                          Swal.fire({
+                            icon: 'success',
+                            title: 'Export Successful!',
+                            text: 'Users data has been exported to Excel.',
+                            confirmButtonColor: Theme.colors.primary
+                          });
+                        } else {
+                          Swal.fire({
+                            icon: 'error',
+                            title: 'Export Failed',
+                            text: 'Failed to export users data. Please try again.',
+                            confirmButtonColor: Theme.colors.primary
+                          });
+                        }
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                    >
+                      <Download size={16} />
+                      Export to Excel
+                    </button>
+                  </div>
                   {/* User Management Table */}
                   <div className="overflow-x-auto">
                     {usersLoading ? (
@@ -4308,7 +4567,7 @@ export default function AdminDashboardIndex() {
                               variant="outline"
                               title="Delete User"
                             >
-                              <Trash2 size={16} />
+                              <IconConfig.Trash2 size={16} />
                             </CButton>
                           </td>
                         </tr>
@@ -4321,11 +4580,11 @@ export default function AdminDashboardIndex() {
           </div>
         )}
 
-        {/* Bookings Section */}
+        {/* Bookings Section - Now displays Bookings from MongoDB */}
         {activeTab === "bookings" && (
           <>
             {/* Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
               <div
                 onClick={() => setBookingFilter('all')}
                 className={`bg-white rounded-xl p-6 border-2 cursor-pointer transition-all duration-300 hover:shadow-lg ${bookingFilter === 'all' ? 'border-blue-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
@@ -4334,26 +4593,10 @@ export default function AdminDashboardIndex() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Total Bookings</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-2">{stats?.totalBookings || 0}</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">{appointments.length || 0}</p>
                   </div>
                   <div className="p-3 bg-blue-100 rounded-lg">
-                    <ClipboardList size={24} className="text-blue-600" />
-                  </div>
-                </div>
-              </div>
-
-              <div
-                onClick={() => setBookingFilter('approved')}
-                className={`bg-white rounded-xl p-6 border-2 cursor-pointer transition-all duration-300 hover:shadow-lg ${bookingFilter === 'approved' ? 'border-green-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
-                  }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Approved Bookings</p>
-                    <p className="text-3xl font-bold text-green-600 mt-2">{stats?.approvedBookings || 0}</p>
-                  </div>
-                  <div className="p-3 bg-green-100 rounded-lg">
-                    <CheckCircle2 size={24} className="text-green-600" />
+                    <IconConfig.Calendar size={24} className="text-blue-600" />
                   </div>
                 </div>
               </div>
@@ -4365,14 +4608,100 @@ export default function AdminDashboardIndex() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Pending Bookings</p>
-                    <p className="text-3xl font-bold text-yellow-600 mt-2">{stats?.pendingBookings || 0}</p>
+                    <p className="text-sm font-medium text-gray-600">Pending</p>
+                    <p className="text-3xl font-bold text-yellow-600 mt-2">
+                      {appointments.filter(a => (a.status === 'pending' || a.adminStatus === 'pending')).length}
+                    </p>
                   </div>
                   <div className="p-3 bg-yellow-100 rounded-lg">
-                    <Clock size={24} className="text-yellow-600" />
+                    <IconConfig.Clock size={24} className="text-yellow-600" />
                   </div>
                 </div>
               </div>
+
+              <div
+                onClick={() => setBookingFilter('approved')}
+                className={`bg-white rounded-xl p-6 border-2 cursor-pointer transition-all duration-300 hover:shadow-lg ${bookingFilter === 'approved' ? 'border-green-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
+                  }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Approved</p>
+                    <p className="text-3xl font-bold text-green-600 mt-2">
+                      {appointments.filter(a => (a.status === 'approved' || a.adminStatus === 'approved')).length}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-green-100 rounded-lg">
+                    <IconConfig.CheckCircle2 size={24} className="text-green-600" />
+                  </div>
+                </div>
+              </div>
+
+              <div
+                onClick={() => setBookingFilter('rejected')}
+                className={`bg-white rounded-xl p-6 border-2 cursor-pointer transition-all duration-300 hover:shadow-lg ${bookingFilter === 'rejected' ? 'border-red-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
+                  }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Rejected</p>
+                    <p className="text-3xl font-bold text-red-600 mt-2">
+                      {appointments.filter(a => (a.status === 'rejected' || a.adminStatus === 'rejected')).length}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-red-100 rounded-lg">
+                    <IconConfig.XCircle size={24} className="text-red-600" />
+                  </div>
+                </div>
+              </div>
+
+              <div
+                onClick={() => setBookingFilter('Scheduled')}
+                className={`bg-white rounded-xl p-6 border-2 cursor-pointer transition-all duration-300 hover:shadow-lg ${bookingFilter === 'Scheduled' ? 'border-blue-500 shadow-md' : 'border-gray-200 hover:border-gray-300'
+                  }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Scheduled</p>
+                    <p className="text-3xl font-bold text-blue-600 mt-2">{appointments.filter(a => a.status === 'Scheduled').length}</p>
+                  </div>
+                  <div className="p-3 bg-blue-100 rounded-lg">
+                    <IconConfig.Calendar size={24} className="text-blue-600" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Export Button for Bookings */}
+            <div className="flex justify-end">
+              <button
+                onClick={() => {
+                  const filteredAppointments = appointments.filter(a => {
+                    if (bookingFilter === 'all') return true;
+                    return a.status === bookingFilter || a.adminStatus === bookingFilter;
+                  });
+                  const success = exportBookingsToExcel(filteredAppointments);
+                  if (success) {
+                    Swal.fire({
+                      icon: 'success',
+                      title: 'Export Successful!',
+                      text: 'Bookings data has been exported to Excel.',
+                      confirmButtonColor: Theme.colors.primary
+                    });
+                  } else {
+                    Swal.fire({
+                      icon: 'error',
+                      title: 'Export Failed',
+                      text: 'Failed to export bookings data. Please try again.',
+                      confirmButtonColor: Theme.colors.primary
+                    });
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+              >
+                <Download size={16} />
+                Export to Excel
+              </button>
             </div>
 
             <div className="space-y-6">
@@ -4382,7 +4711,7 @@ export default function AdminDashboardIndex() {
                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: Theme.colors.primary }}></div>
                     <p className="mt-2 text-gray-500">Loading bookings...</p>
                   </div>
-                ) : bookings.length === 0 ? (
+                ) : appointments.length === 0 ? (
                   <div className="text-center py-8">
                     <p className="text-gray-500">No bookings found.</p>
                   </div>
@@ -4398,226 +4727,159 @@ export default function AdminDashboardIndex() {
                       </tr>
                     </thead>
                     <tbody>
-                      {bookings
-                        .filter(b => {
+                      {appointments
+                        .filter(a => {
                           if (bookingFilter === 'all') return true;
-                          if (bookingFilter === 'pending') return (b.adminStatus || '').toLowerCase() === 'pending';
-                          if (bookingFilter === 'approved') return (b.adminStatus || '').toLowerCase() === 'approved';
-                          return true;
+                          return a.status === bookingFilter || a.adminStatus === bookingFilter;
                         })
-                        .map((b) => (
-                          <tr key={b._id || b.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        .map((appointment) => (
+                          <tr key={appointment._id} className="border-b border-gray-100 hover:bg-gray-50">
                             <td className="p-4">
                               <div>
-                                <div className="font-medium text-gray-900">{b.patientName || b.user?.name || 'Unknown'}</div>
-                                <div className="text-sm text-gray-500">{b.user?.email || 'No email'}</div>
-                                {b.user?.phone && <div className="text-xs text-gray-400">{b.user.phone}</div>}
+                                <div className="font-medium text-gray-900">
+                                  {appointment.user ? appointment.user.name : 'Guest User'}
+                                </div>
+                                {appointment.user && (
+                                  <div className="text-sm text-gray-500">{appointment.user.email}</div>
+                                )}
+                                {appointment.user?.phone && (
+                                  <div className="text-sm text-gray-500">{appointment.user.phone}</div>
+                                )}
                               </div>
                             </td>
                             <td className="p-4">
                               <div className="text-sm">
-                                <div className="font-medium">{b.labName || b.labAppointment}</div>
-                                {b.packageName && <div className="text-gray-500">{b.packageName}</div>}
+                                <div className="font-medium">{appointment.lab?.name || 'Lab'}</div>
+                                {appointment.lab?.address && (
+                                  <div className="text-gray-500">{appointment.lab.address}</div>
+                                )}
+                                {appointment.lab?.phone && (
+                                  <div className="text-gray-500">{appointment.lab.phone}</div>
+                                )}
                               </div>
                             </td>
-                            <td className="p-4 text-sm">
-                              <div>{b.date}</div>
-                              <div className="text-gray-500">{b.time} ({b.duration})</div>
-                              {b.rescheduleFrom && (
-                                <div className="text-xs text-blue-600 mt-1">
-                                  Rescheduled from: {b.rescheduleFrom._id?.slice(-6) || b.rescheduleFrom.slice(-6)}
+                            <td className="p-4">
+                              <div className="text-sm">
+                                <div className="font-medium">
+                                  {new Date(appointment.appointmentDate).toLocaleDateString()}
                                 </div>
-                              )}
+                                <div className="text-gray-500">
+                                  {new Date(appointment.appointmentDate).toLocaleTimeString()}
+                                </div>
+                              </div>
                             </td>
                             <td className="p-4">
-                              <span className={`px-2 py-1 text-xs rounded-full font-medium ${b.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                                b.adminStatus === 'approved' ? 'bg-green-100 text-green-800' :
-                                  b.adminStatus === 'rejected' ? 'bg-red-100 text-red-800' :
-                                    'bg-yellow-100 text-yellow-800'
-                                }`}>
-                                {b.status === 'cancelled' ? 'Cancelled' : (b.adminStatus || 'pending')}
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                appointment.status === 'pending' || appointment.adminStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                appointment.status === 'approved' || appointment.adminStatus === 'approved' ? 'bg-green-100 text-green-800' :
+                                appointment.status === 'rejected' || appointment.adminStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+                                appointment.status === 'Scheduled' ? 'bg-blue-100 text-blue-800' :
+                                appointment.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                                appointment.status === 'Canceled' ? 'bg-red-100 text-red-800' :
+                                appointment.adminStatus === 'approving' ? 'bg-blue-100 text-blue-800' :
+                                appointment.adminStatus === 'rejecting' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-800'
+                              }`}>
+                                {appointment.adminStatus === 'approving' ? 'Approving...' :
+                                 appointment.adminStatus === 'rejecting' ? 'Rejecting...' :
+                                 appointment.adminStatus === 'approved' ? 'Approved' :
+                                 appointment.adminStatus === 'rejected' ? 'Rejected' :
+                                 appointment.status}
                               </span>
                             </td>
-                            <td className="p-4 text-right">
-                              {b.adminStatus === 'pending' && b.status !== 'cancelled' && (
-                                <div className="flex justify-end gap-2">
-                                  <CButton
-                                    onClick={() => handleApprove(b._id || b.id)}
-                                    className="p-2 rounded-full transition-colors"
-                                    variant="outline"
-                                    title="Approve"
-                                    style={{
-                                      backgroundColor: '#10b981',
-                                      color: 'white',
-                                      borderColor: '#10b981'
-                                    }}
-                                  >
-                                    <CheckCircle2 size={20} />
-                                  </CButton>
-                                  <CButton
-                                    onClick={() => {
-                                      Swal.fire({
-                                        title: 'Reject Booking?',
-                                        text: 'Please provide a reason for rejecting this booking.',
-                                        icon: 'warning',
-                                        input: 'textarea',
-                                        inputLabel: 'Rejection Reason',
-                                        inputPlaceholder: 'Enter reason for rejection...',
-                                        inputAttributes: {
-                                          'aria-label': 'Rejection reason'
-                                        },
-                                        showCancelButton: true,
-                                        confirmButtonColor: Theme.colors.primary,
-                                        cancelButtonColor: '#6b7280',
-                                        confirmButtonText: 'Reject Booking',
-                                        cancelButtonText: 'Cancel',
-                                        preConfirm: (reason) => {
-                                          if (!reason || reason.trim() === '') {
-                                            Swal.showValidationMessage('Please provide a reason for rejection');
-                                            return false;
+                            <td className="p-4">
+                              <div className="flex items-center justify-end gap-2">
+                                {/* Show Approve/Reject buttons for pending bookings */}
+                                {(appointment.status === 'pending' || appointment.adminStatus === 'pending') && (
+                                  <>
+                                    <CButton
+                                      onClick={() => handleApprove(appointment._id)}
+                                      className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-sm flex items-center gap-1"
+                                      disabled={appointment.adminStatus === 'approving'}
+                                    >
+                                      {appointment.adminStatus === 'approving' ? (
+                                        <>
+                                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                          Approving...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <IconConfig.CheckCircle size={14} />
+                                        </>
+                                      )}
+                                    </CButton>
+                                    <CButton
+                                      onClick={() => {
+                                        Swal.fire({
+                                          title: 'Reject Booking',
+                                          input: 'textarea',
+                                          inputLabel: 'Rejection Reason',
+                                          inputPlaceholder: 'Please provide a reason for rejection...',
+                                          inputAttributes: {
+                                            'aria-label': 'Please provide a reason for rejection'
+                                          },
+                                          showCancelButton: true,
+                                          confirmButtonText: 'Reject',
+                                          confirmButtonColor: '#dc3741',
+                                          cancelButtonText: 'Cancel',
+                                          showLoaderOnConfirm: true,
+                                          preConfirm: (reason) => {
+                                            if (!reason || reason.trim() === '') {
+                                              Swal.showValidationMessage('Please provide a reason for rejection');
+                                              return false;
+                                            }
+                                            return handleRejectWithReason(appointment._id, reason);
                                           }
-                                          return reason.trim();
-                                        }
-                                      }).then((result) => {
-                                        if (result.isConfirmed && result.value) {
-                                          handleRejectWithReason(b._id || b.id, result.value);
-                                        }
-                                      });
-                                    }}
-                                    className="p-2 rounded-full transition-colors"
-                                    variant="outline"
-                                    title="Reject"
-                                    style={{
-                                      backgroundColor: '#ef4444',
-                                      color: 'white',
-                                      borderColor: '#ef4444'
-                                    }}
+                                        });
+                                      }}
+                                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm flex items-center gap-1"
+                                      disabled={appointment.adminStatus === 'rejecting'}
+                                    >
+                                      {appointment.adminStatus === 'rejecting' ? (
+                                        <>
+                                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                          Rejecting...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <XCircle size={14} />
+                                        </>
+                                      )}
+                                    </CButton>
+                                  </>
+                                )}
+                                {/* Show Complete/Cancel buttons for scheduled appointments */}
+                                {appointment.status === 'Scheduled' && (
+                                  <>
+                                    <CButton
+                                      onClick={() => updateAppointmentStatus(appointment._id, 'Completed')}
+                                      className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-lg text-sm"
+                                    >
+                                      Complete
+                                    </CButton>
+                                    <CButton
+                                      onClick={() => updateAppointmentStatus(appointment._id, 'Canceled')}
+                                      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg text-sm"
+                                    >
+                                      Cancel
+                                    </CButton>
+                                  </>
+                                )}
+                                {appointment.reportUrl && (
+                                  <CButton
+                                    onClick={() => window.open(appointment.reportUrl, '_blank')}
+                                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-sm"
                                   >
-                                    <XCircle size={20} />
+                                    View Report
                                   </CButton>
-                                </div>
-                              )}
-                              {b.status === 'cancelled' && (
-                                <div className="flex justify-end">
-                                  <span className="px-3 py-1 text-xs font-medium text-red-600 bg-red-100 rounded-full">
-                                    Cancelled by User
-                                  </span>
-                                </div>
-                              )}
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))}
                     </tbody>
                   </table>
                 )}
-              </div>
-
-              {/* Mobile Card View */}
-              <div className="md:hidden space-y-4">
-                {bookings
-                  .filter(b => {
-                    if (bookingFilter === 'all') return true;
-                    if (bookingFilter === 'pending') return (b.adminStatus || '').toLowerCase() === 'pending';
-                    if (bookingFilter === 'approved') return (b.adminStatus || '').toLowerCase() === 'approved';
-                    return true;
-                  })
-                  .map((b) => (
-                    <div key={b._id || b.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-lg">{b.patientName || b.user?.name || 'Unknown'}</h4>
-                          <p className="text-sm text-gray-600">{b.user?.email || 'No email'}</p>
-                          {b.user?.phone && <p className="text-sm text-gray-600">{b.user.phone}</p>}
-                        </div>
-                        <span className={`px-2 py-1 text-xs rounded-full`}
-                          style={{
-                            backgroundColor: b.status === 'cancelled' ? '#FEE2E2' :
-                              b.adminStatus === 'approved' ? Theme.colors.emerald100 :
-                                b.adminStatus === 'rejected' ? Theme.colors.red50 : Theme.colors.yellow50,
-                            color: b.status === 'cancelled' ? '#DC2626' :
-                              b.adminStatus === 'approved' ? Theme.colors.emerald600 :
-                                b.adminStatus === 'rejected' ? Theme.colors.red600 : Theme.colors.yellow600
-                          }}
-                        >
-                          {b.status === 'cancelled' ? 'Cancelled' : (b.adminStatus || 'pending')}
-                        </span>
-                      </div>
-                      <div className="space-y-2 text-sm">
-                        <div>
-                          <span className="text-gray-500">Lab: </span>
-                          <span className="font-medium">{b.labName || b.labAppointment}</span>
-                        </div>
-                        {b.packageName && (
-                          <div>
-                            <span className="text-gray-500">Package: </span>
-                            <span>{b.packageName}</span>
-                          </div>
-                        )}
-                        {b.packagePrice > 0 && (
-                          <div>
-                            <span className="text-gray-500">Price: </span>
-                            <span className="text-primary font-semibold">₹{b.packagePrice}</span>
-                          </div>
-                        )}
-                        <div>
-                          <span className="text-gray-500">Schedule: </span>
-                          <span>{b.date} at {b.time} ({b.duration})</span>
-                        </div>
-                        {b.rescheduleFrom && (
-                          <div>
-                            <span className="text-gray-500">Rescheduled from: </span>
-                            <span className="text-blue-600 text-xs">{b.rescheduleFrom._id?.slice(-6) || b.rescheduleFrom.slice(-6)}</span>
-                          </div>
-                        )}
-                        <div>
-                          <span className="text-gray-500">Purpose: </span>
-                          <span>{b.purpose}</span>
-                        </div>
-                        {b.rejectionReason && (
-                          <div>
-                            <span className="text-gray-500">Reason: </span>
-                            <span style={{ color: Theme.colors.red600 }}>{b.rejectionReason}</span>
-                          </div>
-                        )}
-                      </div>
-                      {b.adminStatus === 'pending' && b.status !== 'cancelled' && (
-                        <div className="flex justify-end gap-2 mt-4">
-                          <CButton
-                            onClick={() => handleApprove(b._id || b.id)}
-                            className="px-3 py-1 rounded-full text-sm text-white"
-                            variant="primary"
-                            style={{
-                              backgroundColor: Theme.colors.emerald600
-                            }}
-                          >
-                            Approve
-                          </CButton>
-                          <CButton
-                            onClick={() => {
-                              const reason = prompt('Please enter rejection reason:');
-                              if (reason) {
-                                handleRejectWithReason(b._id || b.id, reason);
-                              }
-                            }}
-                            className="px-3 py-1 rounded-full text-sm text-white"
-                            variant="primary"
-                            style={{
-                              backgroundColor: Theme.colors.red600
-                            }}
-                          >
-                            Reject
-                          </CButton>
-                        </div>
-                      )}
-                      {b.status === 'cancelled' && (
-                        <div className="flex justify-end mt-4">
-                          <span className="px-3 py-1 text-xs font-medium text-red-600 bg-red-100 rounded-full">
-                            Cancelled by User
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  ))}
               </div>
             </div>
           </>
@@ -4662,12 +4924,12 @@ export default function AdminDashboardIndex() {
                           <div className="flex flex-col space-y-1">
                             <div className="font-semibold text-gray-800">{f.user?.name || f.userName || 'Anonymous'}</div>
                             <div className="text-xs text-gray-500 flex items-center gap-1">
-                              <Mail size={12} />
+                              <IconConfig.Mail size={12} />
                               {f.user?.email || f.userEmail || 'No email'}
                             </div>
                             {f.user?.phone && (
                               <div className="text-xs text-gray-500 flex items-center gap-1">
-                                <Phone size={12} />
+                                <IconConfig.Phone size={12} />
                                 {f.user.phone}
                               </div>
                             )}
@@ -4770,7 +5032,7 @@ export default function AdminDashboardIndex() {
                       borderColor: `${Theme.colors.primary}30`
                     }}
                   >
-                    <MessageSquare size={48} className="text-blue-400" style={{ color: Theme.colors.primary }} />
+                    <IconConfig.MessageSquare size={48} className="text-blue-400" style={{ color: Theme.colors.primary }} />
                   </div>
                   <h3 className="text-xl font-bold text-gray-800 mb-3" style={{ color: Theme.colors.textDark }}>No feedback found</h3>
                   <p className="text-sm text-gray-500 max-w-md mx-auto">There are currently no feedbacks to display.</p>
@@ -4801,6 +5063,34 @@ export default function AdminDashboardIndex() {
                 <div className="text-2xl font-bold" style={{ color: Theme.colors.emerald600 }}>{contacts.filter(c => c.status === 'pending').length}</div>
                 <div className="text-sm" style={{ color: Theme.colors.emerald600 }}>Pending</div>
               </div>
+            </div>
+
+            {/* Export Button for Contacts */}
+            <div className="flex justify-end">
+              <button
+                onClick={() => {
+                  const success = exportContactsToExcel(contacts);
+                  if (success) {
+                    Swal.fire({
+                      icon: 'success',
+                      title: 'Export Successful!',
+                      text: 'Contact requests data has been exported to Excel.',
+                      confirmButtonColor: Theme.colors.primary
+                    });
+                  } else {
+                    Swal.fire({
+                      icon: 'error',
+                      title: 'Export Failed',
+                      text: 'Failed to export contact requests data. Please try again.',
+                      confirmButtonColor: Theme.colors.primary
+                    });
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+              >
+                <Download size={16} />
+                Export to Excel
+              </button>
             </div>
 
 
@@ -4855,7 +5145,7 @@ export default function AdminDashboardIndex() {
                               }}
                               onClick={() => openReplyModal(c)}
                             >
-                              <Mail size={14} className="mr-1" />
+                              <IconConfig.Mail size={14} className="mr-1" />
                               View/Reply
                             </CButton>
                             <CButton
@@ -4896,7 +5186,7 @@ export default function AdminDashboardIndex() {
                   size="lg"
                   onClick={() => setShowTestForm(true)}
                 >
-                  <Plus size={16} className="mr-2" />
+                  <IconConfig.Plus size={16} className="mr-2" />
                   Add New Test
                 </CButton>
               </div>
@@ -4907,6 +5197,30 @@ export default function AdminDashboardIndex() {
               <div className="text-sm text-gray-600">
                 {testLoading ? 'Loading...' : `${tests.length} tests found`}
               </div>
+              <button
+                onClick={() => {
+                  const success = exportTestsToExcel(tests);
+                  if (success) {
+                    Swal.fire({
+                      icon: 'success',
+                      title: 'Export Successful!',
+                      text: 'Tests data has been exported to Excel.',
+                      confirmButtonColor: Theme.colors.primary
+                    });
+                  } else {
+                    Swal.fire({
+                      icon: 'error',
+                      title: 'Export Failed',
+                      text: 'Failed to export tests data. Please try again.',
+                      confirmButtonColor: Theme.colors.primary
+                    });
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+              >
+                <Download size={16} />
+                Export to Excel
+              </button>
             </div>
 
             {/* Tests Table */}
@@ -5016,7 +5330,7 @@ export default function AdminDashboardIndex() {
                                   variant="outline"
                                   title="Edit Test"
                                 >
-                                  <Edit2 size={16} />
+                                  <IconConfig.Edit2 size={16} />
                                 </CButton>
                                 <CButton
                                   className="text-red-600 hover:text-red-900 p-1"
@@ -5024,7 +5338,7 @@ export default function AdminDashboardIndex() {
                                   variant="outline"
                                   title="Delete Test"
                                 >
-                                  <Trash2 size={16} />
+                                  <IconConfig.Trash2 size={16} />
                                 </CButton>
                               </div>
                             </td>
@@ -5055,7 +5369,7 @@ export default function AdminDashboardIndex() {
                   size="lg"
                   onClick={() => setShowPackageForm(true)}
                 >
-                  <Plus size={16} className="mr-2" />
+                  <IconConfig.Plus size={16} className="mr-2" />
                   Add New Package
                 </CButton>
               </div>
@@ -5066,6 +5380,30 @@ export default function AdminDashboardIndex() {
               <div className="text-sm text-gray-600">
                 {packageLoading ? 'Loading...' : `${packages.length} packages found`}
               </div>
+              <button
+                onClick={() => {
+                  const success = exportPackagesToExcel(packages);
+                  if (success) {
+                    Swal.fire({
+                      icon: 'success',
+                      title: 'Export Successful!',
+                      text: 'Packages data has been exported to Excel.',
+                      confirmButtonColor: Theme.colors.primary
+                    });
+                  } else {
+                    Swal.fire({
+                      icon: 'error',
+                      title: 'Export Failed',
+                      text: 'Failed to export packages data. Please try again.',
+                      confirmButtonColor: Theme.colors.primary
+                    });
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+              >
+                <Download size={16} />
+                Export to Excel
+              </button>
             </div>
 
             {/* Packages Table */}
@@ -5099,7 +5437,7 @@ export default function AdminDashboardIndex() {
                           <tr key={pkg._id} className="hover:bg-gray-50 transition-colors">
                             <td className="px-3 py-3 whitespace-nowrap" data-label="Icon">
                               <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center">
-                                <Package size={16} className="text-gray-500" />
+                                <IconConfig.Package size={16} className="text-gray-500" />
                               </div>
                             </td>
                             <td className="px-3 py-3" data-label="Name">
@@ -5199,7 +5537,7 @@ export default function AdminDashboardIndex() {
                                   variant="outline"
                                   title="Edit Package"
                                 >
-                                  <Edit2 size={16} />
+                                  <IconConfig.Edit2 size={16} />
                                 </CButton>
                                 <CButton
                                   className="text-red-600 hover:text-red-900 p-1"
@@ -5207,7 +5545,7 @@ export default function AdminDashboardIndex() {
                                   variant="outline"
                                   title="Delete Package"
                                 >
-                                  <Trash2 size={16} />
+                                  <IconConfig.Trash2 size={16} />
                                 </CButton>
                               </div>
                             </td>
@@ -5232,6 +5570,16 @@ export default function AdminDashboardIndex() {
               </div>
               <div className="flex gap-2">
                 <CButton
+                  variant="outline"
+                  fullWidth={false}
+                  className="px-4 py-3 text-sm rounded-md"
+                  size="lg"
+                  onClick={seedHealthConcerns}
+                >
+                  <Package size={16} className="mr-2" />
+                  Seed Data
+                </CButton>
+                <CButton
                   variant="primary"
                   fullWidth={false}
                   className="px-4 py-3 text-sm rounded-md"
@@ -5242,7 +5590,7 @@ export default function AdminDashboardIndex() {
                     setShowHealthConcernForm(true);
                   }}
                 >
-                  <Plus size={16} className="mr-2" />
+                  <IconConfig.Plus size={16} className="mr-2" />
                   Add Health Concern
                 </CButton>
               </div>
@@ -5411,7 +5759,7 @@ export default function AdminDashboardIndex() {
                                   variant="outline"
                                   title="Edit Health Concern"
                                 >
-                                  <Edit2 size={16} />
+                                  <IconConfig.Edit2 size={16} />
                                 </CButton>
                                 <CButton
                                   className="text-red-600 hover:text-red-900 p-1"
@@ -5419,7 +5767,7 @@ export default function AdminDashboardIndex() {
                                   variant="outline"
                                   title="Delete Health Concern"
                                 >
-                                  <Trash2 size={16} />
+                                  <IconConfig.Trash2 size={16} />
                                 </CButton>
                               </div>
                             </td>
@@ -5485,7 +5833,7 @@ export default function AdminDashboardIndex() {
                         size="lg"
                         onClick={() => setShowWhyBookForm(true)}
                       >
-                        <Plus size={16} className="mr-2" />
+                        <IconConfig.Plus size={16} className="mr-2" />
                         Add Item
                       </CButton>
                     </div>
@@ -5562,7 +5910,7 @@ export default function AdminDashboardIndex() {
                           <div className="flex items-center gap-2">
                             {(() => {
                               const Icon = IconConfig[item.iconKey] || IconConfig.Home;
-                              return Icon ? <Icon size={20} className="text-primary" /> : <Home size={20} className="text-primary" />;
+                              return Icon ? <Icon size={20} className="text-primary" /> : <IconConfig.Home size={20} className="text-primary" />;
                             })()}
                             <h5 className="font-semibold text-sm">{item.title}</h5>
                           </div>
@@ -5595,7 +5943,7 @@ export default function AdminDashboardIndex() {
                             size="lg"
                             onClick={() => setShowWhyBookForm(true)}
                           >
-                            <Plus size={16} className="mr-2" />
+                            <IconConfig.Plus size={16} className="mr-2" />
                             Add Your First Item
                           </CButton>
                         </div>
@@ -5618,7 +5966,7 @@ export default function AdminDashboardIndex() {
                         size="lg"
                         onClick={() => setShowHowItWorksForm(true)}
                       >
-                        <Plus size={16} className="mr-2" />
+                        <IconConfig.Plus size={16} className="mr-2" />
                         Add Step
                       </CButton>
                     </div>
@@ -5711,7 +6059,7 @@ export default function AdminDashboardIndex() {
                           <div className="flex items-center gap-2">
                             {(() => {
                               const Icon = IconConfig[item.iconKey] || IconConfig.Home;
-                              return Icon ? <Icon size={20} className="text-primary" /> : <Home size={20} className="text-primary" />;
+                              return Icon ? <Icon size={20} className="text-primary" /> : <IconConfig.Home size={20} className="text-primary" />;
                             })()}
                             <h5 className="font-semibold text-sm">{item.title}</h5>
                           </div>
@@ -5744,7 +6092,7 @@ export default function AdminDashboardIndex() {
                             size="lg"
                             onClick={() => setShowHowItWorksForm(true)}
                           >
-                            <Plus size={16} className="mr-2" />
+                            <IconConfig.Plus size={16} className="mr-2" />
                             Add Your First Step
                           </CButton>
                         </div>
@@ -5806,7 +6154,7 @@ export default function AdminDashboardIndex() {
                         size="lg"
                         onClick={() => setShowServiceForm(true)}
                       >
-                        <Plus size={16} className="mr-2" />
+                        <IconConfig.Plus size={16} className="mr-2" />
                         Add Feature
                       </CButton>
                     </div>
@@ -5953,7 +6301,7 @@ export default function AdminDashboardIndex() {
                         size="lg"
                         onClick={() => setShowHighlightForm(true)}
                       >
-                        <Plus size={16} className="mr-2" />
+                        <IconConfig.Plus size={16} className="mr-2" />
                         Add Highlight
                       </CButton>
                     </div>
@@ -6123,7 +6471,7 @@ export default function AdminDashboardIndex() {
                       }
                     }}
                   >
-                    <Edit2 size={14} className="mr-1" />
+                    <IconConfig.Edit2 size={14} className="mr-1" />
                     Edit Heading
                   </CButton>
                 </div>
@@ -6254,15 +6602,15 @@ export default function AdminDashboardIndex() {
                       <div className="flex items-start justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            {section.icon === 'bolt' && <Zap size={16} style={{ color: Theme.colors.primary }} />}
+                            {section.icon === 'bolt' && <IconConfig.Zap size={16} style={{ color: Theme.colors.primary }} />}
                             {section.icon === 'heart' && <span className="text-red-500">❤️</span>}
-                            {section.icon === 'shield' && <ShieldCheck size={16} className="text-green-600" />}
+                            {section.icon === 'shield' && <IconConfig.ShieldCheck size={16} className="text-green-600" />}
                             {section.icon === 'star' && <span className="text-yellow-500">⭐</span>}
-                            {section.icon === 'home' && <Home size={16} className="text-purple-600" />}
+                            {section.icon === 'home' && <IconConfig.Home size={16} className="text-purple-600" />}
                             {section.icon === 'users' && <span className="text-blue-500">👥</span>}
                             {section.icon === 'check' && <span className="text-green-500">✅</span>}
-                            {section.icon === 'zap' && <Zap size={16} className="text-yellow-600" />}
-                            {section.icon === 'cloud' && <Cloud size={16} className="text-blue-500" />}
+                            {section.icon === 'zap' && <IconConfig.Zap size={16} className="text-yellow-600" />}
+                            {section.icon === 'cloud' && <IconConfig.Cloud size={16} className="text-blue-500" />}
                             {section.icon === 'dollar' && <span className="text-green-600">💰</span>}
                           </div>
                           <h5 className="font-medium text-gray-900">{section.title}</h5>
@@ -6921,7 +7269,7 @@ export default function AdminDashboardIndex() {
                     </>
                   ) : (
                     <>
-                      <Mail size={16} />
+                      <IconConfig.Mail size={16} />
                       Send Reply
                     </>
                   )}
@@ -7226,7 +7574,7 @@ export default function AdminDashboardIndex() {
                       className="p-1"
                       title="Edit Details"
                     >
-                      <Edit2 size={16} />
+                      <IconConfig.Edit2 size={16} />
                     </button>
                     <button
                       onClick={async () => {
@@ -7240,7 +7588,7 @@ export default function AdminDashboardIndex() {
                       className="p-1 text-red-600 hover:text-red-800"
                       title="Delete Details"
                     >
-                      <Trash2 size={16} />
+                      <IconConfig.Trash2 size={16} />
                     </button>
                   </>
                 )}
@@ -7392,7 +7740,7 @@ export default function AdminDashboardIndex() {
                       className="p-1"
                       title="Edit Details"
                     >
-                      <Edit2 size={16} />
+                      <IconConfig.Edit2 size={16} />
                     </button>
                     <button
                       onClick={async () => {
@@ -7406,7 +7754,7 @@ export default function AdminDashboardIndex() {
                       className="p-1 text-red-600 hover:text-red-800"
                       title="Delete Details"
                     >
-                      <Trash2 size={16} />
+                      <IconConfig.Trash2 size={16} />
                     </button>
                   </>
                 )}
@@ -7637,7 +7985,7 @@ export default function AdminDashboardIndex() {
                       className="p-1 text-red-600 hover:text-red-800"
                       title="Delete Category"
                     >
-                      <Trash2 size={16} />
+                      <IconConfig.Trash2 size={16} />
                     </button>
                   </>
                 )}

@@ -174,10 +174,47 @@ const deleteHealthConcern = async (req, res) => {
   }
 };
 
+// Seed health concerns data (Admin only)
+const seedHealthConcerns = async (req, res) => {
+  try {
+    const healthConcernsData = [
+      { id: "liver", title: "Liver", iconKey: "FlaskConical", description: "Liver function tests", isActive: true, order: 1, rating: 4 },
+      { id: "lungs", title: "Lungs", iconKey: "Activity", description: "Respiratory health screening", isActive: true, order: 2, rating: 4 },
+      { id: "kidney", title: "Kidney", iconKey: "Droplets", description: "Kidney function tests", isActive: true, order: 3, rating: 4 },
+      { id: "fever", title: "Fever", iconKey: "Droplets", description: "Fever and infection tests", isActive: true, order: 4, rating: 3 },
+      { id: "thyroid", title: "Thyroid", iconKey: "FlaskConical", description: "Thyroid function tests", isActive: true, order: 5, rating: 4 },
+      { id: "diabetes", title: "Diabetes", iconKey: "Droplets", description: "Blood sugar monitoring", isActive: true, order: 6, rating: 5 }
+    ];
+
+    // Clear existing health concerns
+    await HealthConcern.deleteMany({});
+    console.log('Cleared existing health concerns');
+
+    // Insert new health concerns
+    const insertedHealthConcerns = await HealthConcern.insertMany(healthConcernsData);
+    console.log(`Inserted ${insertedHealthConcerns.length} health concerns`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Health concerns seeded successfully',
+      data: insertedHealthConcerns,
+      count: insertedHealthConcerns.length
+    });
+  } catch (error) {
+    console.error('Error seeding health concerns:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error seeding health concerns',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getHealthConcerns,
   getHealthConcernById,
   createHealthConcern,
   updateHealthConcern,
-  deleteHealthConcern
+  deleteHealthConcern,
+  seedHealthConcerns
 };

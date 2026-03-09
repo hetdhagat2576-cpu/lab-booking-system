@@ -165,10 +165,7 @@ export default function HomeIndex() {
         const howItWorksResult = await howItWorksResponse.json();
         const feedbacksResult = await feedbacksResponse.json();
         
-        console.log('Why Book Data:', whyBookResult.data);
-        console.log('How It Works Data:', howItWorksResult.data);
-        console.log('User Feedbacks:', feedbacksResult.data);
-        
+                
         setWhyBookData(whyBookResult.data || []);
         setHowItWorksData(howItWorksResult.data || []);
         
@@ -371,45 +368,52 @@ export default function HomeIndex() {
 
       
       {/* WHY BOOK WITH US */}
-      <AnimatedSection className="bg-gray-50 py-8 sm:py-12 md:py-16 border-y border-gray-100" delay={0.2}>
+      <AnimatedSection className="bg-gray-50 py-12 sm:py-16 md:py-20 border-y-2 border-gray-200" delay={0.2}>
         <div className="container mx-auto px-4">
           <motion.h2 
             variants={textReveal}
             initial="initial"
             whileInView="animate"
             viewport={{ once: true }}
-            className="text-2xl sm:text-3xl md:text-4xl font-bold text-center text-gray-900 mb-8 sm:mb-12"
+            className="text-3xl sm:text-4xl md:text-5xl font-bold text-center text-gray-900 mb-4 sm:mb-6"
           >
             Why Book With Us?
           </motion.h2>
+          <motion.div 
+            initial={{ width: 0 }}
+            whileInView={{ width: "4rem" }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+            className="h-1 bg-primary mx-auto rounded-full mb-8 sm:mb-12"
+          />
           <motion.div 
             variants={staggerContainer}
             initial="initial"
             whileInView="animate"
             viewport={{ once: true, amount: 0.2 }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10 max-w-5xl mx-auto"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6 sm:gap-8 md:gap-10 max-w-6xl mx-auto"
           >
             {whyBookData.map((item, index) => (
               <AnimatedGridItem
                 key={item._id || index}
                 index={index}
-                className="flex gap-4 sm:gap-6 bg-white p-4 sm:p-6 rounded-2xl shadow-sm hover:shadow-lg transition-all border border-gray-50 group"
+                className="flex gap-4 sm:gap-6 bg-white p-6 sm:p-8 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 group"
               >
                 <motion.div 
                   animate={floating}
-                  className="p-3 sm:p-4 rounded-lg bg-secondary/20 group-hover:bg-secondary/40 transition-colors h-fit"
+                  className="p-4 sm:p-5 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 group-hover:from-primary/20 group-hover:to-secondary/20 transition-all duration-300 h-fit"
                 >
                   {item.iconKey && IconConfig[item.iconKey] ? (
-                    React.createElement(IconConfig[item.iconKey], { className: "text-primary", size: 24 })
+                    React.createElement(IconConfig[item.iconKey], { className: "text-primary", size: 28 })
                   ) : (
-                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary rounded" />
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-primary rounded-lg" />
                   )}
                 </motion.div>
-                <div>
-                  <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-800 group-hover:text-primary transition-colors">
+                <div className="flex-1">
+                  <h3 className="text-xl sm:text-2xl font-bold mb-3 text-gray-800 group-hover:text-primary transition-colors duration-300">
                     {item.title}
                   </h3>
-                  <p className="text-sm sm:text-base text-gray-600 leading-relaxed">{item.desc || item.description}</p>
+                  <p className="text-base sm:text-lg text-gray-600 leading-relaxed">{item.desc || item.description}</p>
                 </div>
               </AnimatedGridItem>
             ))}
@@ -418,43 +422,52 @@ export default function HomeIndex() {
       </AnimatedSection>
 
       {/* HOW IT WORKS */}
-      <AnimatedSection className="bg-white py-8 sm:py-12 md:py-16" delay={0.4}>
+      <AnimatedSection className="bg-gradient-to-b from-white to-gray-50 py-12 sm:py-16 md:py-20" delay={0.4}>
         <div className="container mx-auto px-4 text-center">
           <motion.h2 
             variants={textReveal}
             initial="initial"
             whileInView="animate"
             viewport={{ once: true }}
-            className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-8 sm:mb-10"
+            className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4 sm:mb-6"
           >
             How It Works
           </motion.h2>
+          <motion.div 
+            initial={{ width: 0 }}
+            whileInView={{ width: "4rem" }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+            className="h-1 bg-primary mx-auto rounded-full mb-8 sm:mb-12"
+          />
           <motion.div 
             variants={staggerContainer}
             initial="initial"
             whileInView="animate"
             viewport={{ once: true, amount: 0.2 }}
-            className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8 max-w-6xl mx-auto"
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 max-w-6xl mx-auto"
           >
             {howItWorksData.map((item, index) => (
               <AnimatedGridItem
                 key={item._id || index}
                 index={index}
-                className="space-y-3 sm:space-y-5 group"
+                className="space-y-4 sm:space-y-6 group"
               >
                 <motion.div 
                   whileHover={{ scale: 1.1, rotate: 5 }}
                   transition={{ duration: 0.3 }}
-                  className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-2xl bg-gradient-to-br from-primary to-secondary text-white flex items-center justify-center shadow-lg"
+                  className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-2xl bg-gradient-to-br from-primary to-secondary text-white flex items-center justify-center shadow-lg group-hover:shadow-2xl transition-all duration-300"
                 >
                   {item.iconKey && IconConfig[item.iconKey] ? (
-                    React.createElement(IconConfig[item.iconKey], { size: 24 })
+                    React.createElement(IconConfig[item.iconKey], { size: 28 })
                   ) : (
-                    <div className="w-6 h-6 sm:w-8 sm:h-8 bg-white rounded" />
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-lg" />
                   )}
                 </motion.div>
-                <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-800">{item.title}</h3>
-                <p className="text-sm sm:text-base text-gray-600">{item.desc || item.description}</p>
+                <div className="space-y-2">
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 text-center">{item.title}</h3>
+                  <p className="text-sm sm:text-base text-gray-600 leading-relaxed px-2">{item.desc || item.description}</p>
+                </div>
               </AnimatedGridItem>
             ))}
           </motion.div>
