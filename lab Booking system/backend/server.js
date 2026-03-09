@@ -6,6 +6,7 @@ const http = require('http');
 const WebSocket = require('ws');
 const sessionConfig = require('./middleware/sessionMiddleware');
 const { showLoadingIndicator, hideLoadingIndicator } = require('./middleware/loadingMiddleware');
+const { errorHandler, notFound } = require('./middleware/errorMiddleware');
 
 // Load environment variables
 dotenv.config();
@@ -19,69 +20,121 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// CORS middleware
+// Enhanced CORS middleware for Vercel deployment
 app.use(cors({
-  origin: [
-    'http://localhost:3000', 
-    'http://localhost:3001', 
-    'http://localhost:5001', 
-    'http://127.0.0.1:3000', 
-    'http://127.0.0.1:3001', 
-    process.env.FRONTEND_URL, 
-    'https://backend-nine-kappa-33.vercel.app',
-    'https://backend-icgwcsez0-hetdhagat2576-8656s-projects.vercel.app',
-    /^https:\/\/.*\.vercel\.app$/
-  ],
-  credentials: true,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    
+    // List of explicitly allowed origins
+    const allowedOrigins = [
+      'http://localhost:3000', 
+      'http://localhost:3001', 
+      'http://localhost:5001', 
+      'http://127.0.0.1:3000', 
+      'http://127.0.0.1:3001',
+      'https://backend-nine-kappa-33.vercel.app',
+      'https://backend-icgwcsez0-hetdhagat2576-8656s-projects.vercel.app'
+    ];
+    
+    // Allow any Vercel domain (both frontend and backend)
+    if (origin.includes('.vercel.app')) {
+      console.log(`CORS: Allowing Vercel origin: ${origin}`);
+      return callback(null, true);
+    }
+    
+    // Allow explicitly listed origins
+    if (allowedOrigins.includes(origin)) {
+      console.log(`CORS: Allowing explicit origin: ${origin}`);
+      return callback(null, true);
+    }
+    
+    // Log blocked origins for debugging
+    console.warn(`CORS: Blocking origin: ${origin}`);
+    callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true, // Required for cookies/sessions
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  optionsSuccessStatus: 200
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With',
+    'X-CSRF-Token',
+    'X-API-Key',
+    'Origin',
+    'Accept'
+  ],
+  optionsSuccessStatus: 200, // Legacy browsers choke on 204
+  preflightContinue: false,
+  exposedHeaders: ['X-Total-Count', 'X-Page-Count'] // Expose custom headers
 }));
 
-// Session middleware after JSON parsing
-app.use(sessionConfig);
+// Handle preflight requests explicitly
+app.options('*', cors());
+
+// Session middleware after JSON parsing - only apply to routes that need authentication
+app.use('/api/auth', sessionConfig);
+app.use('/api/bookings', sessionConfig);
+app.use('/api/notifications', sessionConfig);
+app.use('/api/feedback', sessionConfig);
+app.use('/api/contact', sessionConfig);
+app.use('/api/service-content', sessionConfig);
+app.use('/api/terms', sessionConfig);
+app.use('/api/privacy', sessionConfig);
+app.use('/api/about', sessionConfig);
+app.use('/api/payments', sessionConfig);
+app.use('/api/reports', sessionConfig);
+app.use('/api/tests', sessionConfig);
+app.use('/api/packages', sessionConfig);
+app.use('/api/test-details', sessionConfig);
+app.use('/api/package-details', sessionConfig);
+app.use('/api/faq', sessionConfig);
+app.use('/api/health-concerns', sessionConfig);
+app.use('/api/catalog', sessionConfig);
+app.use('/api/appointment', sessionConfig);
+app.use('/api/user', sessionConfig);
+app.use('/api/session', sessionConfig);
+app.use('/api/admin', sessionConfig);
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static('uploads'));
 
-// Pre-flight middleware
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  
-  // Allow any Vercel domain or localhost
-  if (!origin || 
-      origin.startsWith('https://') && origin.includes('.vercel.app') ||
-      origin.startsWith('http://localhost') ||
-      origin.startsWith('http://127.0.0.1')) {
-    res.header('Access-Control-Allow-Origin', origin || '*');
-  } else {
-    res.header('Access-Control-Allow-Origin', '*');
-  }
-  
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
-    return;
-  }
-  next();
-});
-
-// Request logging middleware (enhanced for debugging)
+// Enhanced request logging middleware
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
-  console.log(`[${timestamp}] ${req.method} ${req.path}`);
+  const origin = req.headers.origin || 'no-origin';
+  const userAgent = req.headers['user-agent'] || 'no-user-agent';
   
-  // Log headers for debugging
-  console.log('Headers:', req.headers);
+  console.log(`[${timestamp}] ${req.method} ${req.path} - Origin: ${origin}`);
+  
+  // Log authentication headers for debugging
+  if (req.headers.authorization) {
+    console.log('Auth Header:', req.headers.authorization.substring(0, 20) + '...');
+  }
+  
+  // Log important headers
+  const importantHeaders = ['content-type', 'x-requested-with', 'origin', 'referer'];
+  const headerInfo = {};
+  importantHeaders.forEach(header => {
+    if (req.headers[header]) {
+      headerInfo[header] = req.headers[header];
+    }
+  });
+  
+  if (Object.keys(headerInfo).length > 0) {
+    console.log('Headers:', headerInfo);
+  }
   
   // Log body for POST/PUT requests (avoid logging large binary data)
   if (req.method === 'POST' || req.method === 'PUT' || req.method === 'PATCH') {
     try {
-      const bodyCopy = JSON.parse(JSON.stringify(req.body));
-      console.log('Body:', JSON.stringify(bodyCopy, null, 2));
+      const contentType = req.headers['content-type'] || '';
+      if (contentType.includes('application/json')) {
+        const bodyCopy = JSON.parse(JSON.stringify(req.body));
+        console.log('Body:', JSON.stringify(bodyCopy, null, 2));
+      } else {
+        console.log('Body:', `[${contentType}] - ${req.body ? 'Data present' : 'No data'}`);
+      }
     } catch (e) {
       console.log('Body parsing error:', e.message);
     }
@@ -89,6 +142,12 @@ app.use((req, res, next) => {
   
   next();
 });
+
+// Public content routes - no authentication required
+app.get('/public/content/home/why-book', require('./controllers/contentController').getHomeWhyBook);
+app.get('/public/content/home/how-it-works', require('./controllers/contentController').getHomeHowItWorks);
+app.get('/public/content/faq', require('./controllers/contentController').getFaq);
+app.get('/public/content/legal', require('./controllers/contentController').getLegal);
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
@@ -129,20 +188,18 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({ 
-    message: 'Internal Server Error', 
-    error: err.message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+// CORS test endpoint
+app.get('/api/cors-test', (req, res) => {
+  res.status(200).json({ 
+    message: 'CORS test successful',
+    origin: req.headers.origin,
+    timestamp: new Date().toISOString()
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ message: 'Route not found' });
-});
+// Enhanced error handling middleware (must be last)
+app.use(notFound);
+app.use(errorHandler);
 
 const PORT = process.env.PORT || 5001;
 

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { protect, authorize } = require('../middleware/authMiddleware');
+const { protect, authorize, optionalAuth } = require('../middleware/authMiddleware');
 const { 
   getFaq, 
   getLegal,
@@ -14,14 +14,13 @@ const {
   deleteHomeHowItWorksItem
 } = require('../controllers/contentController');
 
-router.get('/faq', getFaq);
-router.get('/legal', getLegal);
+// Public content routes - no authentication required but optional auth supported
+router.get('/faq', optionalAuth, getFaq);
+router.get('/legal', optionalAuth, getLegal);
+router.get('/home/why-book', optionalAuth, getHomeWhyBook);
+router.get('/home/how-it-works', optionalAuth, getHomeHowItWorks);
 
-// Home content routes - Public access for GET endpoints
-router.get('/home/why-book', getHomeWhyBook);
-router.get('/home/how-it-works', getHomeHowItWorks);
-
-// Home content routes - Admin only for POST, PUT, DELETE endpoints
+// Admin only routes - require authentication and admin role
 router.post('/home/why-book', protect, authorize('admin'), createHomeWhyBookItem);
 router.post('/home/how-it-works', protect, authorize('admin'), createHomeHowItWorksItem);
 router.put('/home/why-book/:id', protect, authorize('admin'), updateHomeWhyBookItem);
