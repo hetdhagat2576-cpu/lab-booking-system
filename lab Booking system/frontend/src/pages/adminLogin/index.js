@@ -21,37 +21,6 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Load reCAPTCHA script dynamically
-  useEffect(() => {
-    const loadRecaptchaScript = () => {
-      // Check if script is already loaded
-      if (window.grecaptcha && window.grecaptcha.render) {
-        return;
-      }
-
-      // Check if script tag already exists
-      const existingScript = document.querySelector('script[src*="recaptcha/api.js"]');
-      if (existingScript) {
-        return;
-      }
-
-      // Create and append reCAPTCHA script
-      const script = document.createElement('script');
-      script.src = 'https://www.google.com/recaptcha/api.js?onload=recaptchaCallback&render=explicit';
-      script.async = true;
-      script.defer = true;
-      
-      // Set up global callback
-      window.recaptchaCallback = () => {
-        console.log('reCAPTCHA script loaded successfully');
-      };
-      
-      document.head.appendChild(script);
-    };
-
-    loadRecaptchaScript();
-  }, []);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -73,128 +42,6 @@ export default function AdminLogin() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // reCAPTCHA utility function
-  const showRecaptchaAlert = async (title, message, confirmButtonText = 'Continue') => {
-    return new Promise((resolve, reject) => {
-      let recaptchaToken = null;
-      let widgetId = null;
-
-      // Ensure reCAPTCHA script is loaded
-      const loadRecaptchaScript = () => {
-        return new Promise((scriptResolve, scriptReject) => {
-          if (window.grecaptcha && window.grecaptcha.render) {
-            scriptResolve();
-            return;
-          }
-
-          // Avoid duplicate script tags
-          const existing = document.querySelector('script[src*="recaptcha/api.js"]');
-          const script = existing || document.createElement('script');
-          if (!existing) {
-            script.src = 'https://www.google.com/recaptcha/api.js?onload=recaptchaCallback&render=explicit';
-            script.async = true;
-            script.defer = true;
-          }
-          
-          // Set up global callback
-          window.recaptchaCallback = () => {
-            scriptResolve();
-          };
-          
-          script.onload = scriptResolve;
-          script.onerror = scriptReject;
-          if (!existing) document.head.appendChild(script);
-        });
-      };
-
-      const showAlert = async () => {
-        try {
-          await loadRecaptchaScript();
-
-          Swal.fire({
-            title: title,
-            html: `
-              <div style="text-align: left;">
-                <p style="margin-bottom: 20px; color: #666;">${message}</p>
-                <div id="recaptcha-container" style="display: flex; justify-content: center; margin: 20px 0;"></div>
-              </div>
-            `,
-            icon: 'info',
-            showCancelButton: true,
-            confirmButtonText: confirmButtonText,
-            cancelButtonText: 'Cancel',
-            confirmButtonColor: Theme.colors.primary,
-            cancelButtonColor: '#d33',
-            didOpen: () => {
-              // Render reCAPTCHA inside the SweetAlert
-              const container = document.getElementById('recaptcha-container');
-              
-              // Wait a bit for reCAPTCHA to be ready
-              setTimeout(() => {
-                if (container && window.grecaptcha && window.grecaptcha.render) {
-                  // If previously rendered, reset instead of rendering again
-                  try {
-                    if (widgetId !== null) {
-                      window.grecaptcha.reset(widgetId);
-                    } else {
-                      container.innerHTML = '';
-                      widgetId = window.grecaptcha.render(container, {
-                        sitekey: process.env.REACT_APP_RECAPTCHA_SITE_KEY || "6LcolFcsAAAAAHu4qJFpMgWFj_SW9jD6obXysvES",
-                        callback: (token) => {
-                          recaptchaToken = token;
-                        },
-                        'expired-callback': () => {
-                          recaptchaToken = null;
-                        }
-                      });
-                    }
-                  } catch (e) {
-                    console.error('reCAPTCHA render/reset error:', e);
-                    Swal.showValidationMessage('reCAPTCHA error. Please reopen and try again.');
-                  }
-                } else {
-                  console.error('reCAPTCHA not available');
-                  Swal.showValidationMessage('reCAPTCHA failed to load. Please refresh the page.');
-                }
-              }, 500); // 500ms delay
-            },
-            willClose: () => {
-              // Cleanup to avoid "already rendered" errors
-              try {
-                const container = document.getElementById('recaptcha-container');
-                if (container) container.innerHTML = '';
-                if (widgetId !== null && window.grecaptcha) {
-                  window.grecaptcha.reset(widgetId);
-                  widgetId = null;
-                }
-                recaptchaToken = null;
-              } catch {}
-            },
-            preConfirm: () => {
-              if (!recaptchaToken) {
-                Swal.showValidationMessage('Please verify you are not a robot');
-                return false;
-              }
-              return recaptchaToken;
-            }
-          }).then((result) => {
-            if (result.isConfirmed && result.value) {
-              resolve(result.value);
-            } else {
-              reject(new Error('User cancelled or reCAPTCHA not completed'));
-            }
-          }).catch((error) => {
-            reject(error);
-          });
-        } catch (error) {
-          reject(error);
-        }
-      };
-
-      showAlert();
-    });
-  };
-
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!validateForm()) {
@@ -204,15 +51,8 @@ export default function AdminLogin() {
     setLoading(true);
     
     try {
-      // DEVELOPMENT MODE: Skip reCAPTCHA for development
+      // Skip reCAPTCHA for admin login
       let recaptchaToken = null;
-      if (process.env.NODE_ENV === 'production') {
-        recaptchaToken = await showRecaptchaAlert(
-          'Admin Login Verification',
-          'Please complete the reCAPTCHA verification below to proceed with admin login.',
-          'Verify & Login'
-        );
-      }
       
       console.log('Admin login attempt:', { 
         email: formData.email, 
