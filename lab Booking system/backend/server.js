@@ -21,7 +21,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // CORS middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001', process.env.FRONTEND_URL],
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5001', 'http://127.0.0.1:3000', 'http://127.0.0.1:3001', process.env.FRONTEND_URL, 'https://backend-nine-kappa-33.vercel.app'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
