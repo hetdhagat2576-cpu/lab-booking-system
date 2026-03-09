@@ -29,7 +29,7 @@ app.use(cors({
     'http://127.0.0.1:3001', 
     process.env.FRONTEND_URL, 
     'https://backend-nine-kappa-33.vercel.app',
-    'https://lab-booking-system-frontend.vercel.app',
+    'https://backend-icgwcsez0-hetdhagat2576-8656s-projects.vercel.app',
     /^https:\/\/.*\.vercel\.app$/
   ],
   credentials: true,
@@ -46,7 +46,18 @@ app.use('/uploads', express.static('uploads'));
 
 // Pre-flight middleware
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  const origin = req.headers.origin;
+  
+  // Allow any Vercel domain or localhost
+  if (!origin || 
+      origin.startsWith('https://') && origin.includes('.vercel.app') ||
+      origin.startsWith('http://localhost') ||
+      origin.startsWith('http://127.0.0.1')) {
+    res.header('Access-Control-Allow-Origin', origin || '*');
+  } else {
+    res.header('Access-Control-Allow-Origin', '*');
+  }
+  
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   res.header('Access-Control-Allow-Credentials', 'true');
