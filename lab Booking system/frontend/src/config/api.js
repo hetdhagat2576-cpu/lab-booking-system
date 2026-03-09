@@ -1,7 +1,7 @@
 // API configuration for the lab booking system
 
 // Base URL for API calls - change this to match your backend URL
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://backend-cre2te8rs-hetdhagat2576-8656s-projects.vercel.app';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://backend-icgwcsez0-hetdhagat2576-8656s-projects.vercel.app';
 
 // API call lock mechanism to prevent concurrent calls
 const apiCallLocks = new Map();
