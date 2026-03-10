@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { createApiUrl, safeFetch } from "../../config/api";
 import { useAuth } from "../../context/authContext";
 import Header from "../../components/header";
 import CButton from "../../components/cButton";
@@ -474,7 +475,7 @@ export default function AdminDashboardIndex() {
     }
     try {
       console.log('Fetching bookings...');
-      const resp = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/bookings`, {
+      const resp = await safeFetch(createApiUrl('/api/bookings'), {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }

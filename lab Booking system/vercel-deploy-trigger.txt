@@ -1,3 +1,0 @@
-# Deployment trigger for responsive layout fixes
-# Last updated: 2025-03-10 12:15
-# Changes: Fixed mobile responsive layout for home page cards

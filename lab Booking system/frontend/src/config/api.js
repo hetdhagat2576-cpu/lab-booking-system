@@ -2,9 +2,9 @@
 // Determine the base API URL based on environment
 const getApiBaseUrl = () => {
   // 1. Check for Vite environment variable (highest priority for Vercel deployment)
-  if (process.env.VITE_API_URL) {
-    console.log('Using API URL from Vite environment:', process.env.VITE_API_URL);
-    return process.env.VITE_API_URL;
+  if (import.meta.env.VITE_API_URL) {
+    console.log('Using API URL from Vite environment:', import.meta.env.VITE_API_URL);
+    return import.meta.env.VITE_API_URL;
   }
   
   // 2. Check for Create React App environment variable (backward compatibility)
