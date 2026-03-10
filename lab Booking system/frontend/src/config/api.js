@@ -1,7 +1,32 @@
-// API configuration for the lab booking system
+// ✅ IMPROVED API Configuration for Production Deployment
+// This file handles API URLs dynamically for both development and production
 
-// Base URL for API calls - change this to match your backend URL
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+// Determine the base API URL based on environment
+const getApiBaseUrl = () => {
+  // 1. Check for explicit environment variable (highest priority)
+  if (process.env.REACT_APP_API_URL) {
+    console.log('Using API URL from environment:', process.env.REACT_APP_API_URL);
+    return process.env.REACT_APP_API_URL;
+  }
+  
+  // 2. Check if running on localhost (development)
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    console.log('Using local development API URL');
+    return 'http://localhost:5001';
+  }
+  
+  // 3. Production: Use relative /api path (Vercel routing handles this)
+  console.log('Using production API URL (relative path)');
+  return window.location.origin; // Returns the same domain the frontend is on
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+console.log('🚀 API Configuration initialized:', {
+  baseUrl: API_BASE_URL,
+  environment: process.env.NODE_ENV,
+  hostname: window.location.hostname
+});
 
 // API call lock mechanism to prevent concurrent calls
 const apiCallLocks = new Map();
@@ -11,7 +36,14 @@ const pendingCalls = new Map();
 export const createApiUrl = (endpoint) => {
   // Remove leading slash if present to avoid double slashes
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-  return `${API_BASE_URL}/${cleanEndpoint}`;
+  
+  // If endpoint already starts with /api, use it directly with origin
+  if (cleanEndpoint.startsWith('api/')) {
+    return `${API_BASE_URL}/${cleanEndpoint}`;
+  }
+  
+  // Otherwise, add /api prefix
+  return `${API_BASE_URL}/api/${cleanEndpoint}`;
 };
 
 export const validateApiCall = (url, id = null) => {
@@ -50,38 +82,44 @@ export const validateApiCall = (url, id = null) => {
   return true;
 };
 
-// Safe fetch wrapper that validates calls before making them and prevents concurrent calls
+// Safe fetch wrapper with credentials
 export const safeFetch = async (url, options = {}) => {
   if (!validateApiCall(url)) {
     throw new Error('Invalid API call parameters');
   }
 
+  // ✅ IMPORTANT: Add credentials to support cookies/sessions
+  const defaultOptions = {
+    credentials: 'include', // This is crucial for authentication
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers
+    }
+  };
+  
+  const mergedOptions = { ...defaultOptions, ...options };
+
   // Create a unique key for this API call
-  const callKey = `${url}:${JSON.stringify(options)}`;
+  const callKey = `${url}:${JSON.stringify(mergedOptions)}`;
   
   // Check if this exact call is already in progress
   if (apiCallLocks.has(callKey)) {
     console.log('API call already in progress, waiting for result:', url);
     
-    // Wait for the existing call to complete and return its result
     try {
       const existingResult = await apiCallLocks.get(callKey);
-      console.log('Reusing existing API call result:', url);
-      // Clone the response to avoid "body stream already read" error
       return existingResult.clone();
     } catch (error) {
-      // If the existing call failed, allow a new call to be made
       console.log('Existing API call failed, proceeding with new call:', url);
       apiCallLocks.delete(callKey);
     }
   }
 
-  // Check if there's a similar pending call (same URL but different options)
-  const urlKey = url.split('?')[0]; // Remove query params for URL matching
+  // Check for similar pending calls
+  const urlKey = url.split('?')[0];
   if (pendingCalls.has(urlKey)) {
     console.log('Similar API call detected, cancelling previous call:', url);
     
-    // Cancel the previous call (if possible) and proceed with new one
     const previousCall = pendingCalls.get(urlKey);
     if (previousCall && previousCall.abortController) {
       previousCall.abortController.abort();
@@ -89,26 +127,30 @@ export const safeFetch = async (url, options = {}) => {
     pendingCalls.delete(urlKey);
   }
 
-  // Create abort controller for this call
+  // Create abort controller
   const abortController = new AbortController();
   const requestOptions = {
-    ...options,
+    ...mergedOptions,
     signal: abortController.signal
   };
 
-  // Store the call in both maps
+  // Store the call
   const callPromise = (async () => {
     try {
-      console.log('Making new API call:', url);
+      console.log('📡 Making API call:', url);
       const response = await fetch(url, requestOptions);
       
-      // Clean up locks and pending calls
       apiCallLocks.delete(callKey);
       pendingCalls.delete(urlKey);
       
+      // Handle unauthorized responses
+      if (response.status === 401) {
+        console.warn('⚠️ Unauthorized: Token may be expired');
+        // Optionally redirect to login or refresh token
+      }
+      
       return response;
     } catch (error) {
-      // Clean up on error
       apiCallLocks.delete(callKey);
       pendingCalls.delete(urlKey);
       
@@ -117,12 +159,11 @@ export const safeFetch = async (url, options = {}) => {
         throw new Error('API call was cancelled due to a newer request');
       }
       
-      console.error('API call failed:', error);
+      console.error('❌ API call failed:', error);
       throw error;
     }
   })();
 
-  // Store the promises
   apiCallLocks.set(callKey, callPromise);
   pendingCalls.set(urlKey, { abortController, callPromise });
 
@@ -162,18 +203,16 @@ export const buildEndpoint = (baseEndpoint, ...pathParts) => {
 // Export the base URL for reference
 export { API_BASE_URL };
 
-// Utility function to clear all API call locks (useful for testing or error recovery)
+// Utility function to clear all API call locks
 export const clearApiCallLocks = () => {
   console.log('Clearing all API call locks');
   
-  // Abort all pending calls
-  pendingCalls.forEach((call, urlKey) => {
+  pendingCalls.forEach((call) => {
     if (call.abortController) {
       call.abortController.abort();
     }
   });
   
-  // Clear all maps
   apiCallLocks.clear();
   pendingCalls.clear();
 };
@@ -184,19 +223,17 @@ export const isApiCallInProgress = (url) => {
   return pendingCalls.has(urlKey) || Array.from(apiCallLocks.keys()).some(key => key.includes(url));
 };
 
-// Debounced API call utility for preventing rapid successive calls
+// Debounced API call utility
 export const debouncedApiCall = (debounceTime = 300) => {
   const debounceTimers = new Map();
   
   return (url, options = {}) => {
     const callKey = `${url}:${JSON.stringify(options)}`;
     
-    // Clear existing timer for this call
     if (debounceTimers.has(callKey)) {
       clearTimeout(debounceTimers.get(callKey));
     }
     
-    // Set new timer
     return new Promise((resolve, reject) => {
       const timer = setTimeout(async () => {
         try {
