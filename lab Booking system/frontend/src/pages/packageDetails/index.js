@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import Header from "../../components/header";
 import Footer from "../../components/footer";
 import Theme from "../../config/theam/index.js";
 import IconConfig from "../../components/icon/index.js";
 import CButton from "../../components/cButton";
 import { safeFetch, createApiUrl } from "../../config/api";
-import { safeTestName, safeSampleType, safeMap, safeLength } from "../../services/testSync";
+import { safeTestName } from "../../services/testSync";
 import Swal from "sweetalert2";
 
 export default function PackageDetails() {
@@ -20,7 +20,7 @@ export default function PackageDetails() {
   const { ArrowLeft, ShieldCheck, Clock, TestTube2, Droplets } = IconConfig;
 
   // Fetch package basic data and details
-  const fetchPackageData = async () => {
+  const fetchPackageData = useCallback(async () => {
     if (!packageId) {
       console.error('No package ID provided');
       setLoading(false);
@@ -29,7 +29,7 @@ export default function PackageDetails() {
 
     try {
       // Fetch basic package data
-      const packageResponse = await safeFetch(createApiUrl('/api/packages/${packageId}'));
+      const packageResponse = await safeFetch(createApiUrl(`/api/packages/${packageId}`));
       
       if (packageResponse.ok) {
         const packageResult = await packageResponse.json();
@@ -40,7 +40,7 @@ export default function PackageDetails() {
       }
 
       // Fetch package details with populated tests
-      const detailsResponse = await safeFetch(createApiUrl('/api/package-details/${packageId}'));
+      const detailsResponse = await safeFetch(createApiUrl(`/api/package-details/${packageId}`));
       
       if (detailsResponse.ok) {
         const detailsResult = await detailsResponse.json();
@@ -51,12 +51,12 @@ export default function PackageDetails() {
         
         // Fallback: try to get package data with populated tests from packages endpoint
         try {
-          const fallbackResponse = await safeFetch(createApiUrl('/api/packages/${packageId}?populate=tests'));
+          const fallbackResponse = await safeFetch(createApiUrl(`/api/packages/${packageId}?populate=tests`));
           if (fallbackResponse.ok) {
             const fallbackResult = await fallbackResponse.json();
             console.log('Fallback package data:', fallbackResult.data);
             // Create a mock packageDetails structure if needed
-            if (fallbackResult.data && !packageDetails) {
+            if (fallbackResult.data) {
               setPackageDetails({
                 includedTests: fallbackResult.data.testsIncluded || [],
                 includedTestNames: fallbackResult.data.testsIncluded?.map(test => test.name) || [],
@@ -76,13 +76,12 @@ export default function PackageDetails() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [packageId]);
 
   useEffect(() => {
     fetchPackageData();
-  }, [packageId]);
+  }, [packageId, fetchPackageData]);
 
-  // Check if user is logged in before booking
   const handleBookNow = () => {
     // Get user data from localStorage
     const storedUser = localStorage.getItem('lab_user');
@@ -116,33 +115,6 @@ export default function PackageDetails() {
     }
   };
 
-  const showBookingConfirmation = () => {
-    Swal.fire({
-      title: 'Confirm Booking',
-      text: `Are you sure you want to book ${packageData?.name || packageData?.title}?`,
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: Theme.colors.primary,
-      cancelButtonColor: '#6b7280',
-      confirmButtonText: 'Yes, Book Now!',
-      cancelButtonText: 'Cancel'
-    }).then((result) => {
-      if (result.isConfirmed) {
-        handleBookNow();
-      }
-    });
-  };
-
-  const showBookingSuccess = () => {
-    Swal.fire({
-      title: 'Booking Successful!',
-      text: 'Your package has been booked successfully.',
-      icon: 'success',
-      confirmButtonColor: Theme.colors.primary,
-      confirmButtonText: 'Great!'
-    });
-  };
-
   const showTestDetails = (testName) => {
     Swal.fire({
       title: testName,
@@ -150,25 +122,6 @@ export default function PackageDetails() {
       icon: 'info',
       confirmButtonColor: Theme.colors.primary,
       confirmButtonText: 'Got it!'
-    });
-  };
-
-  const showPackageInfo = () => {
-    Swal.fire({
-      title: packageData?.name || packageData?.title,
-      html: `
-        <div style="text-align: left;">
-          <p><strong>Price:</strong> ₹${packageData?.price}</p>
-          ${packageData?.originalPrice ? `<p><strong>Original Price:</strong> ₹${packageData.originalPrice}</p>` : ''}
-          ${packageData?.discount ? `<p><strong>Discount:</strong> ${packageData.discount}% OFF</p>` : ''}
-          <p><strong>Report Time:</strong> ${packageDetails?.reportingTime || packageData?.reportTime}</p>
-          <p><strong>Tests Included:</strong> ${packageDetails?.includedTests?.length || packageData?.testsIncluded?.length || 'N/A'}</p>
-          ${packageData?.fastingRequired ? '<p><strong>Fasting Required:</strong> Yes</p>' : ''}
-        </div>
-      `,
-      icon: 'info',
-      confirmButtonColor: Theme.colors.primary,
-      confirmButtonText: 'Close'
     });
   };
 
@@ -291,36 +244,38 @@ export default function PackageDetails() {
                 </div>
               </div>
 
-              {/* Card 2: Included Tests */}
+              {/* Card 2: Included Tests Summary */}
               <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
-                <h2 className="text-xl font-bold text-slate-900 mb-6">Tests Included</h2>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-slate-900">Tests Included</h2>
+                  <div className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">
+                    {(() => {
+                      const includedTests = packageDetails?.includedTests || 
+                                         packageData?.testsIncluded || 
+                                         packageData?.includes || 
+                                         [];
+                      return `${includedTests.length} Tests`;
+                    })()}
+                  </div>
+                </div>
                 
-                                
-                <div className="space-y-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {(() => {
-                    // Try multiple sources for included tests
                     const includedTests = packageDetails?.includedTests || 
                                        packageData?.testsIncluded || 
                                        packageData?.includes || 
                                        [];
                     
-                    console.log('Package Details - Included Tests:', {
-                      packageDetailsIncluded: packageDetails?.includedTests,
-                      packageDataTestsIncluded: packageData?.testsIncluded,
-                      packageDataIncludes: packageData?.includes,
-                      finalArray: includedTests
-                    });
-                    
                     if (includedTests.length === 0) {
                       return (
-                        <p className="text-slate-500 text-sm italic">No tests included in this package</p>
+                        <div className="col-span-full">
+                          <p className="text-slate-500 text-sm italic text-center py-4">No tests included in this package</p>
+                        </div>
                       );
                     }
                     
-                    return includedTests.map((test, index) => {
-                      // Handle different test data formats
+                    return includedTests.slice(0, 6).map((test, index) => {
                       let testName = '';
-                      let testId = test?._id || `test-${index}`;
                       
                       if (typeof test === 'string') {
                         testName = test;
@@ -333,9 +288,9 @@ export default function PackageDetails() {
                       }
                       
                       return (
-                        <div key={testId} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
-                          <TestTube2 className="w-4 h-4 text-primary flex-shrink-0" />
-                          <span className="text-sm text-slate-700 font-medium">
+                        <div key={`test-${index}`} className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg">
+                          <TestTube2 className="w-3 h-3 text-primary flex-shrink-0" />
+                          <span className="text-xs text-slate-700 font-medium truncate">
                             {safeTestName(testName)}
                           </span>
                         </div>
@@ -344,14 +299,31 @@ export default function PackageDetails() {
                   })()}
                 </div>
                 
+                {(() => {
+                  const includedTests = packageDetails?.includedTests || 
+                                     packageData?.testsIncluded || 
+                                     packageData?.includes || 
+                                     [];
+                  
+                  if (includedTests.length > 6) {
+                    return (
+                      <div className="mt-4 text-center">
+                        <p className="text-slate-500 text-sm">
+                          And {includedTests.length - 6} more tests...
+                        </p>
+                      </div>
+                    );
+                  }
+                })()}
+                
                               </div>
 
               
-              {/* Card 3: Details (Report Time, Sample Type) */}
+              {/* Card 3: Details (Report Time, Sample Type, Preparation) */}
               <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
                 
                 {/* Details Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-0">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-0">
                   
                   {/* Report Time */}
                   <div className="md:pr-6 md:border-r border-slate-100">
@@ -366,14 +338,41 @@ export default function PackageDetails() {
                   </div>
 
                   {/* Sample Type */}
-                  <div className="md:pl-6">
+                  <div className="md:px-6 md:border-r border-slate-100">
                     <div className="text-slate-400 font-medium mb-1">Sample Type</div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 mb-2">
                       <span className="font-bold text-slate-900 text-lg">
                         {packageData?.sampleTypes?.[0] || packageDetails?.requiredSamples?.[0] || 'Blood'}
                       </span>
                       <Droplets className="w-4 h-4 text-red-500" />
                     </div>
+                    {(() => {
+                      const sampleTypes = packageData?.sampleTypes || packageDetails?.requiredSamples || [];
+                      if (sampleTypes.length > 1) {
+                        return (
+                          <div className="text-xs text-slate-500">
+                            +{sampleTypes.length - 1} more
+                          </div>
+                        );
+                      }
+                    })()}
+                  </div>
+
+                  {/* Preparation */}
+                  <div className="md:pl-6">
+                    <div className="text-slate-400 font-medium mb-1">Preparation</div>
+                    <div className="text-sm text-slate-700 leading-relaxed">
+                      {packageData?.preparation || packageData?.fastingRequired ? 
+                        (packageData?.preparation || 'Fasting may be required') : 
+                        'No special preparation required'
+                      }
+                    </div>
+                    {packageData?.fastingRequired && (
+                      <div className="mt-2 inline-flex items-center gap-1 text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded">
+                        <Clock className="w-3 h-3" />
+                        Fasting Required
+                      </div>
+                    )}
                   </div>
 
                 </div>
@@ -388,12 +387,22 @@ export default function PackageDetails() {
                     <h2 className="text-xl font-bold text-slate-900 mb-6">Benefits</h2>
                     
                     <div className="space-y-3">
-                      {packageDetails?.benefits?.map((benefit, index) => (
-                        <div key={index} className="flex items-center gap-3">
-                          <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-                          <span className="text-slate-700">{benefit}</span>
-                        </div>
-                      )) || <div className="text-slate-500">No benefits listed</div>}
+                      {(() => {
+                        const benefits = packageDetails?.benefits || packageData?.benefits || [];
+                        
+                        if (benefits.length === 0) {
+                          return (
+                            <p className="text-slate-500 text-sm italic">No benefits listed for this package</p>
+                          );
+                        }
+                        
+                        return benefits.map((benefit, index) => (
+                          <div key={`benefit-${index}`} className="flex items-start gap-3">
+                            <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0 mt-2"></div>
+                            <span className="text-slate-700 leading-relaxed">{benefit}</span>
+                          </div>
+                        ));
+                      })()}
                     </div>
                   </div>
 
@@ -402,21 +411,28 @@ export default function PackageDetails() {
                     <h2 className="text-xl font-bold text-slate-900 mb-6">Suitable For</h2>
                     
                     <div className="space-y-3">
-                      {safeMap(packageDetails?.suitableFor || packageData?.suitableFor || [], (group, index) => (
-                        <div key={`suitable-${index}`} className="flex items-center gap-3">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                          <span className="text-slate-700">{group}</span>
-                        </div>
-                      ))}
+                      {(() => {
+                        const suitableFor = packageDetails?.suitableFor || packageData?.suitFor || packageData?.suitableFor || [];
+                        
+                        if (suitableFor.length === 0) {
+                          return (
+                            <p className="text-slate-500 text-sm italic">No suitability information available</p>
+                          );
+                        }
+                        
+                        return suitableFor.map((group, index) => (
+                          <div key={`suitable-${index}`} className="flex items-start gap-3">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
+                            <span className="text-slate-700 leading-relaxed">{group}</span>
+                          </div>
+                        ));
+                      })()}
                     </div>
-                    
-                    {safeLength(packageDetails?.suitableFor || packageData?.suitableFor || []) === 0 && (
-                      <p className="text-slate-500 text-sm italic">No suitability information available</p>
-                    )}
                   </div>
                 </div>
               </div>
 
+              
             </div>
 
           </div>

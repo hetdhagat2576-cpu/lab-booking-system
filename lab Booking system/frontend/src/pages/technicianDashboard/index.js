@@ -182,6 +182,31 @@ const TechnicianDashboard = () => {
     return () => clearInterval(interval);
   }, [fetchBookings, fetchPendingReports, activeView]);
 
+  const handleDownloadReport = async (bookingId) => {
+    try {
+      // Check if user is authenticated
+      if (!user || !user.token) {
+        alerts.reportError('Please log in to download reports');
+        return;
+      }
+      
+      console.log('Downloading report for booking ID:', bookingId);
+      
+      // Create download link similar to admin dashboard
+      const link = document.createElement('a');
+      link.href = `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/by-booking/${bookingId}/download`;
+      link.download = `Lab_Report_${bookingId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      alerts.pdfSuccess();
+    } catch (error) {
+      console.error('Error downloading report:', error);
+      alerts.pdfError();
+    }
+  };
+
   const handleViewReport = async (bookingId) => {
     try {
       // Check if user is authenticated
@@ -608,16 +633,29 @@ const TechnicianDashboard = () => {
                                appointment.status || "Pending"}
                             </span>
                             {appointment.status === "completed" && (
-                              <CButton 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={() => handleViewReport(appointment._id || appointment.id)}
-                                fullWidth={false}
-                                className="text-xs px-3 py-1 flex items-center gap-1"
-                              >
-                                <Eye className="w-3 h-3" />
-                                View
-                              </CButton>
+                              <>
+                                <CButton 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => handleViewReport(appointment._id || appointment.id)}
+                                  fullWidth={false}
+                                  className="text-xs px-3 py-1 flex items-center gap-1"
+                                >
+                                  <Eye className="w-3 h-3" />
+                                  View
+                                </CButton>
+                                <CButton 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={() => handleDownloadReport(appointment._id || appointment.id)}
+                                  fullWidth={false}
+                                  className="text-xs px-3 py-1 flex items-center gap-1 text-green-600 hover:text-green-800"
+                                  title="Download Report"
+                                >
+                                  <TestTube className="w-3 h-3" />
+                                  Download
+                                </CButton>
+                              </>
                             )}
                             {appointment.adminStatus === "approved" && (!appointment.status || appointment.status === "pending") ? (
                               <CButton 

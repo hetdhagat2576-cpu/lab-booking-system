@@ -176,276 +176,111 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
           <>
             {/* Desktop Navigation */}
             <nav className={`hidden lg:flex items-center ${isAuthenticated ? 'justify-center' : 'gap-6 xl:gap-10'}`}>
-              {visibleNavLinks.map((link) => (
-                <button 
-                  key={link.name} 
-                  onClick={() => navigate(link.path)} 
-                  className={location.pathname === link.path ? activeBeamUnderline : beamUnderline}
-                >
-                  {link.name}
-                </button>
-              ))}
-              
-              {/* Always show Contact Us and Booking for logged-in users, centered */}
-              {isAuthenticated && (
-                <>
-                  <button 
-                    onClick={() => navigate("/contact")} 
-                    className={location.pathname === "/contact" ? activeBeamUnderline : beamUnderline}
-                  >
-                    Contact Us
-                  </button>
-                  <div className="relative dropdown-container ml-10">
-                    <button
-                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      className={`${(location.pathname === "/tests" || location.pathname === "/health-packages/all") ? activeBeamUnderline : beamUnderline} flex items-center gap-1`}
-                    >
-                      Booking
-                      {ChevronDown && <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />}
-                    </button>
-                    {isDropdownOpen && (
-                      <div className="absolute top-full left-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden z-50">
-                        <button
-                          onClick={() => {
-                            navigate("/tests");
-                            setIsDropdownOpen(false);
-                          }}
-                          className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-                            location.pathname === "/tests" 
-                              ? "text-primary bg-gray-50" 
-                              : "text-gray-700 hover:bg-gray-50 hover:text-primary"
-                          }`}
-                        >
-                          Tests
-                        </button>
-                        <button
-                          onClick={() => {
-                            navigate("/health-packages/all");
-                            setIsDropdownOpen(false);
-                          }}
-                          className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-                            location.pathname === "/health-packages/all" 
-                              ? "text-primary bg-gray-50" 
-                              : "text-gray-700 hover:bg-gray-50 hover:text-primary"
-                          }`}
-                        >
-                          Packages
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-              
-              {/* Show Contact Us and Booking for non-logged-in users (original behavior) */}
-              {!isAuthenticated && (
-                <>
-                  <button 
-                    onClick={() => navigate("/contact")} 
-                    className={location.pathname === "/contact" ? activeBeamUnderline : beamUnderline}
-                  >
-                    Contact Us
-                  </button>
-                  <div className="relative dropdown-container">
-                    <button
-                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      className={`${(location.pathname === "/tests" || location.pathname === "/health-packages/all") ? activeBeamUnderline : beamUnderline} flex items-center gap-1`}
-                    >
-                      Booking
-                      {ChevronDown && <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />}
-                    </button>
-                    {isDropdownOpen && (
-                      <div className="absolute top-full left-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden z-50">
-                        <button
-                          onClick={() => {
-                            navigate("/tests");
-                            setIsDropdownOpen(false);
-                          }}
-                          className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-                            location.pathname === "/tests" 
-                              ? "text-primary bg-gray-50" 
-                              : "text-gray-700 hover:bg-gray-50 hover:text-primary"
-                          }`}
-                        >
-                          Tests
-                        </button>
-                        <button
-                          onClick={() => {
-                            navigate("/health-packages/all");
-                            setIsDropdownOpen(false);
-                          }}
-                          className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
-                            location.pathname === "/health-packages/all" 
-                              ? "text-primary bg-gray-50" 
-                              : "text-gray-700 hover:bg-gray-50 hover:text-primary"
-                          }`}
-                        >
-                          Packages
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
+              <button onClick={() => navigate("/login-selection")} className={`${beamUnderline}`}>
+                Login
+              </button>
+              <button 
+                onClick={() => navigate("/register")} 
+                className="px-6 py-2.5 text-white rounded-full text-sm font-black transition-all active:scale-95 flex items-center gap-2"
+                style={{
+                  backgroundColor: Theme.colors.primary,
+                  boxShadow: `0 4px 15px ${Theme.colors.primary}40`
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = Theme.colors.primaryHover;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = Theme.colors.primary;
+                }}
+              >
+                REGISTER
+              </button>
             </nav>
           </>
         )}
 
         {/* RIGHT SIDE */}
-        <div className="flex-shrink-0 flex items-center gap-2 sm:gap-4">
-          
-          {/* Desktop: Auth Buttons or Profile */}
-          <div className="hidden lg:flex items-center gap-4">
-            {!isAuthenticated ? (
-              <>
-                <button onClick={() => navigate("/login-selection")} className={`${beamUnderline}`}>
-                  Login
-                </button>
-                <button 
-                  onClick={() => navigate("/register")} 
-                  className="px-6 py-2.5 text-white rounded-full text-sm font-black transition-all active:scale-95 flex items-center gap-2"
-                  style={{
-                    backgroundColor: Theme.colors.primary,
-                    boxShadow: `0 4px 15px ${Theme.colors.primary}40`
+        <div className="flex-1 flex justify-end items-center gap-2 sm:gap-4 md:gap-6 lg:gap-8">
+          {!isAuthenticated ? (
+            <>
+              <button onClick={() => navigate("/login-selection")} className={`${beamUnderline} hidden lg:block`}>
+                Login
+              </button>
+              
+              <button 
+                onClick={() => navigate("/register")} 
+                className="px-3 sm:px-4 md:px-6 lg:px-7 py-2 sm:py-2.5 text-white rounded-full text-xs sm:text-sm font-black transition-all active:scale-95 flex items-center gap-1 sm:gap-2"
+                style={{ 
+                  backgroundColor: Theme.colors.primary,
+                  border: `1px solid ${Theme.colors.primary}20`
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = Theme.colors.primaryHover;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = Theme.colors.primary;
+                }}
+              >
+                <span className="hidden sm:inline">REGISTER</span>
+                <span className="sm:hidden">SIGN UP</span>
+              </button>
+            </>
+          ) : (
+            <>
+              {/* Notification Bell for regular users only (not admin or lab technician) */}
+              {isAuthenticated && !isAdmin && !isLabTechnician && (
+                <NotificationBell />
+              )}
+              
+              {/* Profile Icon for authenticated users */}
+              {isAuthenticated && !hideProfileIcon && !isAdmin && !isLabTechnician && (
+                <button
+                  onClick={() => {
+                    const route = isLabTechnician ? "/lab-technician-profile" : "/user-profile";
+                    navigate(route);
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = Theme.colors.primaryHover;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = Theme.colors.primary;
-                  }}
+                  className="hidden lg:flex items-center gap-2 text-white/90 hover:text-white font-bold transition-all"
+                  title={user?.name || user?.email || "Profile"}
                 >
-                  REGISTER
+                  {UserCircle && <UserCircle className="w-4 h-4 sm:w-5 sm:h-5" />}
+                  <span className="hidden xl:inline">Profile</span>
                 </button>
-              </>
-            ) : (
-              <>
-                {!isAdmin && !isLabTechnician && !hideProfileIcon && (
-                  <NotificationBell />
-                )}
-                {!hideProfileIcon && (
-                  <div className="relative dropdown-container">
-                    <button
-                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-white/10 transition-all"
-                    >
-                      <div className="w-9 h-9 bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
-                        {UserCircle && <UserCircle className="w-6 h-6 text-white" />}
-                      </div>
-                      {ChevronDown && <ChevronDown className={`w-4 h-4 text-white/70 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />}
-                    </button>
-                    {isDropdownOpen && (
-                      <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden z-50">
-                        {!isAdmin && !isLabTechnician && (
-                          <button
-                            onClick={() => { navigate("/user-profile"); setIsDropdownOpen(false); }}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                          >
-                            {UserCircle && <UserCircle className="w-4 h-4 text-gray-400" />} Profile
-                          </button>
-                        )}
-                        <button
-                          onClick={() => { navigate("/settings"); setIsDropdownOpen(false); }}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                          {Settings && <Settings className="w-4 h-4 text-gray-400" />} Settings
-                        </button>
-                        <div className="border-t border-gray-100">
-                          <button
-                            onClick={handleLogoutClick}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                          >
-                            {LogOut && <LogOut className="w-4 h-4" />} Logout
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
-          {/* Mobile: Auth Buttons or Profile Icon */}
-          <div className="flex lg:hidden items-center gap-2">
-            {!isAuthenticated ? (
-              <>
-                <button 
-                  onClick={() => navigate("/login-selection")} 
-                  className="px-3 py-1.5 text-white text-xs font-medium rounded-lg hover:bg-white/10 transition-all"
-                >
-                  Login
-                </button>
-                <button 
-                  onClick={() => navigate("/register")} 
-                  className="px-3 py-1.5 text-white rounded-full text-xs font-black transition-all active:scale-95"
-                  style={{ backgroundColor: Theme.colors.primary, boxShadow: `0 4px 15px ${Theme.colors.primary}40` }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = Theme.colors.primaryHover; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = Theme.colors.primary; }}
-                >
-                  REGISTER
-                </button>
-              </>
-            ) : (
-              <>
-                {!isAdmin && !isLabTechnician && !hideProfileIcon && (
-                  <NotificationBell />
-                )}
-                {!hideProfileIcon && (
-                  <div className="relative dropdown-container">
-                    <button
-                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white/10 transition-all"
-                    >
-                      <div className="w-8 h-8 bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
-                        {UserCircle && <UserCircle className="w-5 h-5 text-white" />}
-                      </div>
-                    </button>
-                    {isDropdownOpen && (
-                      <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden z-50">
-                        {!isAdmin && !isLabTechnician && (
-                          <button
-                            onClick={() => { navigate("/user-profile"); setIsDropdownOpen(false); }}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                          >
-                            {UserCircle && <UserCircle className="w-4 h-4 text-gray-400" />} Profile
-                          </button>
-                        )}
-                        <button
-                          onClick={() => { navigate("/settings"); setIsDropdownOpen(false); }}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                        >
-                          {Settings && <Settings className="w-4 h-4 text-gray-400" />} Settings
-                        </button>
-                        <div className="border-t border-gray-100">
-                          <button
-                            onClick={handleLogoutClick}
-                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                          >
-                            {LogOut && <LogOut className="w-4 h-4" />} Logout
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-          
-          {/* Mobile Menu Button (always at the end) */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-            data-mobile-menu-button
-          >
-            {isMobileMenuOpen ? (X && <X className="w-6 h-6" />) : (Menu && <Menu className="w-6 h-6" />)}
-          </button>
-        </div>
+              )}
+              <button
+                onClick={handleLogoutClick}
+                className="px-3 sm:px-4 md:px-5 lg:px-6 py-2 text-white rounded-full text-xs sm:text-sm font-black transition-all active:scale-95 flex items-center gap-1 sm:gap-2"
+                style={{ 
+                  backgroundColor: Theme.colors.primary,
+                  border: `1px solid ${Theme.colors.primary}20`
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = Theme.colors.primaryHover;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = Theme.colors.primary;
+                }}
+              >
+                {LogOut && <LogOut className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />}
+                <span className="hidden sm:inline">Logout</span>
+              </button>
+            </>
+          )}
         </div>
 
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
+      </div>
+
+        {/* Mobile Menu Button */}
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="lg:hidden text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+          data-mobile-menu-button
+        >
+          {isMobileMenuOpen ? (X && <X className="w-6 h-6" />) : (Menu && <Menu className="w-6 h-6" />)}
+        </button>
+      </div>
+
+      {/* Mobile Menu */}
+      {isMobileMenuOpen && (
         <div className="mobile-menu-container lg:hidden bg-primary/95 backdrop-blur-md border-t border-white/10">
           <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
             <nav className={`flex flex-col space-y-3 ${isAuthenticated ? 'items-center' : ''}`}>
@@ -590,11 +425,23 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                   </button>
                 </>
               )}
+
+              {/* Mobile Profile Button for Lab Technicians */}
+              {isAuthenticated && !hideProfileIcon && isLabTechnician && (
+                <button
+                  onClick={() => {
+                    navigate("/lab-technician-profile");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="text-left px-4 py-3 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-all"
+                >
+                  Profile
+                </button>
+              )}
             </nav>
           </div>
         </div>
       )}
-      </div>
     </header>
   );
 }
