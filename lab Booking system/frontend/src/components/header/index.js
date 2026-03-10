@@ -126,10 +126,11 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
 
   return (
     <header className="bg-gradient-to-r from-primary to-secondary shadow-lg sticky top-0 z-50">
-      <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3 flex items-center justify-between">
+      <div className="container mx-auto px-2 sm:px-4 py-2 sm:py-3">
+        <div className="flex items-center justify-between min-h-0">
         
         {/* LOGO */}
-        <div className="flex-1">
+        <div className="flex-shrink-0">
           <button 
             onClick={() => {
               if (isAuthenticated) {
@@ -144,16 +145,16 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                 navigate("/");
               }
             }} 
-            className="flex items-center gap-2 sm:gap-3 group"
+            className="flex items-center gap-1.5 sm:gap-3 group"
           >
-            <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl flex items-center justify-center border border-white/20 group-hover:border-white/40 transition-all shadow-inner">
-              <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-7 h-7 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-white/10 backdrop-blur-md rounded-lg sm:rounded-2xl flex items-center justify-center border border-white/20 group-hover:border-white/40 transition-all shadow-inner">
+              <svg className="w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-7 md:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
               </svg>
             </div>
             <div className="flex flex-col text-left">
-              <span className="text-sm sm:text-base md:text-xl lg:text-2xl font-black text-white leading-none tracking-tight">BookMyLab</span>
-              <span className="text-[8px] sm:text-[9px] md:text-[10px] text-white/50 font-bold uppercase tracking-[0.2em] sm:tracking-[0.3em] hidden xs:block"> System</span>
+              <span className="text-xs sm:text-base md:text-xl lg:text-2xl font-black text-white leading-none tracking-tight">BookMyLab</span>
+              <span className="text-[6px] sm:text-[9px] md:text-[10px] text-white/50 font-bold uppercase tracking-[0.1em] sm:tracking-[0.3em] hidden xs:block">System</span>
             </div>
           </button>
         </div>
@@ -287,7 +288,7 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
         )}
 
         {/* RIGHT SIDE */}
-        <div className="flex-1 flex justify-end items-center gap-2 sm:gap-4 md:gap-6 lg:gap-8">
+        <div className="flex-shrink-0 flex items-center gap-2 sm:gap-4 md:gap-6 lg:gap-8">
           {!isAuthenticated ? (
             <>
               <button onClick={() => navigate("/login-selection")} className={`${beamUnderline} hidden lg:block`}>
@@ -296,68 +297,84 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
               
               <button 
                 onClick={() => navigate("/register")} 
-                className="px-3 sm:px-4 md:px-6 lg:px-7 py-2 sm:py-2.5 text-white rounded-full text-xs sm:text-sm font-black transition-all active:scale-95 flex items-center gap-1 sm:gap-2"
-                style={{ 
-                  backgroundColor: Theme.colors.primary,
-                  border: `1px solid ${Theme.colors.primary}20`
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = Theme.colors.primaryHover;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = Theme.colors.primary;
+                className="px-2 sm:px-4 md:px-6 lg:px-7 py-1.5 sm:py-2.5 text-white rounded-full text-xs sm:text-sm font-black transition-all active:scale-95 flex items-center gap-1 sm:gap-2"
+                style={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)'
                 }}
               >
-                <span className="hidden sm:inline">REGISTER</span>
-                <span className="sm:hidden">SIGN UP</span>
+                <span className="hidden xs:inline">REGISTER</span>
+                <span className="xs:hidden">SIGN UP</span>
               </button>
             </>
           ) : (
             <>
-              {/* Notification Bell for regular users only (not admin or lab technician) */}
-              {isAuthenticated && !isAdmin && !isLabTechnician && (
+              {/* Notification Bell - Only show for regular users */}
+              {!isAdmin && !isLabTechnician && !hideProfileIcon && (
                 <NotificationBell />
               )}
               
-              {/* Profile Icon for authenticated users */}
-              {isAuthenticated && !hideProfileIcon && !isAdmin && !isLabTechnician && (
-                <button
-                  onClick={() => {
-                    const route = isLabTechnician ? "/lab-technician-profile" : "/user-profile";
-                    navigate(route);
-                  }}
-                  className="hidden lg:flex items-center gap-2 text-white/90 hover:text-white font-bold transition-all"
-                  title={user?.name || user?.email || "Profile"}
-                >
-                  {UserCircle && <UserCircle className="w-4 h-4 sm:w-5 sm:h-5" />}
-                  <span className="hidden xl:inline">Profile</span>
-                </button>
+              {/* Profile Dropdown */}
+              {!hideProfileIcon && (
+                <div className="relative dropdown-container">
+                  <button
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="flex items-center gap-2 p-1.5 sm:p-2 rounded-lg hover:bg-white/10 transition-all"
+                  >
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
+                      {UserCircle && <UserCircle className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />}
+                    </div>
+                    {ChevronDown && <ChevronDown className={`w-3 h-3 sm:w-4 sm:h-4 text-white/70 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />}
+                  </button>
+                  
+                  {isDropdownOpen && (
+                    <div className="absolute top-full right-0 mt-2 w-40 sm:w-48 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden z-50">
+                      {/* Profile Link */}
+                      {!isAdmin && !isLabTechnician && (
+                        <button
+                          onClick={() => {
+                            navigate("/user-profile");
+                            setIsDropdownOpen(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          {UserCircle && <UserCircle className="w-4 h-4 text-gray-400" />}
+                          Profile
+                        </button>
+                      )}
+                      
+                      {/* Settings */}
+                      <button
+                        onClick={() => {
+                          navigate("/settings");
+                          setIsDropdownOpen(false);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        {Settings && <Settings className="w-4 h-4 text-gray-400" />}
+                        Settings
+                      </button>
+                      
+                      <div className="border-t border-gray-100">
+                        <button
+                          onClick={handleLogoutClick}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          {LogOut && <LogOut className="w-4 h-4" />}
+                          <span className="hidden sm:inline">Logout</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
-              <button
-                onClick={handleLogoutClick}
-                className="px-3 sm:px-4 md:px-5 lg:px-6 py-2 text-white rounded-full text-xs sm:text-sm font-black transition-all active:scale-95 flex items-center gap-1 sm:gap-2"
-                style={{ 
-                  backgroundColor: Theme.colors.primary,
-                  border: `1px solid ${Theme.colors.primary}20`
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = Theme.colors.primaryHover;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = Theme.colors.primary;
-                }}
-              >
-                {LogOut && <LogOut className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />}
-                <span className="hidden sm:inline">Logout</span>
-              </button>
             </>
           )}
         </div>
+        </div>
 
-      </div>
-
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
         <div className="mobile-menu-container lg:hidden bg-primary/95 backdrop-blur-md border-t border-white/10">
           <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
             <nav className={`flex flex-col space-y-3 ${isAuthenticated ? 'items-center' : ''}`}>
@@ -499,6 +516,7 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
           </div>
         </div>
       )}
+      </div>
     </header>
   );
 }

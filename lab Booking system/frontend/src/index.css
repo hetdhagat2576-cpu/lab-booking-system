@@ -21,6 +21,64 @@
 html, body {
   overflow-x: hidden;
   scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+
+/* Samsung Galaxy specific fixes */
+@media screen and (max-width: 480px) {
+  html {
+    font-size: 14px;
+  }
+  
+  /* Header fixes for small screens */
+  header {
+    min-height: 60px !important;
+  }
+  
+  header .container {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+  
+  /* Button touch targets for mobile */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Text adjustments */
+  .text-xs {
+    font-size: 0.7rem !important;
+  }
+  
+  .text-sm {
+    font-size: 0.8rem !important;
+  }
+}
+
+/* Extra small screens (Samsung Galaxy S series in portrait) */
+@media screen and (max-width: 360px) {
+  html {
+    font-size: 12px;
+  }
+  
+  header .container {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
+  
+  /* Logo adjustments */
+  header .w-7 {
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+  }
+  
+  /* Register button adjustments */
+  header button[class*="px-"] {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
 }
 
 /* Feedback section scroll fix */
