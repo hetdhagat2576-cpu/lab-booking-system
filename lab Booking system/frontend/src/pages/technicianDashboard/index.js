@@ -98,7 +98,7 @@ const TechnicianDashboard = () => {
   // Initialize WebSocket connection
   useEffect(() => {
     if (user?.token && user?.id) {
-      const websocketUrl = `${process.env.REACT_APP_WS_URL || 'ws://localhost:5001'}?userId=${user.id}&token=${user.token}`;
+      const websocketUrl = `${process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5001'}?userId=${user.id}&token=${user.token}`;
       const websocket = new WebSocket(websocketUrl);
       
       websocket.onopen = () => {
@@ -134,7 +134,7 @@ const TechnicianDashboard = () => {
         setTimeout(() => {
           if (user?.token && user?.id) {
             console.log('Attempting to reconnect WebSocket...');
-            const reconnectUrl = `${process.env.REACT_APP_WS_URL || 'ws://localhost:5001'}?userId=${user.id}&token=${user.token}`;
+            const reconnectUrl = `${process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5001'}?userId=${user.id}&token=${user.token}`;
             const reconnectWs = new WebSocket(reconnectUrl);
             setWs(reconnectWs);
           }

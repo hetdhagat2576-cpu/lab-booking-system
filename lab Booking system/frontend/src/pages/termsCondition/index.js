@@ -21,7 +21,7 @@ export default function TermsConditionIndex() {
     
     const fetchTerms = async () => {
       try {
-        const res = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/terms/public`);
+        const res = await fetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/terms/public`);
         const data = await res.json();
         if (data.success && data.data && data.data.sections) {
           setDataSections(data.data.sections.map(section => ({

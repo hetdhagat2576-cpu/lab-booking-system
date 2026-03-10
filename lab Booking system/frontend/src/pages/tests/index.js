@@ -29,7 +29,7 @@ export default function AllTests() {
       });
 
       // Fetch fresh data from API
-      const response = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests?isActive=true`);
+      const response = await safeFetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests?isActive=true`);
       
       if (response.ok) {
         const data = await response.json();
@@ -90,7 +90,7 @@ export default function AllTests() {
 
         // Fetch fresh data from API
         console.log('=== Fetching fresh tests from API ===');
-        const response = await safeFetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests?isActive=true`);
+        const response = await safeFetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests?isActive=true`);
         
         if (response.ok) {
           const data = await response.json();

@@ -1,21 +1,25 @@
-// ✅ IMPROVED API Configuration for Production Deployment
-// This file handles API URLs dynamically for both development and production
 
 // Determine the base API URL based on environment
 const getApiBaseUrl = () => {
-  // 1. Check for explicit environment variable (highest priority)
+  // 1. Check for Vite environment variable (highest priority for Vercel deployment)
+  if (process.env.VITE_API_URL) {
+    console.log('Using API URL from Vite environment:', process.env.VITE_API_URL);
+    return process.env.VITE_API_URL;
+  }
+  
+  // 2. Check for Create React App environment variable (backward compatibility)
   if (process.env.REACT_APP_API_URL) {
-    console.log('Using API URL from environment:', process.env.REACT_APP_API_URL);
+    console.log('Using API URL from CRA environment:', process.env.REACT_APP_API_URL);
     return process.env.REACT_APP_API_URL;
   }
   
-  // 2. Check if running on localhost (development)
+  // 3. Check if running on localhost (development)
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     console.log('Using local development API URL');
     return 'http://localhost:5001';
   }
   
-  // 3. Production: Use relative /api path (Vercel routing handles this)
+  // 4. Production: Use relative /api path (Vercel routing handles this)
   console.log('Using production API URL (relative path)');
   return window.location.origin; // Returns the same domain the frontend is on
 };

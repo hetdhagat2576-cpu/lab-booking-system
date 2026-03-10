@@ -76,7 +76,7 @@ export default function TestDetails() {
             
             // Use debounced API call to prevent multiple rapid calls
             const debouncedCall = debouncedApiCall(300); // 300ms debounce
-            const response = await debouncedCall(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests/${id}`);
+            const response = await debouncedCall(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests/${id}`);
             
             console.log(`API response status: ${response.status}`);
             
@@ -110,7 +110,7 @@ export default function TestDetails() {
             try {
               console.log('Attempting to fetch a valid test as fallback...');
               const debouncedFallbackCall = debouncedApiCall(300);
-              const fallbackResponse = await debouncedFallbackCall(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests?isActive=true&limit=1`);
+              const fallbackResponse = await debouncedFallbackCall(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests?isActive=true&limit=1`);
               if (fallbackResponse.ok) {
                 const fallbackData = await fallbackResponse.json();
                 if (fallbackData.data && fallbackData.data.length > 0) {
