@@ -276,14 +276,6 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                 </>
               )}
             </nav>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden text-white p-1.5 sm:p-2 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              {isMobileMenuOpen ? (X && <X className="w-5 h-5 sm:w-6 sm:h-6" />) : (Menu && <Menu className="w-5 h-5 sm:w-6 sm:h-6" />)}
-            </button>
           </>
         )}
 
@@ -291,13 +283,42 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
         <div className="flex-shrink-0 flex items-center gap-2 sm:gap-4 md:gap-6 lg:gap-8">
           {!isAuthenticated ? (
             <>
+              {/* Mobile Login/Register Buttons */}
+              <div className="lg:hidden flex items-center gap-2">
+                <button 
+                  onClick={() => navigate("/login-selection")} 
+                  className="px-2 sm:px-3 py-1.5 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-white/10 transition-all"
+                >
+                  Login
+                </button>
+                
+                <button 
+                  onClick={() => navigate("/register")} 
+                  className="px-2 sm:px-3 py-1.5 text-white rounded-full text-xs sm:text-sm font-black transition-all active:scale-95"
+                  style={{
+                    backgroundColor: Theme.colors.primary,
+                    boxShadow: `0 4px 15px ${Theme.colors.primary}40`
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = Theme.colors.primaryHover;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = Theme.colors.primary;
+                  }}
+                >
+                  REGISTER
+                </button>
+              </div>
+              
+              {/* Desktop Login Button */}
               <button onClick={() => navigate("/login-selection")} className={`${beamUnderline} hidden lg:block`}>
                 Login
               </button>
               
+              {/* Desktop Register Button */}
               <button 
                 onClick={() => navigate("/register")} 
-                className="px-2 sm:px-4 md:px-6 lg:px-7 py-1.5 sm:py-2.5 text-white rounded-full text-xs sm:text-sm font-black transition-all active:scale-95 flex items-center gap-1 sm:gap-2"
+                className="px-2 sm:px-4 md:px-6 lg:px-7 py-1.5 sm:py-2.5 text-white rounded-full text-xs sm:text-sm font-black transition-all active:scale-95 flex items-center gap-1 sm:gap-2 hidden lg:block"
                 style={{
                   backgroundColor: Theme.colors.primary,
                   boxShadow: `0 4px 15px ${Theme.colors.primary}40`
@@ -376,6 +397,14 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
               )}
             </>
           )}
+          
+          {/* Mobile Menu Button - Always at the end */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="lg:hidden text-white p-1.5 sm:p-2 rounded-lg hover:bg-white/10 transition-colors"
+          >
+            {isMobileMenuOpen ? (X && <X className="w-5 h-5 sm:w-6 sm:h-6" />) : (Menu && <Menu className="w-5 h-5 sm:w-6 sm:h-6" />)}
+          </button>
         </div>
         </div>
 

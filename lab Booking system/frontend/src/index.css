@@ -79,6 +79,52 @@ html, body {
     padding-left: 0.5rem !important;
     padding-right: 0.5rem !important;
   }
+  
+  /* Form improvements */
+  .MuiPaper-root {
+    margin: 8px !important;
+  }
+  
+  .MuiFormControl-root {
+    margin-bottom: 12px !important;
+  }
+  
+  /* Button improvements */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Input improvements */
+  input {
+    min-height: 44px;
+    font-size: 16px !important; /* Prevent zoom on iOS */
+  }
+  
+  /* Container improvements */
+  .container {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+  
+  /* Card improvements */
+  .MuiCard-root {
+    margin: 8px !important;
+  }
+}
+
+/* Touch device improvements */
+@media (hover: none) and (pointer: coarse) {
+  button, a, .clickable {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px 12px;
+  }
+  
+  input, textarea, select {
+    min-height: 44px;
+    font-size: 16px;
+  }
 }
 
 /* Feedback section scroll fix */
