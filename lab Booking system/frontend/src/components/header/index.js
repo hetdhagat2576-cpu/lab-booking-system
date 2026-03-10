@@ -299,8 +299,14 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                 onClick={() => navigate("/register")} 
                 className="px-2 sm:px-4 md:px-6 lg:px-7 py-1.5 sm:py-2.5 text-white rounded-full text-xs sm:text-sm font-black transition-all active:scale-95 flex items-center gap-1 sm:gap-2"
                 style={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)'
+                  backgroundColor: Theme.colors.primary,
+                  boxShadow: `0 4px 15px ${Theme.colors.primary}40`
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = Theme.colors.primaryHover;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = Theme.colors.primary;
                 }}
               >
                 <span className="hidden xs:inline">REGISTER</span>
