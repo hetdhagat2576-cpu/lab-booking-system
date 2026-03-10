@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Shield, ArrowLeft, Lock, Mail, User, Eye, EyeOff } from "lucide-react";
-import { Button, Box, Paper, Typography, Alert, InputAdornment, TextField } from "@mui/material";
+import { Button, Box, Paper, Typography, Alert, InputAdornment, TextField, MenuItem } from "@mui/material";
 import Header from "../../components/header";
 import CButton from "../../components/cButton";
 import CInput from "../../components/cInput";
@@ -15,7 +15,7 @@ import Swal from 'sweetalert2';
 export default function RegisterIndex() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [formData, setFormData] = useState({ name: "", email: "", password: "", confirmPassword: "" });
+  const [formData, setFormData] = useState({ name: "", email: "", password: "", confirmPassword: "", role: "user" });
   const [errors, setErrors] = useState({});
   const [registerError, setRegisterError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -457,6 +457,53 @@ export default function RegisterIndex() {
                 },
               }}
             />
+
+            <TextField
+              fullWidth
+              select
+              name="role"
+              label="Register as"
+              value={formData.role}
+              onChange={handleChange}
+              error={!!errors.role}
+              helperText={errors.role && <span className="text-red-500 text-xs font-medium">{errors.role}</span>}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Shield size={16} style={{ color: Theme.colors.primary }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                  "&:hover fieldset": {
+                    borderColor: errors.role ? "#ef4444" : Theme.colors.primary,
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: errors.role ? "#ef4444" : Theme.colors.primary,
+                    borderWidth: 2,
+                  },
+                  "&.Mui-error fieldset": {
+                    borderColor: "#ef4444",
+                    borderWidth: 2,
+                  },
+                  "&.Mui-error": {
+                    backgroundColor: "#fef2f2",
+                  },
+                },
+                "& .MuiFormHelperText-root": {
+                  fontSize: '0.75rem',
+                  marginTop: '4px',
+                  fontWeight: 'medium',
+                  color: '#dc2626',
+                },
+              }}
+            >
+              <MenuItem value="user">User</MenuItem>
+              <MenuItem value="admin">Administrator</MenuItem>
+              <MenuItem value="labtechnician">Lab Technician</MenuItem>
+            </TextField>
 
             {registerError && (
               <Alert severity="error" sx={{ borderRadius: 2 }}>

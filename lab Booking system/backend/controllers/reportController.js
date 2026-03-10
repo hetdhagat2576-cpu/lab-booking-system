@@ -362,6 +362,47 @@ const getUserReports = async (req, res) => {
   }
 };
 
+// Get all reports for admin (without technician filter)
+const getAllReportsForAdmin = async (req, res) => {
+  try {
+    // Check if user is authenticated and is admin
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ success: false, message: 'User not authenticated' });
+    }
+
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Access denied. Admin role required.' });
+    }
+
+    const { page = 1, limit = 10, status, technicianId, patientId } = req.query;
+    const filter = {};
+    
+    if (status) filter.status = status;
+    if (technicianId) filter.technicianId = technicianId;
+    if (patientId) filter.patientId = patientId;
+
+    const reports = await Report.find(filter)
+      .populate('patientId', 'name email phone')
+      .populate('technicianId', 'name email')
+      .populate('bookingId', 'date time labName packageName')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Report.countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: reports,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+      total
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 module.exports = {
   createReport,
   getAllReports,
@@ -373,5 +414,6 @@ module.exports = {
   updateReport,
   deleteReport,
   downloadReportPDF,
-  getUserReports
+  getUserReports,
+  getAllReportsForAdmin
 };

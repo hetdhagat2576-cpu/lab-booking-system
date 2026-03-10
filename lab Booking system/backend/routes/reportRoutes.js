@@ -11,7 +11,8 @@ const {
   updateReport,
   deleteReport,
   downloadReportPDF,
-  getUserReports
+  getUserReports,
+  getAllReportsForAdmin
 } = require('../controllers/reportController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
@@ -22,6 +23,9 @@ router.get('/pending/reports', protect, authorize('labtechnician'), getPendingRe
 
 // User reports route (for authenticated users to get their own reports)
 router.get('/user', protect, getUserReports);
+
+// Admin routes
+router.get('/admin/all', protect, authorize('admin'), getAllReportsForAdmin);
 
 // Specific routes must come before parameterized routes
 router.get('/booking/:bookingId', protect, getReportByBookingId);

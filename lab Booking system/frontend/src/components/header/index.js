@@ -333,6 +333,21 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                   <span className="hidden xl:inline">Profile</span>
                 </button>
               )}
+
+              {/* Profile Icon for lab technicians */}
+              {isAuthenticated && !hideProfileIcon && isLabTechnician && (
+                <button
+                  onClick={() => {
+                    navigate("/lab-technician-profile");
+                  }}
+                  className="hidden lg:flex items-center gap-2 text-white/90 hover:text-white font-bold transition-all"
+                  title={user?.name || user?.email || "Profile"}
+                >
+                  {UserCircle && <UserCircle className="w-4 h-4 sm:w-5 sm:h-5" />}
+                  <span className="hidden xl:inline">Profile</span>
+                </button>
+              )}
+              
               <button
                 onClick={handleLogoutClick}
                 className="px-3 sm:px-4 md:px-5 lg:px-6 py-2 text-white rounded-full text-xs sm:text-sm font-black transition-all active:scale-95 flex items-center gap-1 sm:gap-2"
@@ -488,6 +503,19 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                   onClick={() => {
                     const route = isLabTechnician ? "/lab-technician-profile" : "/user-profile";
                     navigate(route);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="text-left px-4 py-3 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-all"
+                >
+                  Profile
+                </button>
+              )}
+
+              {/* Mobile Profile Button for Lab Technicians */}
+              {isAuthenticated && !hideProfileIcon && isLabTechnician && (
+                <button
+                  onClick={() => {
+                    navigate("/lab-technician-profile");
                     setIsMobileMenuOpen(false);
                   }}
                   className="text-left px-4 py-3 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-all"

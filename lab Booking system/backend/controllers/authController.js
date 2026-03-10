@@ -263,8 +263,31 @@ const registerUser = async (req, res) => {
   }
 };
 
+const cleanupOldLoginSessions = async () => {
+  try {
+    // Clear lastLogin for users who haven't been active for more than 10 minutes
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+    const result = await User.updateMany(
+      { 
+        lastLogin: { $lt: tenMinutesAgo },
+        role: { $in: ['admin', 'labtechnician', 'doctor'] }
+      },
+      { lastLogin: null }
+    );
+    
+    if (result.modifiedCount > 0) {
+      console.log(`🧹 Cleaned up ${result.modifiedCount} old login sessions`);
+    }
+  } catch (error) {
+    console.warn('⚠️ Error cleaning up old login sessions:', error.message);
+  }
+};
+
 const loginUser = async (req, res) => {
   try {
+    // Clean up old login sessions first
+    await cleanupOldLoginSessions();
+    
     console.log('=== DEBUG: Login Request ===');
     console.log('============================');
     console.log('📋 LOGIN REQUEST RECEIVED');
@@ -328,18 +351,22 @@ const loginUser = async (req, res) => {
           lastLogin: { $exists: true }
         }).sort({ lastLogin: -1 }).limit(10);
         
-        // Check for recent logins (within last 30 minutes)
-        const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+        // Check for recent logins (within last 5 minutes instead of 30)
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
         const recentlyActiveUsers = activeUsers.filter(u => 
-          u.lastLogin && u.lastLogin > thirtyMinutesAgo && u._id.toString() !== user._id.toString()
+          u.lastLogin && u.lastLogin > fiveMinutesAgo && u._id.toString() !== user._id.toString()
         );
         
-        if (recentlyActiveUsers.length > 0) {
-          const activeUser = recentlyActiveUsers[0];
-          console.log('❌ Another user with privileged role is already active:', {
+        // Only block if there's an active user with a DIFFERENT privileged role
+        const differentRoleActiveUsers = recentlyActiveUsers.filter(u => u.role !== user.role);
+        
+        if (differentRoleActiveUsers.length > 0) {
+          const activeUser = differentRoleActiveUsers[0];
+          console.log('❌ Another user with different privileged role is already active:', {
             activeRole: activeUser.role,
             activeEmail: activeUser.email,
-            lastLogin: activeUser.lastLogin
+            lastLogin: activeUser.lastLogin,
+            attemptingRole: user.role
           });
           
           return res.status(403).json({
@@ -551,6 +578,8 @@ module.exports = {
   resendOtp,
   getAllUsersForAdmin,
   deleteUserByAdmin,
+  blockUserByAdmin,
+  unblockUserByAdmin,
   forgotPassword,
   resetPassword,
   resendPasswordReset,
@@ -890,6 +919,71 @@ async function deleteUserByAdmin(req, res) {
   } catch (error) {
     console.error('Delete user error:', error);
     return res.status(500).json({ success: false, message: 'Error deleting user', error: error.message });
+  }
+}
+
+async function blockUserByAdmin(req, res) {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Admin access required' });
+    }
+    const { id } = req.params;
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    // Prevent admin from blocking themselves
+    if (user._id.toString() === req.user._id.toString()) {
+      return res.status(400).json({ success: false, message: 'You cannot block yourself' });
+    }
+    
+    user.isActive = false;
+    await user.save();
+    
+    return res.status(200).json({ 
+      success: true, 
+      message: 'User blocked successfully',
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isActive: user.isActive
+      }
+    });
+  } catch (error) {
+    console.error('Block user error:', error);
+    return res.status(500).json({ success: false, message: 'Error blocking user', error: error.message });
+  }
+}
+
+async function unblockUserByAdmin(req, res) {
+  try {
+    if (!req.user || req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Admin access required' });
+    }
+    const { id } = req.params;
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    
+    user.isActive = true;
+    await user.save();
+    
+    return res.status(200).json({ 
+      success: true, 
+      message: 'User unblocked successfully',
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isActive: user.isActive
+      }
+    });
+  } catch (error) {
+    console.error('Unblock user error:', error);
+    return res.status(500).json({ success: false, message: 'Error unblocking user', error: error.message });
   }
 }
 

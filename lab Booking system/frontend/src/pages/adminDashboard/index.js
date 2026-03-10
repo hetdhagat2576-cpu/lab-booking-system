@@ -6,6 +6,7 @@ import CButton from "../../components/cButton";
 import IconConfig from "../../components/icon/index.js";
 import Theme from "../../config/theam/index.js";
 import LogoutConfirmation from "../../components/logoutConfirmation/index.js";
+import SidebarDropdown from "./sidebarDropdown.js";
 import Swal from 'sweetalert2';
 import * as XLSX from 'xlsx';
 import { } from "../../config/staticData";
@@ -181,6 +182,24 @@ const exportPackagesToExcel = (packages) => {
   return exportToExcel(exportData, `Packages_Export_${new Date().toISOString().split('T')[0]}`, 'Packages');
 };
 
+const exportReportsToExcel = (reports) => {
+  const exportData = reports.map(report => ({
+    'Report ID': report._id || '',
+    'Patient Name': report.patientId?.name || '',
+    'Patient Email': report.patientId?.email || '',
+    'Technician Name': report.technicianId?.name || '',
+    'Technician Email': report.technicianId?.email || '',
+    'Package Name': report.packageName || '',
+    'Test Date': report.testDate ? new Date(report.testDate).toLocaleDateString() : '',
+    'Status': report.status || '',
+    'Number of Tests': report.selectedTests?.length || 0,
+    'Summary': report.summary || '',
+    'Recommendations': report.recommendations || '',
+    'Created Date': report.createdAt ? new Date(report.createdAt).toLocaleDateString() : ''
+  }));
+  return exportToExcel(exportData, `Reports_Export_${new Date().toISOString().split('T')[0]}`, 'Reports');
+};
+
 export default function AdminDashboardIndex() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -196,6 +215,11 @@ export default function AdminDashboardIndex() {
   const [bookingFilter, setBookingFilter] = useState('all');
   const [stats, setStats] = useState({ totalBookings: 0, pendingBookings: 0, approvedBookings: 0, rejectedBookings: 0, totalUsers: 0, adminUsers: 0, labtechUsers: 0, regularUsers: 0 });
   const [feedbackStats, setFeedbackStats] = useState({ totalFeedbacks: 0, pendingFeedbacks: 0, reviewedFeedbacks: 0, resolvedFeedbacks: 0 });
+
+  // Sidebar Dropdown States
+  const [contentDropdownOpen, setContentDropdownOpen] = useState(false);
+  const [systemDropdownOpen, setSystemDropdownOpen] = useState(false);
+  const [bookingDropdownOpen, setBookingDropdownOpen] = useState(false);
 
   // User Dashboard Management State
   const [healthConcerns, setHealthConcerns] = useState([]);
@@ -233,6 +257,11 @@ export default function AdminDashboardIndex() {
   const [sendingReply, setSendingReply] = useState(false);
   const [feedbackFilter, setFeedbackFilter] = useState('all');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Reports Management State
+  const [reports, setReports] = useState([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [reportFilter, setReportFilter] = useState('all');
 
   // User Management State
   const [users, setUsers] = useState([]);
@@ -382,9 +411,22 @@ export default function AdminDashboardIndex() {
     suitableFor: []
   });
 
+  // User Registration Form State
+  const [showUserRegistrationForm, setShowUserRegistrationForm] = useState(false);
+  const [userRegistrationFormData, setUserRegistrationFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    phone: '',
+    address: '',
+    age: '',
+    gender: 'male',
+    role: 'user'
+  });
+
   // Disable body scroll when any modal is open
   useEffect(() => {
-    if (showTestForm || showPackageForm) {
+    if (showTestForm || showPackageForm || showUserRegistrationForm) {
       // Save current scroll position
       const scrollY = window.scrollY;
 
@@ -403,7 +445,7 @@ export default function AdminDashboardIndex() {
         window.scrollTo(0, scrollY);
       };
     }
-  }, [showTestForm, showPackageForm]);
+  }, [showTestForm, showPackageForm, showUserRegistrationForm]);
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -690,6 +732,59 @@ export default function AdminDashboardIndex() {
     }
   };
 
+  // Delete booking function
+  const handleDeleteBooking = async (bookingId, bookingDetails) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: `Are you sure you want to delete booking for "${bookingDetails.patientName || 'Unknown'}"? This action cannot be undone.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: Theme.colors.primary,
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/bookings/${bookingId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
+
+      if (response.ok) {
+        // Refresh bookings list
+        fetchBookings();
+        await Swal.fire({
+          icon: 'success',
+          title: 'Booking deleted successfully',
+          confirmButtonColor: Theme.colors.primary
+        });
+      } else {
+        const errorData = await response.json();
+        await Swal.fire({
+          icon: 'error',
+          title: 'Failed to delete booking',
+          text: errorData.message || 'Unknown error',
+          confirmButtonColor: Theme.colors.primary
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting booking:', error);
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error deleting booking',
+        text: 'Please try again.',
+        confirmButtonColor: Theme.colors.primary
+      });
+    }
+  };
+
   // Filter users based on role and search term
   const getFilteredUsers = () => {
     let filteredUsers = users;
@@ -710,6 +805,112 @@ export default function AdminDashboardIndex() {
     }
 
     return filteredUsers;
+  };
+
+  // Reports Management API Functions
+  const fetchReports = useCallback(async () => {
+    if (!user?.token) return;
+
+    try {
+      setReportsLoading(true);
+      const token = user.token;
+      console.log('Fetching reports with token:', token.substring(0, 20) + '...');
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/admin/all?limit=100`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      console.log('Reports API response status:', response.status);
+
+      if (response.ok) {
+        const result = await response.json();
+        const reportsData = result.data || [];
+        setReports(reportsData);
+      } else {
+        console.error('Failed to fetch reports - Status:', response.status);
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+
+        if (response.status === 401) {
+          console.log('Authentication failed - redirecting to login');
+          logout();
+          navigate('/admin-login');
+        } else {
+          setReports([]);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching reports:', error);
+      setReports([]);
+    } finally {
+      setReportsLoading(false);
+    }
+  }, [user, logout, navigate]);
+
+  // Delete report function
+  const handleDeleteReport = async (reportId) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'You will not be able to recover this report!',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: Theme.colors.primary,
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Delete',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (!result.isConfirmed) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/${reportId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${user.token}`
+        }
+      });
+
+      if (response.ok) {
+        fetchReports();
+        await Swal.fire({
+          icon: 'success',
+          title: 'Report deleted successfully',
+          confirmButtonColor: Theme.colors.primary
+        });
+      } else {
+        const errorData = await response.json();
+        await Swal.fire({
+          icon: 'error',
+          title: 'Failed to delete report',
+          text: errorData.message || 'Unknown error',
+          confirmButtonColor: Theme.colors.primary
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      await Swal.fire({
+        icon: 'error',
+        title: 'Error deleting report',
+        text: 'Please try again.',
+        confirmButtonColor: Theme.colors.primary
+      });
+    }
+  };
+
+  // Filter reports based on status
+  const getFilteredReports = () => {
+    let filteredReports = reports;
+
+    // Filter by status
+    if (reportFilter !== 'all') {
+      filteredReports = filteredReports.filter(report => report.status === reportFilter);
+    }
+
+    return filteredReports;
   };
 
   // Content Management API Functions
@@ -1337,6 +1538,167 @@ export default function AdminDashboardIndex() {
         text: error.message,
         confirmButtonColor: Theme.colors.primary
       });
+    }
+  };
+
+  // User Registration Function
+  const handleUserRegistration = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${user.token}`
+        },
+        body: JSON.stringify(userRegistrationFormData)
+      });
+
+      const responseData = await response.json();
+
+      if (response.ok) {
+        Swal.fire({
+          icon: 'success',
+          title: 'User Registered Successfully!',
+          text: `${userRegistrationFormData.name} has been registered successfully.`,
+          confirmButtonColor: Theme.colors.primary
+        });
+
+        // Reset form and close modal
+        setShowUserRegistrationForm(false);
+        setUserRegistrationFormData({
+          name: '',
+          email: '',
+          password: '',
+          phone: '',
+          address: '',
+          age: '',
+          gender: 'male',
+          role: 'user'
+        });
+
+        // Refresh users list
+        fetchUsers();
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Registration Failed',
+          text: responseData.message || 'Failed to register user. Please try again.',
+          confirmButtonColor: Theme.colors.primary
+        });
+      }
+    } catch (error) {
+      console.error('Error registering user:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Registration Failed',
+        text: 'An error occurred while registering the user.',
+        confirmButtonColor: Theme.colors.primary
+      });
+    }
+  };
+
+  // Block/Unblock User Functions
+  const handleBlockUser = async (userId, userName) => {
+    const result = await Swal.fire({
+      title: 'Block User?',
+      text: `Are you sure you want to block user "${userName}"? They will not be able to access their account.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, Block User',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/admin/users/${userId}/block`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${user.token}`
+          }
+        });
+
+        const responseData = await response.json();
+
+        if (response.ok) {
+          Swal.fire({
+            icon: 'success',
+            title: 'User Blocked',
+            text: `${userName} has been blocked successfully.`,
+            confirmButtonColor: Theme.colors.primary
+          });
+          fetchUsers();
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Failed to Block User',
+            text: responseData.message || 'Failed to block user. Please try again.',
+            confirmButtonColor: Theme.colors.primary
+          });
+        }
+      } catch (error) {
+        console.error('Error blocking user:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Failed to Block User',
+          text: 'An error occurred while blocking the user.',
+          confirmButtonColor: Theme.colors.primary
+        });
+      }
+    }
+  };
+
+  const handleUnblockUser = async (userId, userName) => {
+    const result = await Swal.fire({
+      title: 'Unblock User?',
+      text: `Are you sure you want to unblock user "${userName}"? They will be able to access their account again.`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#10b981',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Yes, Unblock User',
+      cancelButtonText: 'Cancel'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/admin/users/${userId}/unblock`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${user.token}`
+          }
+        });
+
+        const responseData = await response.json();
+
+        if (response.ok) {
+          Swal.fire({
+            icon: 'success',
+            title: 'User Unblocked',
+            text: `${userName} has been unblocked successfully.`,
+            confirmButtonColor: Theme.colors.primary
+          });
+          fetchUsers();
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Failed to Unblock User',
+            text: responseData.message || 'Failed to unblock user. Please try again.',
+            confirmButtonColor: Theme.colors.primary
+          });
+        }
+      } catch (error) {
+        console.error('Error unblocking user:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Failed to Unblock User',
+          text: 'An error occurred while unblocking the user.',
+          confirmButtonColor: Theme.colors.primary
+        });
+      }
     }
   };
 
@@ -3433,6 +3795,13 @@ export default function AdminDashboardIndex() {
     }
   }, [activeTab, user]);
 
+  // Fetch reports when reports tab is active
+  useEffect(() => {
+    if (activeTab === 'reports' && user?.token) {
+      fetchReports();
+    }
+  }, [activeTab, user]);
+
   // Fetch content data when content tabs are active
   useEffect(() => {
     if ((activeTab === 'service-content' || activeTab === 'home-content' || activeTab === 'terms' || activeTab === 'privacy' || activeTab === 'faq' || activeTab === 'about') && user?.token) {
@@ -4408,29 +4777,59 @@ export default function AdminDashboardIndex() {
             <div className="mb-4">
               <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Main Management</h3>
               <SidebarItem id="registration" label="User Registration" icon={IconConfig.LayoutDashboard} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
-              <SidebarItem id="bookings" label="Lab Bookings" icon={IconConfig.ClipboardList} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
               <SidebarItem id="feedback" label="User Feedback" icon={IconConfig.MessageSquare} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
               <SidebarItem id="contact" label="Contact Requests" icon={IconConfig.PhoneCall} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
             </div>
 
+            {/* Booking Settings */}
+            <SidebarDropdown
+              label="Booking Settings"
+              icon={IconConfig.ClipboardList}
+              isOpen={bookingDropdownOpen}
+              onToggle={() => setBookingDropdownOpen(!bookingDropdownOpen)}
+              items={[
+                { id: "bookings", label: "Lab Bookings", icon: IconConfig.ClipboardList, onItemClick: handleSidebarItemClick },
+                { id: "reports", label: "Lab Reports", icon: IconConfig.FileText, onItemClick: handleSidebarItemClick }
+              ]}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              ChevronRight={IconConfig.ChevronRight}
+            />
+
             {/* Content Management */}
-            <div className="mb-4">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">Content Management</h3>
-              <SidebarItem id="tests" label="Test Management" icon={IconConfig.TestTube} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
-              <SidebarItem id="packages" label="Package Management" icon={IconConfig.Package} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
-              <SidebarItem id="health-concerns" label="Health Concerns" icon={IconConfig.Stethoscope} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
-            </div>
+            <SidebarDropdown
+              label="Content Management"
+              icon={IconConfig.FileText}
+              isOpen={contentDropdownOpen}
+              onToggle={() => setContentDropdownOpen(!contentDropdownOpen)}
+              items={[
+                { id: "tests", label: "Test Management", icon: IconConfig.TestTube, onItemClick: handleSidebarItemClick },
+                { id: "packages", label: "Package Management", icon: IconConfig.Package, onItemClick: handleSidebarItemClick },
+                { id: "health-concerns", label: "Health Concerns", icon: IconConfig.Stethoscope, onItemClick: handleSidebarItemClick }
+              ]}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              ChevronRight={IconConfig.ChevronRight}
+            />
 
             {/* System Settings */}
-            <div className="mb-4">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-3">System Settings</h3>
-              <SidebarItem id="service-content" label="Service Content" icon={IconConfig.Globe} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
-              <SidebarItem id="about" label="About Content" icon={IconConfig.FileText} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
-              <SidebarItem id="home-content" label="Home Content" icon={IconConfig.Home} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
-              <SidebarItem id="terms" label="Terms & Conditions" icon={IconConfig.FileText} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
-              <SidebarItem id="privacy" label="Privacy Policy" icon={IconConfig.ShieldCheck} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
-              <SidebarItem id="faq" label="FAQ Management" icon={IconConfig.HelpCircle} activeTab={activeTab} setActiveTab={setActiveTab} ChevronRight={IconConfig.ChevronRight} onItemClick={handleSidebarItemClick} />
-            </div>
+            <SidebarDropdown
+              label="System Settings"
+              icon={IconConfig.Settings}
+              isOpen={systemDropdownOpen}
+              onToggle={() => setSystemDropdownOpen(!systemDropdownOpen)}
+              items={[
+                { id: "service-content", label: "Service Content", icon: IconConfig.Globe, onItemClick: handleSidebarItemClick },
+                { id: "about", label: "About Content", icon: IconConfig.FileText, onItemClick: handleSidebarItemClick },
+                { id: "home-content", label: "Home Content", icon: IconConfig.Home, onItemClick: handleSidebarItemClick },
+                { id: "terms", label: "Terms & Conditions", icon: IconConfig.FileText, onItemClick: handleSidebarItemClick },
+                { id: "privacy", label: "Privacy Policy", icon: IconConfig.ShieldCheck, onItemClick: handleSidebarItemClick },
+                { id: "faq", label: "FAQ Management", icon: IconConfig.HelpCircle, onItemClick: handleSidebarItemClick }
+              ]}
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              ChevronRight={IconConfig.ChevronRight}
+            />
           </div>
         </aside>
 
@@ -4477,32 +4876,38 @@ export default function AdminDashboardIndex() {
             <div className="p-6 md:p-8 space-y-6">
               {activeTab === "registration" && (
                 <div className="space-y-6">
-                  {/* Export Button */}
-                  <div className="flex justify-end">
-                    <button
-                      onClick={() => {
-                        const success = exportUsersToExcel(getFilteredUsers());
-                        if (success) {
-                          Swal.fire({
-                            icon: 'success',
-                            title: 'Export Successful!',
-                            text: 'Users data has been exported to Excel.',
-                            confirmButtonColor: Theme.colors.primary
-                          });
-                        } else {
-                          Swal.fire({
-                            icon: 'error',
-                            title: 'Export Failed',
-                            text: 'Failed to export users data. Please try again.',
-                            confirmButtonColor: Theme.colors.primary
-                          });
-                        }
-                      }}
-                      className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
-                    >
-                      <Download size={16} />
-                      Export to Excel
-                    </button>
+                  {/* Header with Actions */}
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="text-lg font-semibold">User Management</h3>
+                      <p className="text-sm text-gray-600 mt-1">Manage user registrations and accounts</p>
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => {
+                          const success = exportUsersToExcel(getFilteredUsers());
+                          if (success) {
+                            Swal.fire({
+                              icon: 'success',
+                              title: 'Export Successful!',
+                              text: 'Users data has been exported to Excel.',
+                              confirmButtonColor: Theme.colors.primary
+                            });
+                          } else {
+                            Swal.fire({
+                              icon: 'error',
+                              title: 'Export Failed',
+                              text: 'Failed to export users data. Please try again.',
+                              confirmButtonColor: Theme.colors.primary
+                            });
+                          }
+                        }}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+                      >
+                        <Download size={16} />
+                        Export to Excel
+                      </button>
+                    </div>
                   </div>
                   {/* User Management Table */}
                   <div className="overflow-x-auto">
@@ -4523,6 +4928,7 @@ export default function AdminDashboardIndex() {
                         <th className="p-4">User Details</th>
                         <th className="p-4">Role</th>
                         <th className="p-4">Email Verified</th>
+                        <th className="p-4">Status</th>
                         <th className="p-4">Registration Date</th>
                         <th className="p-4">Last Login</th>
                         <th className="p-4 text-right">Actions</th>
@@ -4554,6 +4960,12 @@ export default function AdminDashboardIndex() {
                               {userItem.emailVerified ? 'Verified' : 'Not Verified'}
                             </span>
                           </td>
+                          <td className="p-4">
+                            <span className={`px-2 py-1 text-xs rounded-full font-medium ${userItem.isActive !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                              }`}>
+                              {userItem.isActive !== false ? 'Active' : 'Blocked'}
+                            </span>
+                          </td>
                           <td className="p-4 text-sm">
                             {userItem.createdAt ? new Date(userItem.createdAt).toLocaleDateString() : 'N/A'}
                           </td>
@@ -4561,14 +4973,35 @@ export default function AdminDashboardIndex() {
                             {userItem.lastLogin ? new Date(userItem.lastLogin).toLocaleDateString() : 'Never'}
                           </td>
                           <td className="p-4 text-right">
-                            <CButton
-                              onClick={() => handleDeleteUser(userItem._id, userItem.name)}
-                              className="p-2 rounded-full text-red-600 hover:bg-red-50 transition-colors"
-                              variant="outline"
-                              title="Delete User"
-                            >
-                              <IconConfig.Trash2 size={16} />
-                            </CButton>
+                            <div className="flex justify-end gap-2">
+                              {userItem.isActive !== false ? (
+                                <CButton
+                                  onClick={() => handleBlockUser(userItem._id, userItem.name)}
+                                  className="p-2 rounded-full text-orange-600 hover:bg-orange-50 transition-colors"
+                                  variant="outline"
+                                  title="Block User"
+                                >
+                                  <IconConfig.Lock size={16} />
+                                </CButton>
+                              ) : (
+                                <CButton
+                                  onClick={() => handleUnblockUser(userItem._id, userItem.name)}
+                                  className="p-2 rounded-full text-green-600 hover:bg-green-50 transition-colors"
+                                  variant="outline"
+                                  title="Unblock User"
+                                >
+                                  <IconConfig.ShieldCheck size={16} />
+                                </CButton>
+                              )}
+                              <CButton
+                                onClick={() => handleDeleteUser(userItem._id, userItem.name)}
+                                className="p-2 rounded-full text-red-600 hover:bg-red-50 transition-colors"
+                                variant="outline"
+                                title="Delete User"
+                              >
+                                <IconConfig.Trash2 size={16} />
+                              </CButton>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -4846,6 +5279,13 @@ export default function AdminDashboardIndex() {
                                         </>
                                       )}
                                     </CButton>
+                                    <CButton
+                                      onClick={() => handleDeleteBooking(appointment._id, appointment)}
+                                      className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-lg text-sm flex items-center gap-1"
+                                      title="Delete Booking"
+                                    >
+                                      <IconConfig.Trash2 size={14} />
+                                    </CButton>
                                   </>
                                 )}
                                 {/* Show Complete/Cancel buttons for scheduled appointments */}
@@ -4863,11 +5303,18 @@ export default function AdminDashboardIndex() {
                                     >
                                       Cancel
                                     </CButton>
+                                    <CButton
+                                      onClick={() => handleDeleteBooking(appointment._id, appointment)}
+                                      className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-lg text-sm flex items-center gap-1"
+                                      title="Delete Booking"
+                                    >
+                                      <IconConfig.Trash2 size={14} />
+                                    </CButton>
                                   </>
                                 )}
                                 {appointment.reportUrl && (
                                   <CButton
-                                    onClick={() => window.open(appointment.reportUrl, '_blank')}
+                                    onClick={() => window.open(`/admin/reportView/${appointment._id}`, '_blank')}
                                     className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-lg text-sm"
                                   >
                                     View Report
@@ -5166,6 +5613,188 @@ export default function AdminDashboardIndex() {
                   No contact requests found.
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Reports Management */}
+        {activeTab === "reports" && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div 
+                onClick={() => setReportFilter('all')}
+                className="p-4 rounded-lg border cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105"
+                style={{
+                  backgroundColor: reportFilter === 'all' ? `${Theme.colors.primary}20` : `${Theme.colors.primary}10`,
+                  borderColor: reportFilter === 'all' ? Theme.colors.primary : `${Theme.colors.primary}30`
+                }}
+              >
+                <div className="text-2xl font-bold" style={{ color: Theme.colors.primary }}>{reports.length}</div>
+                <div className="text-sm" style={{ color: Theme.colors.primary }}>Total Reports</div>
+              </div>
+              <div 
+                onClick={() => setReportFilter('Completed')}
+                className="p-4 rounded-lg border cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105"
+                style={{
+                  backgroundColor: reportFilter === 'Completed' ? Theme.colors.emerald100 : Theme.colors.emerald50,
+                  borderColor: reportFilter === 'Completed' ? Theme.colors.emerald600 : Theme.colors.emerald100
+                }}
+              >
+                <div className="text-2xl font-bold" style={{ color: Theme.colors.emerald600 }}>{reports.filter(r => r.status === 'Completed').length}</div>
+                <div className="text-sm" style={{ color: Theme.colors.emerald600 }}>Completed</div>
+              </div>
+              <div 
+                onClick={() => setReportFilter('In Progress')}
+                className="p-4 rounded-lg border cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105"
+                style={{
+                  backgroundColor: reportFilter === 'In Progress' ? Theme.colors.amber100 : Theme.colors.amber50,
+                  borderColor: reportFilter === 'In Progress' ? Theme.colors.amber600 : Theme.colors.amber100
+                }}
+              >
+                <div className="text-2xl font-bold" style={{ color: Theme.colors.amber600 }}>{reports.filter(r => r.status === 'In Progress').length}</div>
+                <div className="text-sm" style={{ color: Theme.colors.amber600 }}>In Progress</div>
+              </div>
+              <div 
+                onClick={() => setReportFilter('Pending')}
+                className="p-4 rounded-lg border cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105"
+                style={{
+                  backgroundColor: reportFilter === 'Pending' ? Theme.colors.blue100 : Theme.colors.blue50,
+                  borderColor: reportFilter === 'Pending' ? Theme.colors.blue600 : Theme.colors.blue100
+                }}
+              >
+                <div className="text-2xl font-bold" style={{ color: Theme.colors.blue600 }}>{reports.filter(r => r.status === 'Pending').length}</div>
+                <div className="text-sm" style={{ color: Theme.colors.blue600 }}>Pending</div>
+              </div>
+            </div>
+
+            {/* Export Button Only */}
+            <div className="flex justify-end">
+              <button
+                onClick={() => {
+                  const success = exportReportsToExcel(getFilteredReports());
+                  if (success) {
+                    Swal.fire({
+                      icon: 'success',
+                      title: 'Export Successful!',
+                      text: 'Reports data has been exported to Excel.',
+                      confirmButtonColor: Theme.colors.primary
+                    });
+                  } else {
+                    Swal.fire({
+                      icon: 'error',
+                      title: 'Export Failed',
+                      text: 'Failed to export reports data. Please try again.',
+                      confirmButtonColor: Theme.colors.primary
+                    });
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors"
+              >
+                <IconConfig.Download size={16} />
+                Export to Excel
+              </button>
+            </div>
+
+            {/* Reports Table */}
+            <div className="overflow-x-auto rounded-2xl border border-gray-200/50 shadow-xl backdrop-blur-sm">
+              <div className="min-w-[1000px]">
+                {reportsLoading ? (
+                  <div className="flex justify-center items-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  </div>
+                ) : getFilteredReports().length > 0 ? (
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200 bg-gray-50/50 backdrop-blur-sm">
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Report ID</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Patient</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Package</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Test Date</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Tests</th>
+                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {getFilteredReports().map((report) => (
+                        <tr key={report._id} className="hover:bg-gray-50/80 transition-colors">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm font-mono text-gray-900">#{report._id.slice(-8)}</span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium text-gray-900">{report.patientId?.name || 'N/A'}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium text-gray-900">{report.technicianId?.email || 'N/A'}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-gray-900">{report.packageName || 'N/A'}</span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-gray-900">
+                              {new Date(report.testDate).toLocaleDateString()}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              report.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                              report.status === 'In Progress' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {report.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="text-sm text-gray-900">{report.selectedTests?.length || 0} tests</span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => window.open(`/reportView/${report._id}`, '_blank')}
+                                className="text-blue-600 hover:text-blue-800 font-medium p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                                title="View Report"
+                              >
+                                <IconConfig.Eye size={16} />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  const link = document.createElement('a');
+                                  link.href = `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/${report._id}/download`;
+                                  link.download = `Report_${report._id.slice(-8)}.pdf`;
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                }}
+                                className="text-green-600 hover:text-green-800 font-medium p-2 rounded-lg hover:bg-green-50 transition-colors"
+                                title="Download Report"
+                              >
+                                <IconConfig.Download size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteReport(report._id)}
+                                className="text-red-600 hover:text-red-800 font-medium"
+                              >
+                                <IconConfig.Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12">
+                    <IconConfig.FileText size={48} className="text-gray-400 mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-700 mb-2">No reports found</h3>
+                    <p className="text-sm text-gray-500">No reports match the current filters.</p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -5570,16 +6199,6 @@ export default function AdminDashboardIndex() {
               </div>
               <div className="flex gap-2">
                 <CButton
-                  variant="outline"
-                  fullWidth={false}
-                  className="px-4 py-3 text-sm rounded-md"
-                  size="lg"
-                  onClick={seedHealthConcerns}
-                >
-                  <Package size={16} className="mr-2" />
-                  Seed Data
-                </CButton>
-                <CButton
                   variant="primary"
                   fullWidth={false}
                   className="px-4 py-3 text-sm rounded-md"
@@ -5590,7 +6209,7 @@ export default function AdminDashboardIndex() {
                     setShowHealthConcernForm(true);
                   }}
                 >
-                  <IconConfig.Plus size={16} className="mr-2" />
+                  <Plus size={16} className="mr-2" />
                   Add Health Concern
                 </CButton>
               </div>
@@ -7535,6 +8154,142 @@ export default function AdminDashboardIndex() {
                       category: '',
                       duration: '',
                       fastingRequired: false
+                    });
+                  }}
+                >
+                  Cancel
+                </CButton>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* User Registration Form Modal */}
+      {showUserRegistrationForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">Register New User</h3>
+            <form onSubmit={handleUserRegistration}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={userRegistrationFormData.name || ''}
+                    onChange={(e) => setUserRegistrationFormData({ ...userRegistrationFormData, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={userRegistrationFormData.email || ''}
+                    onChange={(e) => setUserRegistrationFormData({ ...userRegistrationFormData, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Password *
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength="6"
+                    value={userRegistrationFormData.password || ''}
+                    onChange={(e) => setUserRegistrationFormData({ ...userRegistrationFormData, password: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={userRegistrationFormData.phone || ''}
+                    onChange={(e) => setUserRegistrationFormData({ ...userRegistrationFormData, phone: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Address
+                  </label>
+                  <textarea
+                    value={userRegistrationFormData.address || ''}
+                    onChange={(e) => setUserRegistrationFormData({ ...userRegistrationFormData, address: e.target.value })}
+                    rows={2}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Age
+                  </label>
+                  <input
+                    type="text"
+                    value={userRegistrationFormData.age || ''}
+                    onChange={(e) => setUserRegistrationFormData({ ...userRegistrationFormData, age: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Gender
+                  </label>
+                  <select
+                    value={userRegistrationFormData.gender || 'male'}
+                    onChange={(e) => setUserRegistrationFormData({ ...userRegistrationFormData, gender: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                  >
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Role *
+                  </label>
+                  <select
+                    required
+                    value={userRegistrationFormData.role || 'user'}
+                    onChange={(e) => setUserRegistrationFormData({ ...userRegistrationFormData, role: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500"
+                  >
+                    <option value="user">User</option>
+                    <option value="labtechnician">Lab Technician</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-6">
+                <CButton type="submit" variant="primary">
+                  Register User
+                </CButton>
+                <CButton
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowUserRegistrationForm(false);
+                    setUserRegistrationFormData({
+                      name: '',
+                      email: '',
+                      password: '',
+                      phone: '',
+                      address: '',
+                      age: '',
+                      gender: 'male',
+                      role: 'user'
                     });
                   }}
                 >
