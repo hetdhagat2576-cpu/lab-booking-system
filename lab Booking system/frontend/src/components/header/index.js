@@ -20,19 +20,31 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
       if (!event.target.closest('.dropdown-container')) {
         setIsDropdownOpen(false);
       }
-      if (!event.target.closest('.mobile-menu-container')) {
+      if (!event.target.closest('.mobile-menu-container') && !event.target.closest('[data-mobile-menu-button]')) {
         setIsMobileMenuOpen(false);
       }
     };
 
-    if (isDropdownOpen || isMobileMenuOpen) {
-      document.addEventListener('click', handleClickOutside);
-    }
+    document.addEventListener('click', handleClickOutside);
 
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
-  }, [isDropdownOpen, isMobileMenuOpen]);
+  }, []);
+
+  useEffect(() => {
+    // Prevent body scroll when mobile menu is open
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+
+    return () => {
+      // Ensure body scroll is restored when component unmounts
+      document.body.style.overflow = 'auto';
+    };
+  }, [isMobileMenuOpen]);
 
   const handleLogout = (reason) => {
     logout();
@@ -280,21 +292,18 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
         )}
 
         {/* RIGHT SIDE */}
-        <div className="flex-shrink-0 flex items-center gap-2 sm:gap-4 md:gap-6 lg:gap-8">
-          {!isAuthenticated ? (
-            <>
-              {/* Mobile Login/Register Buttons */}
-              <div className="lg:hidden flex items-center gap-2">
-                <button 
-                  onClick={() => navigate("/login-selection")} 
-                  className="px-2 sm:px-3 py-1.5 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-white/10 transition-all"
-                >
+        <div className="flex-shrink-0 flex items-center gap-2 sm:gap-4">
+          
+          {/* Desktop: Auth Buttons or Profile */}
+          <div className="hidden lg:flex items-center gap-4">
+            {!isAuthenticated ? (
+              <>
+                <button onClick={() => navigate("/login-selection")} className={`${beamUnderline}`}>
                   Login
                 </button>
-                
                 <button 
                   onClick={() => navigate("/register")} 
-                  className="px-2 sm:px-3 py-1.5 text-white rounded-full text-xs sm:text-sm font-black transition-all active:scale-95"
+                  className="px-6 py-2.5 text-white rounded-full text-sm font-black transition-all active:scale-95 flex items-center gap-2"
                   style={{
                     backgroundColor: Theme.colors.primary,
                     boxShadow: `0 4px 15px ${Theme.colors.primary}40`
@@ -308,102 +317,129 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                 >
                   REGISTER
                 </button>
-              </div>
-              
-              {/* Desktop Login Button */}
-              <button onClick={() => navigate("/login-selection")} className={`${beamUnderline} hidden lg:block`}>
-                Login
-              </button>
-              
-              {/* Desktop Register Button */}
-              <button 
-                onClick={() => navigate("/register")} 
-                className="px-2 sm:px-4 md:px-6 lg:px-7 py-1.5 sm:py-2.5 text-white rounded-full text-xs sm:text-sm font-black transition-all active:scale-95 flex items-center gap-1 sm:gap-2 hidden lg:block"
-                style={{
-                  backgroundColor: Theme.colors.primary,
-                  boxShadow: `0 4px 15px ${Theme.colors.primary}40`
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = Theme.colors.primaryHover;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = Theme.colors.primary;
-                }}
-              >
-                <span className="hidden xs:inline">REGISTER</span>
-                <span className="xs:hidden">SIGN UP</span>
-              </button>
-            </>
-          ) : (
-            <>
-              {/* Notification Bell - Only show for regular users */}
-              {!isAdmin && !isLabTechnician && !hideProfileIcon && (
-                <NotificationBell />
-              )}
-              
-              {/* Profile Dropdown */}
-              {!hideProfileIcon && (
-                <div className="relative dropdown-container">
-                  <button
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center gap-2 p-1.5 sm:p-2 rounded-lg hover:bg-white/10 transition-all"
-                  >
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
-                      {UserCircle && <UserCircle className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />}
-                    </div>
-                    {ChevronDown && <ChevronDown className={`w-3 h-3 sm:w-4 sm:h-4 text-white/70 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />}
-                  </button>
-                  
-                  {isDropdownOpen && (
-                    <div className="absolute top-full right-0 mt-2 w-40 sm:w-48 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden z-50">
-                      {/* Profile Link */}
-                      {!isAdmin && !isLabTechnician && (
+              </>
+            ) : (
+              <>
+                {!isAdmin && !isLabTechnician && !hideProfileIcon && (
+                  <NotificationBell />
+                )}
+                {!hideProfileIcon && (
+                  <div className="relative dropdown-container">
+                    <button
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="flex items-center gap-2 p-2 rounded-lg hover:bg-white/10 transition-all"
+                    >
+                      <div className="w-9 h-9 bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
+                        {UserCircle && <UserCircle className="w-6 h-6 text-white" />}
+                      </div>
+                      {ChevronDown && <ChevronDown className={`w-4 h-4 text-white/70 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />}
+                    </button>
+                    {isDropdownOpen && (
+                      <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden z-50">
+                        {!isAdmin && !isLabTechnician && (
+                          <button
+                            onClick={() => { navigate("/user-profile"); setIsDropdownOpen(false); }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                          >
+                            {UserCircle && <UserCircle className="w-4 h-4 text-gray-400" />} Profile
+                          </button>
+                        )}
                         <button
-                          onClick={() => {
-                            navigate("/user-profile");
-                            setIsDropdownOpen(false);
-                          }}
+                          onClick={() => { navigate("/settings"); setIsDropdownOpen(false); }}
                           className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                         >
-                          {UserCircle && <UserCircle className="w-4 h-4 text-gray-400" />}
-                          Profile
+                          {Settings && <Settings className="w-4 h-4 text-gray-400" />} Settings
                         </button>
-                      )}
-                      
-                      {/* Settings */}
-                      <button
-                        onClick={() => {
-                          navigate("/settings");
-                          setIsDropdownOpen(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                      >
-                        {Settings && <Settings className="w-4 h-4 text-gray-400" />}
-                        Settings
-                      </button>
-                      
-                      <div className="border-t border-gray-100">
-                        <button
-                          onClick={handleLogoutClick}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                          {LogOut && <LogOut className="w-4 h-4" />}
-                          <span className="hidden sm:inline">Logout</span>
-                        </button>
+                        <div className="border-t border-gray-100">
+                          <button
+                            onClick={handleLogoutClick}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                          >
+                            {LogOut && <LogOut className="w-4 h-4" />} Logout
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </>
-          )}
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Mobile: Auth Buttons or Profile Icon */}
+          <div className="flex lg:hidden items-center gap-2">
+            {!isAuthenticated ? (
+              <>
+                <button 
+                  onClick={() => navigate("/login-selection")} 
+                  className="px-3 py-1.5 text-white text-xs font-medium rounded-lg hover:bg-white/10 transition-all"
+                >
+                  Login
+                </button>
+                <button 
+                  onClick={() => navigate("/register")} 
+                  className="px-3 py-1.5 text-white rounded-full text-xs font-black transition-all active:scale-95"
+                  style={{ backgroundColor: Theme.colors.primary, boxShadow: `0 4px 15px ${Theme.colors.primary}40` }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = Theme.colors.primaryHover; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = Theme.colors.primary; }}
+                >
+                  REGISTER
+                </button>
+              </>
+            ) : (
+              <>
+                {!isAdmin && !isLabTechnician && !hideProfileIcon && (
+                  <NotificationBell />
+                )}
+                {!hideProfileIcon && (
+                  <div className="relative dropdown-container">
+                    <button
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-white/10 transition-all"
+                    >
+                      <div className="w-8 h-8 bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
+                        {UserCircle && <UserCircle className="w-5 h-5 text-white" />}
+                      </div>
+                    </button>
+                    {isDropdownOpen && (
+                      <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden z-50">
+                        {!isAdmin && !isLabTechnician && (
+                          <button
+                            onClick={() => { navigate("/user-profile"); setIsDropdownOpen(false); }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                          >
+                            {UserCircle && <UserCircle className="w-4 h-4 text-gray-400" />} Profile
+                          </button>
+                        )}
+                        <button
+                          onClick={() => { navigate("/settings"); setIsDropdownOpen(false); }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          {Settings && <Settings className="w-4 h-4 text-gray-400" />} Settings
+                        </button>
+                        <div className="border-t border-gray-100">
+                          <button
+                            onClick={handleLogoutClick}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                          >
+                            {LogOut && <LogOut className="w-4 h-4" />} Logout
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
           
-          {/* Mobile Menu Button - Always at the end */}
+          {/* Mobile Menu Button (always at the end) */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden text-white p-1.5 sm:p-2 rounded-lg hover:bg-white/10 transition-colors"
+            className="lg:hidden text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+            data-mobile-menu-button
           >
-            {isMobileMenuOpen ? (X && <X className="w-5 h-5 sm:w-6 sm:h-6" />) : (Menu && <Menu className="w-5 h-5 sm:w-6 sm:h-6" />)}
+            {isMobileMenuOpen ? (X && <X className="w-6 h-6" />) : (Menu && <Menu className="w-6 h-6" />)}
           </button>
         </div>
         </div>
@@ -521,31 +557,38 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                 </>
               )}
 
-              {/* Mobile Auth Buttons */}
-              {!isAuthenticated && (
-                <button 
-                  onClick={() => {
-                    navigate("/login-selection");
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="text-left px-4 py-3 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-all"
-                >
-                  Login
-                </button>
-              )}
-
-              {/* Mobile Profile Button */}
-              {isAuthenticated && !hideProfileIcon && !isAdmin && !isLabTechnician && (
-                <button
-                  onClick={() => {
-                    const route = isLabTechnician ? "/lab-technician-profile" : "/user-profile";
-                    navigate(route);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="text-left px-4 py-3 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-all"
-                >
-                  Profile
-                </button>
+              {isAuthenticated && !hideProfileIcon && (
+                <>
+                  {!isAdmin && !isLabTechnician && (
+                    <button
+                      onClick={() => {
+                        navigate("/user-profile");
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="text-left px-4 py-3 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-all"
+                    >
+                      Profile
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      navigate("/settings");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="text-left px-4 py-3 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-all"
+                  >
+                    Settings
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleLogoutClick();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="text-left px-4 py-3 rounded-lg text-red-500 hover:text-red-400 hover:bg-white/10 transition-all"
+                  >
+                    Logout
+                  </button>
+                </>
               )}
             </nav>
           </div>

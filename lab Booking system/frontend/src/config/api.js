@@ -32,17 +32,27 @@ console.log('🚀 API Configuration initialized:', {
 const apiCallLocks = new Map();
 const pendingCalls = new Map();
 
-// Function to create full API URLs
 export const createApiUrl = (endpoint) => {
+  if (endpoint.startsWith(API_BASE_URL)) {
+    return endpoint;
+  }
+
   // Remove leading slash if present to avoid double slashes
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
-  
-  // If endpoint already starts with /api, use it directly with origin
+
+  // we need to avoid duplication.
+  if (API_BASE_URL.endsWith('/api') && cleanEndpoint.startsWith('api/')) {
+    // Just append the part of the endpoint that comes after 'api/'
+    const specificPath = cleanEndpoint.substring(4);
+    return `${API_BASE_URL}/${specificPath}`;
+  }
+
+  // If the endpoint already starts with 'api/', construct the URL directly
   if (cleanEndpoint.startsWith('api/')) {
     return `${API_BASE_URL}/${cleanEndpoint}`;
   }
-  
-  // Otherwise, add /api prefix
+
+  // Otherwise, add the /api prefix
   return `${API_BASE_URL}/api/${cleanEndpoint}`;
 };
 
