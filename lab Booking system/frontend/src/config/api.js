@@ -19,9 +19,9 @@ const getApiBaseUrl = () => {
     return 'http://localhost:5001';
   }
   
-  // 4. Production: Use relative /api path (Vercel routing handles this)
-  console.log('Using production API URL (relative path)');
-  return window.location.origin; // Returns the same domain the frontend is on
+  // 4. Production: Use the configured backend URL
+  console.log('Using production API URL from environment');
+  return process.env.REACT_APP_API_URL || 'https://lab-booking-system-backend.vercel.app';
 };
 
 const API_BASE_URL = getApiBaseUrl();
