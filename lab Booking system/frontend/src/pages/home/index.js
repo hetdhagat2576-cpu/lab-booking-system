@@ -201,49 +201,28 @@ export default function HomeIndex() {
         ]);
         setHowItWorksData([
           {
-            iconKey: "Search",
-            stepNumber: 1,
-            title: "Search & Select",
-            desc: "Search for tests and labs, compare prices, and select what you need."
+            step: 1,
+            title: "Book Test",
+            desc: "Select your test and book appointment online."
           },
           {
-            iconKey: "CreditCard",
-            stepNumber: 2,
-            title: "Book & Pay",
-            desc: "Book your test and pay securely online or choose cash on collection."
-          },
-          {
-            iconKey: "Home",
-            stepNumber: 3,
+            step: 2,
             title: "Sample Collection",
-            desc: "Get your sample collected at home or visit the lab."
+            desc: "Our certified professional will collect sample from your home."
           },
           {
-            iconKey: "FileText",
-            stepNumber: 4,
+            step: 3,
+            title: "Lab Testing",
+            desc: "Sample is tested in our certified laboratory."
+          },
+          {
+            step: 4,
             title: "Get Reports",
-            desc: "Receive your test reports digitally within 24-48 hours."
+            desc: "Receive your accurate test reports digitally."
           }
         ]);
         
-        // In case of error, set fallback feedbacks
-        setUserFeedbacks([
-          {
-            userName: "Priya Sharma",
-            bookingEaseRating: 5,
-            comment: "Booking was incredibly easy and fast. The home sample collection was very convenient. Highly recommend!"
-          },
-          {
-            userName: "Amit Singh",
-            bookingEaseRating: 4,
-            comment: "Good service and competitive pricing. The digital reports were delivered on time. The app is very user-friendly."
-          },
-          {
-            userName: "Sunita Patel",
-            bookingEaseRating: 5,
-            comment: "Excellent experience from start to finish. The staff was professional and the process was seamless. Will use again."
-          }
-        ]);
+        setUserFeedbacks([]);
       } finally {
         setLoading(false);
       }

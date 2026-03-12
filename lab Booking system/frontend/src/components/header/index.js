@@ -170,34 +170,7 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
             </div>
           </button>
         </div>
-        
-        {/* CENTER NAV */}
-        {!hideNavItems && (
-          <>
-            {/* Desktop Navigation */}
-            <nav className={`hidden lg:flex items-center ${isAuthenticated ? 'justify-center' : 'gap-6 xl:gap-10'}`}>
-              <button onClick={() => navigate("/login-selection")} className={`${beamUnderline}`}>
-                Login
-              </button>
-              <button 
-                onClick={() => navigate("/register")} 
-                className="px-6 py-2.5 text-white rounded-full text-sm font-black transition-all active:scale-95 flex items-center gap-2"
-                style={{
-                  backgroundColor: Theme.colors.primary,
-                  boxShadow: `0 4px 15px ${Theme.colors.primary}40`
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = Theme.colors.primaryHover;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = Theme.colors.primary;
-                }}
-              >
-                REGISTER
-              </button>
-            </nav>
-          </>
-        )}
+      
 
         {/* RIGHT SIDE */}
         <div className="flex-1 flex justify-end items-center gap-2 sm:gap-4 md:gap-6 lg:gap-8">
