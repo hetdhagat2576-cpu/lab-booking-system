@@ -487,6 +487,16 @@ export default function AdminDashboardIndex() {
         const list = result.data || [];
         setBookings(list);
         setLastUpdated(new Date());
+        
+        // Transform bookings for appointments display
+        const transformedBookings = list.map(booking => ({
+          ...booking,
+          patientName: booking.patientName || booking.user?.name || 'Unknown',
+          email: booking.user?.email || 'No email',
+          phone: booking.user?.phone || 'No phone'
+        }));
+        setAppointments(transformedBookings);
+        
         const pending = list.filter(b => (b.adminStatus || '').toLowerCase() === 'pending').length;
         const approved = list.filter(b => (b.adminStatus || '').toLowerCase() === 'approved').length;
         const rejected = list.filter(b => (b.adminStatus || '').toLowerCase() === 'rejected').length;
@@ -579,47 +589,6 @@ export default function AdminDashboardIndex() {
       setContacts([]);
     }
   }, [user]);
-
-  // Admin: Fetch appointments (now using bookings data)
-  const fetchAppointmentsAdmin = useCallback(async () => {
-    if (!user?.token) return;
-    try {
-      const resp = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/bookings`, {
-        headers: {
-          'Authorization': `Bearer ${user.token}`
-        }
-      });
-      if (resp.ok) {
-        const result = await resp.json();
-        // Transform bookings data to match appointment structure
-        const transformedBookings = (result.data || []).map(booking => ({
-          _id: booking._id,
-          user: booking.user,
-          lab: booking.labName || booking.labAppointment,
-          appointmentDate: booking.date,
-          appointmentTime: booking.time,
-          status: booking.adminStatus || booking.status || 'pending',
-          patientName: booking.patientName,
-          purpose: booking.purpose,
-          packageName: booking.packageName,
-          totalAmount: booking.totalAmount,
-          paymentStatus: booking.paymentStatus,
-          createdAt: booking.createdAt,
-          // Add fields that the UI expects
-          name: booking.patientName,
-          email: booking.user?.email,
-          phone: booking.user?.phone
-        }));
-        setAppointments(transformedBookings);
-      } else {
-        console.error('Failed to fetch bookings');
-        setAppointments([]);
-      }
-    } catch (err) {
-      console.error('Error fetching appointments:', err);
-      setAppointments([]);
-    }
-  }, [user, logout, navigate]);
 
   // User Management API Functions
   const fetchUsers = useCallback(async () => {
@@ -3707,7 +3676,6 @@ export default function AdminDashboardIndex() {
       fetchBookings();
       fetchFeedbacksAdmin();
       fetchContactsAdmin();
-      fetchAppointmentsAdmin();
       // fetchUsers() will be called when registration tab is active
     } else {
       console.warn('No user token found - skipping API calls');
