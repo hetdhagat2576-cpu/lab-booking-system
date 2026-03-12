@@ -56,7 +56,7 @@ const AnimatedRoute = ({ children }) => (
 );
 
 // Protected Route Component
-const ProtectedRoute = ({ children, requiredRole }) => {
+const ProtectedRoute = ({ children, requiredRole, allowedRoles }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -74,21 +74,26 @@ const ProtectedRoute = ({ children, requiredRole }) => {
     return <Navigate to="/login-selection" replace />;
   }
 
+  // Check if user has required role OR is in allowed roles list
   if (requiredRole && user.role !== requiredRole) {
-    // Debug logging
-    console.log('ProtectedRoute - Role mismatch:', {
-      requiredRole,
-      userRole: user.role,
-      userType: typeof user.role,
-      user
-    });
-    // Redirect to appropriate login page based on required role
-    const loginRoutes = {
-      'admin': '/admin-login',
-      'labtechnician': '/lab-technician-login',
-      'user': '/user-login'
-    };
-    return <Navigate to={loginRoutes[requiredRole] || '/login-selection'} replace />;
+    // Check if user's role is in the allowed roles list
+    if (allowedRoles && !allowedRoles.includes(user.role)) {
+      // Debug logging
+      console.log('ProtectedRoute - Role mismatch:', {
+        requiredRole,
+        allowedRoles,
+        userRole: user.role,
+        userType: typeof user.role,
+        user
+      });
+      // Redirect to appropriate login page based on required role
+      const loginRoutes = {
+        'admin': '/admin-login',
+        'labtechnician': '/lab-technician-login',
+        'user': '/user-login'
+      };
+      return <Navigate to={loginRoutes[requiredRole] || '/login-selection'} replace />;
+    }
   }
 
   return children;
@@ -172,7 +177,7 @@ export default function App() {
             </ProtectedRoute>
           } />
           <Route path="/reportView/:reportId" element={
-            <ProtectedRoute requiredRole="user">
+            <ProtectedRoute allowedRoles={['user', 'admin', 'labtechnician']}>
               <AnimatedRoute><ReportView /></AnimatedRoute>
             </ProtectedRoute>
           } />

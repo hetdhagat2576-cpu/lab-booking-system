@@ -116,16 +116,137 @@ const ReportView = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const handleGoBack = () => {
+    // Check if there's history to go back to
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      // Fallback: navigate based on user role
+      if (user?.role === 'admin') {
+        navigate('/admin-dashboard');
+      } else if (user?.role === 'labtechnician') {
+        navigate('/lab-technician-dashboard');
+      } else {
+        navigate('/dashboard');
+      }
+    }
+  };
+
+  // Enhanced back function that specifically checks for dashboard origins
+  const handleSmartBack = () => {
+    const referrer = document.referrer;
+    const currentPath = window.location.pathname;
+    
+    console.log('Referrer:', referrer);
+    console.log('Current path:', currentPath);
+    console.log('User role:', user?.role);
+    console.log('User info:', user);
+    
+    // Priority 1: Check sessionStorage (most reliable for tracking dashboard origin)
+    const cameFromAdmin = sessionStorage.getItem('cameFromAdminDashboard');
+    const cameFromLabTech = sessionStorage.getItem('cameFromLabTechDashboard');
+    const cameFromUserProfile = sessionStorage.getItem('cameFromUserProfile');
+    
+    if (cameFromAdmin === 'true') {
+      console.log('SessionStorage indicates admin dashboard');
+      sessionStorage.removeItem('cameFromAdminDashboard');
+      navigate('/admin-dashboard');
+      return;
+    }
+    
+    if (cameFromLabTech === 'true') {
+      console.log('SessionStorage indicates lab technician dashboard');
+      sessionStorage.removeItem('cameFromLabTechDashboard');
+      navigate('/lab-technician-dashboard');
+      return;
+    }
+    
+    if (cameFromUserProfile === 'true') {
+      console.log('SessionStorage indicates user profile');
+      sessionStorage.removeItem('cameFromUserProfile');
+      navigate('/user-profile');
+      return;
+    }
+    
+    // Priority 2: Check user role first (most reliable)
+    if (user?.role === 'admin') {
+      console.log('Navigating to admin dashboard based on role');
+      navigate('/admin-dashboard');
+      return;
+    }
+    
+    if (user?.role === 'labtechnician') {
+      console.log('Navigating to lab technician dashboard based on role');
+      navigate('/lab-technician-dashboard');
+      return;
+    }
+    
+    // Priority 3: Check referrer URL
+    if (referrer.includes('/admin-dashboard')) {
+      console.log('Referrer indicates admin dashboard');
+      navigate('/admin-dashboard');
+      return;
+    }
+    
+    if (referrer.includes('/lab-technician-dashboard')) {
+      console.log('Referrer indicates lab technician dashboard');
+      navigate('/lab-technician-dashboard');
+      return;
+    }
+    
+    if (referrer.includes('/dashboard')) {
+      console.log('Referrer indicates user dashboard');
+      navigate('/dashboard');
+      return;
+    }
+    
+    // Priority 4: Use browser history
+    if (window.history.length > 1) {
+      console.log('Using browser history back');
+      navigate(-1);
+      return;
+    }
+    
+    // Priority 5: Final fallback based on user data
+    if (user?.email && (user.email.includes('lab') || user.email.includes('tech'))) {
+      console.log('Email suggests lab technician, navigating to lab dashboard');
+      navigate('/lab-technician-dashboard');
+    } else if (user?.email && user.email.includes('admin')) {
+      console.log('Email suggests admin, navigating to admin dashboard');
+      navigate('/admin-dashboard');
+    } else {
+      console.log('Default fallback to user dashboard');
+      navigate('/dashboard');
+    }
+  };
+
   useEffect(() => {
     const fetchReport = async () => {
       try {
-        // Check if user is authenticated
-        console.log('ReportView - User:', user);
-        console.log('ReportView - Token exists:', !!user?.token);
+        // Check if user is authenticated - also check localStorage as fallback
+        let userData = user;
+        let token = user?.token;
         
-        if (!user || !user.token) {
+        if (!userData || !token) {
+          // Fallback to localStorage for new tab scenarios
+          const storedUser = localStorage.getItem('lab_user');
+          if (storedUser) {
+            userData = JSON.parse(storedUser);
+            token = userData.token;
+            console.log('Using localStorage user data for new tab');
+          }
+        }
+        
+        console.log('ReportView - User:', userData);
+        console.log('ReportView - Token exists:', !!token);
+        
+        if (!userData || !token) {
           setError('Please log in to view reports');
           setLoading(false);
+          // Optionally redirect to login
+          setTimeout(() => {
+            navigate('/login-selection');
+          }, 2000);
           return;
         }
 
@@ -160,7 +281,42 @@ const ReportView = () => {
 
   const handleDownloadPDF = async () => {
     try {
-      const blob = await reportService.downloadReportPDF(reportId);
+      console.log('Starting download for report:', reportId);
+      
+      // Get token from auth context or fallback to localStorage for new tab scenarios
+      let token = user?.token;
+      if (!token) {
+        const storedUser = localStorage.getItem('lab_user');
+        if (storedUser) {
+          const userData = JSON.parse(storedUser);
+          token = userData.token;
+          console.log('Using localStorage token for download');
+        }
+      }
+      
+      console.log('User authenticated:', !!token);
+      
+      if (!token) {
+        throw new Error('Authentication required. Please log in again.');
+      }
+      
+      // Use the same download method as admin and lab technician
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/${reportId}/download`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      console.log('Download response status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.status}`);
+      }
+      
+      const blob = await response.blob();
+      console.log('Blob created, size:', blob.size);
+      
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -169,6 +325,8 @@ const ReportView = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      
+      showDownloadSuccess();
     } catch (error) {
       console.error('Error downloading PDF:', error);
       showDownloadError();
@@ -238,7 +396,7 @@ const ReportView = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Header {...headerNav} />
+      <Header hideNavItems={true} hideProfileIcon={true} />
       
       <main className="flex-grow">
         {/* Action Bar */}
@@ -247,7 +405,7 @@ const ReportView = () => {
             <div className="flex justify-between items-center py-4">
               <div className="flex items-center space-x-4">
                 <button
-                  onClick={() => navigate(-1)}
+                  onClick={handleSmartBack}
                   className="flex items-center text-gray-600 hover:text-primary transition-colors"
                 >
                   <ArrowLeft className="w-5 h-5 mr-2" />

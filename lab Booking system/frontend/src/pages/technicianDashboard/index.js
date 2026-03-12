@@ -171,15 +171,11 @@ const TechnicianDashboard = () => {
       fetchPendingReports();
     }
     
-    // Set up real-time polling for new approved bookings
-    const interval = setInterval(() => {
-      fetchBookings();
-      if (activeView === 'reports') {
-        fetchPendingReports();
-      }
-    }, 10000); // Poll every 10 seconds
-    
-    return () => clearInterval(interval);
+    // Remove polling since WebSocket handles real-time updates
+    // Only use polling as fallback if WebSocket fails
+    return () => {
+      // Cleanup function
+    };
   }, [fetchBookings, fetchPendingReports, activeView]);
 
   const handleDownloadReport = async (bookingId) => {
@@ -192,15 +188,49 @@ const TechnicianDashboard = () => {
       
       console.log('Downloading report for booking ID:', bookingId);
       
-      // Create download link similar to admin dashboard
-      const link = document.createElement('a');
-      link.href = `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/by-booking/${bookingId}/download`;
-      link.download = `Lab_Report_${bookingId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // First get the report by booking ID
+      const bookingData = await reportService.getReportByBookingId(bookingId);
       
-      alerts.pdfSuccess();
+      if (bookingData.success && bookingData.data) {
+        // Use the correct download endpoint with report ID
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/${bookingData.data._id}/download`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${user.token}`,
+          },
+        });
+        
+        if (!response.ok) {
+          if (response.status === 403) {
+            alerts.reportError('Access denied. You do not have permission to download this report.');
+            return;
+          } else if (response.status === 404) {
+            alerts.reportError('Report not found.');
+            return;
+          }
+          throw new Error(`Download failed: ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        if (blob.size === 0) {
+          alerts.reportError('Downloaded file is empty. Please try again.');
+          return;
+        }
+        
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const patientName = bookingData.data.patientId?.name || 'Patient';
+        a.download = `Lab_Report_${patientName}_${bookingData.data._id.slice(-8)}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        alerts.pdfSuccess();
+      } else {
+        alerts.reportError('Report not found for this appointment');
+      }
     } catch (error) {
       console.error('Error downloading report:', error);
       alerts.pdfError();
@@ -225,9 +255,12 @@ const TechnicianDashboard = () => {
       console.log('Response data:', bookingData);
       
       if (bookingData.success && bookingData.data) {
-        // Open the report view with the report ID in the same tab
-        // This ensures authentication context is preserved
-        navigate(`/reportView/${bookingData.data._id}`);
+        // Set sessionStorage to track that we came from lab technician dashboard
+        sessionStorage.setItem('cameFromLabTechDashboard', 'true');
+        
+        // Open the report view in a new tab like admin dashboard
+        const reportUrl = `/reportView/${bookingData.data._id}`;
+        window.open(reportUrl, '_blank');
       } else {
         alerts.reportError('Report not found for this appointment');
       }

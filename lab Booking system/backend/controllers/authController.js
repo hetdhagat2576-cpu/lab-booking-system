@@ -340,50 +340,8 @@ const loginUser = async (req, res) => {
 
     console.log('✅ Email verified for:', email);
 
-    // Check if any user from the 3 roles is already logged in
-    const activeRoles = ['admin', 'labtechnician', 'doctor'];
-    if (activeRoles.includes(user.role)) {
-      try {
-        // Check if any user with these roles is currently logged in
-        // This is a simple check - in production you might want to use Redis or a proper session store
-        const activeUsers = await User.find({ 
-          role: { $in: activeRoles },
-          lastLogin: { $exists: true }
-        }).sort({ lastLogin: -1 }).limit(10);
-        
-        // Check for recent logins (within last 5 minutes instead of 30)
-        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-        const recentlyActiveUsers = activeUsers.filter(u => 
-          u.lastLogin && u.lastLogin > fiveMinutesAgo && u._id.toString() !== user._id.toString()
-        );
-        
-        // Only block if there's an active user with a DIFFERENT privileged role
-        const differentRoleActiveUsers = recentlyActiveUsers.filter(u => u.role !== user.role);
-        
-        if (differentRoleActiveUsers.length > 0) {
-          const activeUser = differentRoleActiveUsers[0];
-          console.log('❌ Another user with different privileged role is already active:', {
-            activeRole: activeUser.role,
-            activeEmail: activeUser.email,
-            lastLogin: activeUser.lastLogin,
-            attemptingRole: user.role
-          });
-          
-          return res.status(403).json({
-            success: false,
-            message: `Another user with role '${activeUser.role}' (${activeUser.email}) is already logged in. Please wait for them to logout or try again later.`,
-            activeUser: {
-              role: activeUser.role,
-              email: activeUser.email,
-              lastLogin: activeUser.lastLogin
-            }
-          });
-        }
-      } catch (error) {
-        console.warn('⚠️ Error checking active users:', error.message);
-        // Continue with login even if check fails
-      }
-    }
+    // Remove admin/lab technician blocking logic to allow concurrent logins
+    // Multiple users can now be logged in simultaneously regardless of role
 
     // Check role if specified (more flexible matching)
     if (role && user.role !== role) {
@@ -528,13 +486,13 @@ const logoutUser = async (req, res) => {
     console.log('=== DEBUG: Logout Request ===');
     console.log('User logging out:', req.user?.email, 'Role:', req.user?.role);
     
-    // Clear lastLogin timestamp for privileged roles to allow other users to login
+    // Clear lastLogin timestamp for user session cleanup
     if (req.user && ['admin', 'labtechnician', 'doctor'].includes(req.user.role)) {
       try {
         await User.findByIdAndUpdate(req.user._id, { 
           lastLogin: null 
         });
-        console.log('✅ Cleared lastLogin for privileged role user');
+        console.log(`✅ Cleared lastLogin for ${req.user.role} user:`, req.user.email);
       } catch (error) {
         console.warn('⚠️ Error clearing lastLogin:', error.message);
       }

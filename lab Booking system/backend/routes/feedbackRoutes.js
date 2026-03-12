@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { 
+  // General feedback functions
   createPublicFeedback, 
   getAllFeedbacks,
   getFeedbackById,
@@ -23,7 +24,7 @@ router.route('/reviewed').get(getReviewedFeedbacks);
 router.route('/user').post(protect, createUserFeedback);
 router.route('/my').get(protect, getMyFeedbacks);
 
-// Admin routes
+// Admin routes for general feedback
 router.route('/').get(protect, authorize('admin'), getAllFeedbacks);
 router.route('/:id').get(protect, authorize('admin'), getFeedbackById);
 router.route('/:id').put(protect, authorize('admin'), updateFeedback);
