@@ -141,6 +141,21 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Root route for Vercel
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    message: 'Lab Booking System Backend API',
+    status: 'Running',
+    version: '1.0.0',
+    endpoints: {
+      health: '/health',
+      api: '/api',
+      cors_test: '/api/cors-test'
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 // CORS test endpoint
 app.get('/api/cors-test', (req, res) => {
   res.status(200).json({ 
