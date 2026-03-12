@@ -17,6 +17,6 @@
   ],
   "env": {
     "NODE_ENV": "production",
-    "REACT_APP_API_URL": "https://lab-booking-backend.vercel.app"
+    "REACT_APP_API_URL": "https://backend-pi-sable-83.vercel.app"
   }
 }
