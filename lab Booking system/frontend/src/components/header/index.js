@@ -13,38 +13,30 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
   const { user, isAuthenticated, isAdmin, isLabTechnician, logout } = useAuth();
   const { UserCircle, LogOut, ChevronDown, Settings, Menu, X } = IconConfig || {};
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (!event.target.closest('.dropdown-container')) {
+      if (!event.target.closest('.booking-dropdown-container')) {
         setIsDropdownOpen(false);
       }
-      if (!event.target.closest('.mobile-menu-container') && !event.target.closest('[data-mobile-menu-button]')) {
+      if (!event.target.closest('.profile-dropdown-container')) {
+        setIsProfileDropdownOpen(false);
+      }
+      if (!event.target.closest('.mobile-menu-container')) {
         setIsMobileMenuOpen(false);
       }
     };
 
-    document.addEventListener('click', handleClickOutside);
+    if (isDropdownOpen || isProfileDropdownOpen || isMobileMenuOpen) {
+      document.addEventListener('click', handleClickOutside);
+    }
 
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
-  }, []);
-
-  useEffect(() => {
-    // Prevent body scroll when mobile menu is open
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
-
-    return () => {
-      // Ensure body scroll is restored when component unmounts
-      document.body.style.overflow = 'auto';
-    };
-  }, [isMobileMenuOpen]);
+  }, [isDropdownOpen, isProfileDropdownOpen, isMobileMenuOpen]);
 
   const handleLogout = (reason) => {
     logout();
@@ -66,12 +58,10 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
     { name: "Home", path: "/" },
     { name: "Service", path: "/services" },
     { name: "About Us", path: "/about" },
-    { name: "Contact Us", path: "/contact" },
   ];
   
   // Filter nav links based on authentication state
-  // Show navigation links both before and after login
-  const visibleNavLinks = navLinks;
+  const visibleNavLinks = isAuthenticated ? [] : navLinks;
     
   const beamUnderline = `
     relative py-2 text-sm font-bold text-white/90 transition-all duration-300
@@ -172,69 +162,173 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
             </div>
           </button>
         </div>
-      
+        
+        {/* CENTER NAV */}
+        {!hideNavItems && (
+          <>
+            {/* Desktop Navigation */}
+            <nav className={`hidden lg:flex items-center ${isAuthenticated ? 'justify-center' : 'gap-6 xl:gap-10'}`}>
+              {visibleNavLinks.map((link) => (
+                <button 
+                  key={link.name} 
+                  onClick={() => navigate(link.path)} 
+                  className={location.pathname === link.path ? activeBeamUnderline : beamUnderline}
+                >
+                  {link.name}
+                </button>
+              ))}
+              
+              {/* Always show Contact Us and Booking for logged-in users, centered */}
+              {isAuthenticated && (
+                <>
+                  <button 
+                    onClick={() => navigate("/contact")} 
+                    className={location.pathname === "/contact" ? activeBeamUnderline : beamUnderline}
+                  >
+                    Contact Us
+                  </button>
+                  <div className="relative booking-dropdown-container ml-10">
+                    <button
+                      onClick={() => {
+                        setIsDropdownOpen(!isDropdownOpen);
+                        setIsProfileDropdownOpen(false);
+                      }}
+                      className={`${(location.pathname === "/tests" || location.pathname === "/health-packages/all") ? activeBeamUnderline : beamUnderline} flex items-center gap-1`}
+                    >
+                      Booking
+                      {ChevronDown && <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />}
+                    </button>
+                    {isDropdownOpen && (
+                      <div className="absolute top-full left-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden z-50">
+                        <button
+                          onClick={() => {
+                            navigate("/tests");
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                            location.pathname === "/tests" 
+                              ? "text-primary bg-gray-50" 
+                              : "text-gray-700 hover:bg-gray-50 hover:text-primary"
+                          }`}
+                        >
+                          Tests
+                        </button>
+                        <button
+                          onClick={() => {
+                            navigate("/health-packages/all");
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                            location.pathname === "/health-packages/all" 
+                              ? "text-primary bg-gray-50" 
+                              : "text-gray-700 hover:bg-gray-50 hover:text-primary"
+                          }`}
+                        >
+                          Packages
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+              
+              {/* Show Contact Us and Booking for non-logged-in users (original behavior) */}
+              {!isAuthenticated && (
+                <>
+                  <button 
+                    onClick={() => navigate("/contact")} 
+                    className={location.pathname === "/contact" ? activeBeamUnderline : beamUnderline}
+                  >
+                    Contact Us
+                  </button>
+                  <div className="relative booking-dropdown-container">
+                    <button
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className={`${(location.pathname === "/tests" || location.pathname === "/health-packages/all") ? activeBeamUnderline : beamUnderline} flex items-center gap-1`}
+                    >
+                      Booking
+                      {ChevronDown && <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />}
+                    </button>
+                    {isDropdownOpen && (
+                      <div className="absolute top-full left-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-100 overflow-hidden z-50">
+                        <button
+                          onClick={() => {
+                            navigate("/tests");
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                            location.pathname === "/tests" 
+                              ? "text-primary bg-gray-50" 
+                              : "text-gray-700 hover:bg-gray-50 hover:text-primary"
+                          }`}
+                        >
+                          Tests
+                        </button>
+                        <button
+                          onClick={() => {
+                            navigate("/health-packages/all");
+                            setIsDropdownOpen(false);
+                          }}
+                          className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                            location.pathname === "/health-packages/all" 
+                              ? "text-primary bg-gray-50" 
+                              : "text-gray-700 hover:bg-gray-50 hover:text-primary"
+                          }`}
+                        >
+                          Packages
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </nav>
+          </>
+        )}
 
         {/* RIGHT SIDE */}
-        <div className="flex items-center justify-between w-full">
-          {/* Navigation Links - Centered */}
-          <nav className="hidden lg:flex items-center justify-center flex-1 gap-6">
-            {visibleNavLinks.map((link) => (
-              <button 
-                key={link.name} 
-                onClick={() => navigate(link.path)}
-                className={`${
-                  location.pathname === link.path ? activeBeamUnderline : beamUnderline
-                }`}
-              >
-                {link.name}
-              </button>
-            ))}
-            
-            {/* Booking Dropdown for Desktop */}
-            <div className="relative group">
-              <button className={`${beamUnderline} flex items-center gap-1`}>
-                Booking
-                <ChevronDown className="w-4 h-4" />
-              </button>
-              
-              {/* Dropdown Menu */}
-              <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform group-hover:translate-y-0 translate-y-2 z-50">
-                <div className="py-2">
-                  <button
-                    onClick={() => navigate("/tests")}
-                    className={`block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors ${
-                      location.pathname === "/tests" ? 'bg-gray-100 text-primary font-semibold' : ''
-                    }`}
-                  >
-                    Tests
-                  </button>
-                  <button
-                    onClick={() => navigate("/health-packages/all")}
-                    className={`block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors ${
-                      location.pathname === "/health-packages/all" ? 'bg-gray-100 text-primary font-semibold' : ''
-                    }`}
-                  >
-                    Packages
-                  </button>
-                </div>
-              </div>
-            </div>
-          </nav>
-          
-          {/* Auth Buttons - Right Side */}
-          <div className="flex items-center gap-2 sm:gap-4 md:gap-6 lg:gap-8">
-            {!isAuthenticated ? (
+        <div className="flex-shrink-0 flex items-center gap-2 sm:gap-4 md:gap-6 lg:gap-8">
+          {!isAuthenticated ? (
             <>
+              {/* Mobile Login/Register Buttons */}
+              <div className="lg:hidden flex items-center gap-2">
+                <button 
+                  onClick={() => navigate("/login-selection")} 
+                  className="px-2 sm:px-3 py-1.5 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-white/10 transition-all"
+                >
+                  Login
+                </button>
+                
+                <button 
+                  onClick={() => navigate("/register")} 
+                  className="px-2 sm:px-3 py-1.5 text-white rounded-full text-xs sm:text-sm font-black transition-all active:scale-95"
+                  style={{
+                    backgroundColor: Theme.colors.primary,
+                    boxShadow: `0 4px 15px ${Theme.colors.primary}40`
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = Theme.colors.primaryHover;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = Theme.colors.primary;
+                  }}
+                >
+                  REGISTER
+                </button>
+              </div>
+              
+              {/* Desktop Login Button */}
               <button onClick={() => navigate("/login-selection")} className={`${beamUnderline} hidden lg:block`}>
                 Login
               </button>
               
+              {/* Desktop Register Button */}
               <button 
                 onClick={() => navigate("/register")} 
-                className="px-3 sm:px-4 md:px-6 lg:px-7 py-2 sm:py-2.5 text-white rounded-full text-xs sm:text-sm font-black transition-all active:scale-95 flex items-center gap-1 sm:gap-2"
-                style={{ 
+                className="px-2 sm:px-4 md:px-6 lg:px-7 py-1.5 sm:py-2.5 text-white rounded-full text-xs sm:text-sm font-black transition-all active:scale-95 flex items-center gap-1 sm:gap-2 hidden lg:block"
+                style={{
                   backgroundColor: Theme.colors.primary,
-                  border: `1px solid ${Theme.colors.primary}20`
+                  boxShadow: `0 4px 15px ${Theme.colors.primary}40`
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = Theme.colors.primaryHover;
@@ -243,67 +337,74 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                   e.currentTarget.style.backgroundColor = Theme.colors.primary;
                 }}
               >
-                <span className="hidden sm:inline">REGISTER</span>
-                <span className="sm:hidden">SIGN UP</span>
+                <span className="hidden xs:inline">REGISTER</span>
+                <span className="xs:hidden">SIGN UP</span>
               </button>
             </>
           ) : (
             <>
-              {/* Notification Bell for regular users only (not admin or lab technician) */}
-              {isAuthenticated && !isAdmin && !isLabTechnician && (
+              {/* Notification Bell - Only show for regular users */}
+              {!isAdmin && !isLabTechnician && !hideProfileIcon && (
                 <NotificationBell />
               )}
               
-              {/* Profile Icon for authenticated users */}
-              {isAuthenticated && !hideProfileIcon && !isAdmin && !isLabTechnician && (
-                <button
-                  onClick={() => {
-                    const route = isLabTechnician ? "/lab-technician-profile" : "/user-profile";
-                    navigate(route);
-                  }}
-                  className="hidden lg:flex items-center gap-2 text-white/90 hover:text-white font-bold transition-all"
-                  title={user?.name || user?.email || "Profile"}
-                >
-                  {UserCircle && <UserCircle className="w-4 h-4 sm:w-5 sm:h-5" />}
-                  <span className="hidden xl:inline">Profile</span>
-                </button>
+              {/* Profile Dropdown */}
+              {!hideProfileIcon && (
+                <div className="relative profile-dropdown-container">
+                  <button
+                    onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                    className="flex items-center gap-2 p-1.5 sm:p-2 rounded-lg hover:bg-white/10 transition-all"
+                  >
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
+                      {UserCircle && <UserCircle className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />}
+                    </div>
+                    {ChevronDown && <ChevronDown className={`w-3 h-3 sm:w-4 sm:h-4 text-white/70 transition-transform ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />}
+                  </button>
+                  
+                  {isProfileDropdownOpen && (
+                    <div className="absolute top-full right-0 mt-2 w-40 sm:w-48 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden z-50">
+                      {/* Profile Link */}
+                      {!isAdmin && !isLabTechnician && (
+                        <button
+                          onClick={() => {
+                            navigate("/user-profile");
+                            setIsProfileDropdownOpen(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          {UserCircle && <UserCircle className="w-4 h-4 text-gray-400" />}
+                          Profile
+                        </button>
+                      )}
+                      
+                      <div className="border-t border-gray-100">
+                        <button
+                          onClick={handleLogoutClick}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          {LogOut && <LogOut className="w-4 h-4" />}
+                          <span className="hidden sm:inline">Logout</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
-              <button
-                onClick={handleLogoutClick}
-                className="px-3 sm:px-4 md:px-5 lg:px-6 py-2 text-white rounded-full text-xs sm:text-sm font-black transition-all active:scale-95 flex items-center gap-1 sm:gap-2"
-                style={{ 
-                  backgroundColor: Theme.colors.primary,
-                  border: `1px solid ${Theme.colors.primary}20`
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = Theme.colors.primaryHover;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = Theme.colors.primary;
-                }}
-              >
-                {LogOut && <LogOut className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5" />}
-                <span className="hidden sm:inline">Logout</span>
-              </button>
             </>
           )}
+          
+          {/* Mobile Menu Button - Always at the end */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="lg:hidden text-white p-1.5 sm:p-2 rounded-lg hover:bg-white/10 transition-colors"
+          >
+            {isMobileMenuOpen ? (X && <X className="w-5 h-5 sm:w-6 sm:h-6" />) : (Menu && <Menu className="w-5 h-5 sm:w-6 sm:h-6" />)}
+          </button>
         </div>
         </div>
 
-      </div>
-
-        {/* Mobile Menu Button */}
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="lg:hidden text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-          data-mobile-menu-button
-        >
-          {isMobileMenuOpen ? (X && <X className="w-6 h-6" />) : (Menu && <Menu className="w-6 h-6" />)}
-        </button>
-      </div>
-
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
         <div className="mobile-menu-container lg:hidden bg-primary/95 backdrop-blur-md border-t border-white/10">
           <div className="container mx-auto px-2 sm:px-4 py-3 sm:py-4">
             <nav className={`flex flex-col space-y-3 ${isAuthenticated ? 'items-center' : ''}`}>
@@ -415,45 +516,25 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                 </>
               )}
 
-              {isAuthenticated && !hideProfileIcon && (
-                <>
-                  {!isAdmin && !isLabTechnician && (
-                    <button
-                      onClick={() => {
-                        navigate("/user-profile");
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className="text-left px-4 py-3 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-all"
-                    >
-                      Profile
-                    </button>
-                  )}
-                  <button
-                    onClick={() => {
-                      navigate("/settings");
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="text-left px-4 py-3 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-all"
-                  >
-                    Settings
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleLogoutClick();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="text-left px-4 py-3 rounded-lg text-red-500 hover:text-red-400 hover:bg-white/10 transition-all"
-                  >
-                    Logout
-                  </button>
-                </>
+              {/* Mobile Auth Buttons */}
+              {!isAuthenticated && (
+                <button 
+                  onClick={() => {
+                    navigate("/login-selection");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="text-left px-4 py-3 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-all"
+                >
+                  Login
+                </button>
               )}
 
-              {/* Mobile Profile Button for Lab Technicians */}
-              {isAuthenticated && !hideProfileIcon && isLabTechnician && (
+              {/* Mobile Profile Button */}
+              {isAuthenticated && !hideProfileIcon && !isAdmin && !isLabTechnician && (
                 <button
                   onClick={() => {
-                    navigate("/lab-technician-profile");
+                    const route = isLabTechnician ? "/lab-technician-profile" : "/user-profile";
+                    navigate(route);
                     setIsMobileMenuOpen(false);
                   }}
                   className="text-left px-4 py-3 rounded-lg text-white/90 hover:text-white hover:bg-white/10 transition-all"
@@ -465,6 +546,7 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
           </div>
         </div>
       )}
+      </div>
     </header>
   );
 }
