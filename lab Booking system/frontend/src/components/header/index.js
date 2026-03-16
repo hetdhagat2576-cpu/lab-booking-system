@@ -348,8 +348,50 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                 <NotificationBell />
               )}
               
-              {/* Profile Dropdown */}
-              {!hideProfileIcon && (
+              {/* Admin - Show direct logout button */}
+              {isAdmin && !hideProfileIcon && (
+                <button
+                  onClick={handleLogoutClick}
+                  className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-sm text-white rounded-full transition-all"
+                  style={{
+                    backgroundColor: Theme.colors.primary,
+                    boxShadow: `0 4px 15px ${Theme.colors.primary}40`
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = Theme.colors.primaryHover;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = Theme.colors.primary;
+                  }}
+                >
+                  {LogOut && <LogOut className="w-4 h-4" />}
+                  <span className="hidden sm:inline">Logout</span>
+                </button>
+              )}
+              
+              {/* Lab Technician - Show direct logout button only (no profile icon) */}
+              {isLabTechnician && !hideProfileIcon && (
+                <button
+                  onClick={handleLogoutClick}
+                  className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 text-sm text-white rounded-full transition-all"
+                  style={{
+                    backgroundColor: Theme.colors.primary,
+                    boxShadow: `0 4px 15px ${Theme.colors.primary}40`
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = Theme.colors.primaryHover;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = Theme.colors.primary;
+                  }}
+                >
+                  {LogOut && <LogOut className="w-4 h-4" />}
+                  <span className="hidden sm:inline">Logout</span>
+                </button>
+              )}
+              
+              {/* Profile Dropdown - Only for regular users (not admin or lab technician) */}
+              {!isAdmin && !isLabTechnician && !hideProfileIcon && (
                 <div className="relative profile-dropdown-container">
                   <button
                     onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
@@ -529,8 +571,56 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                 </button>
               )}
 
-              {/* Mobile Profile Button */}
-              {isAuthenticated && !hideProfileIcon && !isAdmin && !isLabTechnician && (
+              {/* Mobile Logout Button - Admin users */}
+              {isAuthenticated && isAdmin && !hideProfileIcon && (
+                <button
+                  onClick={() => {
+                    handleLogoutClick();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="text-left px-4 py-3 rounded-lg text-white/90 hover:text-white transition-all flex items-center gap-3"
+                  style={{
+                    backgroundColor: Theme.colors.primary,
+                    boxShadow: `0 4px 15px ${Theme.colors.primary}40`
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = Theme.colors.primaryHover;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = Theme.colors.primary;
+                  }}
+                >
+                  {LogOut && <LogOut className="w-4 h-4" />}
+                  Logout
+                </button>
+              )}
+
+              {/* Mobile Logout Button - Lab Technician users */}
+              {isAuthenticated && isLabTechnician && !hideProfileIcon && (
+                <button
+                  onClick={() => {
+                    handleLogoutClick();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="text-left px-4 py-3 rounded-lg text-white/90 hover:text-white transition-all flex items-center gap-3"
+                  style={{
+                    backgroundColor: Theme.colors.primary,
+                    boxShadow: `0 4px 15px ${Theme.colors.primary}40`
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = Theme.colors.primaryHover;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = Theme.colors.primary;
+                  }}
+                >
+                  {LogOut && <LogOut className="w-4 h-4" />}
+                  Logout
+                </button>
+              )}
+
+              {/* Mobile Profile Button - Non-admin users */}
+              {isAuthenticated && !isAdmin && !isLabTechnician && !hideProfileIcon && (
                 <button
                   onClick={() => {
                     const route = isLabTechnician ? "/lab-technician-profile" : "/user-profile";
