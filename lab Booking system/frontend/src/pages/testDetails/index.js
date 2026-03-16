@@ -353,12 +353,16 @@ export default function TestDetails() {
                     <h2 className="text-xl font-bold text-slate-900 mb-6">Benefits</h2>
                     
                     <div className="space-y-3">
-                      {test.benefits?.map((benefit, index) => (
-                        <div key={index} className="flex items-center gap-3">
-                          <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
-                          <span className="text-slate-700">{benefit}</span>
-                        </div>
-                      )) || <div className="text-slate-500">No benefits listed</div>}
+                      {test.benefits && test.benefits.length > 0 ? (
+                        test.benefits.map((benefit, index) => (
+                          <div key={index} className="flex items-center gap-3">
+                            <div className="w-2 h-2 bg-green-500 rounded-full flex-shrink-0"></div>
+                            <span className="text-slate-700">{benefit}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-slate-500">No benefits listed for this test</div>
+                      )}
                     </div>
                   </div>
 
@@ -367,19 +371,121 @@ export default function TestDetails() {
                     <h2 className="text-xl font-bold text-slate-900 mb-6">Suitable For</h2>
                     
                     <div className="space-y-3">
-                      {test.suitableFor?.map((group, index) => (
-                        <div key={`suitable-${index}`} className="flex items-center gap-3">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                          <span className="text-slate-700">{group}</span>
-                        </div>
-                      )) || <div className="text-slate-500">No suitability information available</div>}
+                      {test.suitableFor && test.suitableFor.length > 0 ? (
+                        test.suitableFor.map((group, index) => (
+                          <div key={`suitable-${index}`} className="flex items-center gap-3">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                            <span className="text-slate-700">{group}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-slate-500">No suitability information available for this test</div>
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
 
               
-              {/* Card 5: What's Included */}
+              {/* Card 4: Clinical Significance & Test Parameters */}
+              {(test.clinicalSignificance || (test.parameters && test.parameters.length > 0)) && (
+                <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
+                  <div className="flex flex-col md:flex-row gap-8">
+                    {/* Clinical Significance Section */}
+                    {test.clinicalSignificance && (
+                      <div className="flex-1">
+                        <h2 className="text-xl font-bold text-slate-900 mb-6">Clinical Significance</h2>
+                        <p className="text-slate-700 leading-relaxed">{test.clinicalSignificance}</p>
+                      </div>
+                    )}
+
+                    {/* Test Parameters Section */}
+                    {test.parameters && test.parameters.length > 0 && (
+                      <div className="flex-1">
+                        <h2 className="text-xl font-bold text-slate-900 mb-6">Test Parameters</h2>
+                        <div className="space-y-3">
+                          {test.parameters.map((param, index) => (
+                            <div key={`param-${index}`} className="border-l-2 border-primary pl-4">
+                              <div className="font-semibold text-slate-900">{param.name}</div>
+                              {param.unit && (
+                                <div className="text-sm text-slate-500">Unit: {param.unit}</div>
+                              )}
+                              {param.normalRange && (
+                                <div className="text-sm text-slate-600">Normal Range: {param.normalRange}</div>
+                              )}
+                              {param.description && (
+                                <div className="text-sm text-slate-700 mt-1">{param.description}</div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Card 5: Symptoms & Related Conditions */}
+              {((test.symptoms && test.symptoms.length > 0) || (test.relatedConditions && test.relatedConditions.length > 0)) && (
+                <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
+                  <div className="flex flex-col md:flex-row gap-8">
+                    {/* Symptoms Section */}
+                    {test.symptoms && test.symptoms.length > 0 && (
+                      <div className="flex-1">
+                        <h2 className="text-xl font-bold text-slate-900 mb-6">Common Symptoms</h2>
+                        <div className="space-y-3">
+                          {test.symptoms.map((symptom, index) => (
+                            <div key={`symptom-${index}`} className="flex items-center gap-3">
+                              <div className="w-2 h-2 bg-orange-500 rounded-full flex-shrink-0"></div>
+                              <span className="text-slate-700">{symptom}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Related Conditions Section */}
+                    {test.relatedConditions && test.relatedConditions.length > 0 && (
+                      <div className="flex-1">
+                        <h2 className="text-xl font-bold text-slate-900 mb-6">Related Conditions</h2>
+                        <div className="space-y-3">
+                          {test.relatedConditions.map((condition, index) => (
+                            <div key={`condition-${index}`} className="flex items-center gap-3">
+                              <div className="w-2 h-2 bg-purple-500 rounded-full flex-shrink-0"></div>
+                              <span className="text-slate-700">{condition}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Card 6: Normal Range & Abnormal Indicates */}
+              {(test.normalRange || test.abnormalIndicates) && (
+                <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
+                  <div className="flex flex-col md:flex-row gap-8">
+                    {/* Normal Range Section */}
+                    {test.normalRange && (
+                      <div className="flex-1">
+                        <h2 className="text-xl font-bold text-slate-900 mb-6">Normal Range</h2>
+                        <p className="text-slate-700 leading-relaxed">{test.normalRange}</p>
+                      </div>
+                    )}
+
+                    {/* Abnormal Indicates Section */}
+                    {test.abnormalIndicates && (
+                      <div className="flex-1">
+                        <h2 className="text-xl font-bold text-slate-900 mb-6">Abnormal Results Indicate</h2>
+                        <p className="text-slate-700 leading-relaxed">{test.abnormalIndicates}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {/* Card 7: What's Included */}
               {test.includes && test.includes.length > 0 && (
                 <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100">
                   <h2 className="text-xl font-bold text-slate-900 mb-6">What's Included</h2>

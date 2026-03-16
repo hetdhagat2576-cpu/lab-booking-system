@@ -36,6 +36,16 @@ const getTestDetails = async (req, res) => {
       isPopular: test.isPopular,
       tags: test.tags,
       imageUrl: test.imageUrl,
+      benefits: test.benefits || [],
+      suitableFor: test.suitableFor || [],
+      includes: test.includes || [],
+      parameters: test.parameters || [],
+      relatedConditions: test.relatedConditions || [],
+      symptoms: test.symptoms || [],
+      clinicalSignificance: test.clinicalSignificance,
+      normalRange: test.normalRange,
+      abnormalIndicates: test.abnormalIndicates,
+      longDescription: test.longDescription,
       createdAt: test.createdAt,
       updatedAt: test.updatedAt
     };
