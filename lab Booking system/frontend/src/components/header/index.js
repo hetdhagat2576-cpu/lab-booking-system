@@ -66,10 +66,12 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
     { name: "Home", path: "/" },
     { name: "Service", path: "/services" },
     { name: "About Us", path: "/about" },
+    { name: "Contact Us", path: "/contact" },
   ];
   
   // Filter nav links based on authentication state
-  const visibleNavLinks = isAuthenticated ? [] : navLinks;
+  // Show navigation links both before and after login
+  const visibleNavLinks = navLinks;
     
   const beamUnderline = `
     relative py-2 text-sm font-bold text-white/90 transition-all duration-300
@@ -173,8 +175,55 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
       
 
         {/* RIGHT SIDE */}
-        <div className="flex-1 flex justify-end items-center gap-2 sm:gap-4 md:gap-6 lg:gap-8">
-          {!isAuthenticated ? (
+        <div className="flex items-center justify-between w-full">
+          {/* Navigation Links - Centered */}
+          <nav className="hidden lg:flex items-center justify-center flex-1 gap-6">
+            {visibleNavLinks.map((link) => (
+              <button 
+                key={link.name} 
+                onClick={() => navigate(link.path)}
+                className={`${
+                  location.pathname === link.path ? activeBeamUnderline : beamUnderline
+                }`}
+              >
+                {link.name}
+              </button>
+            ))}
+            
+            {/* Booking Dropdown for Desktop */}
+            <div className="relative group">
+              <button className={`${beamUnderline} flex items-center gap-1`}>
+                Booking
+                <ChevronDown className="w-4 h-4" />
+              </button>
+              
+              {/* Dropdown Menu */}
+              <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform group-hover:translate-y-0 translate-y-2 z-50">
+                <div className="py-2">
+                  <button
+                    onClick={() => navigate("/tests")}
+                    className={`block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors ${
+                      location.pathname === "/tests" ? 'bg-gray-100 text-primary font-semibold' : ''
+                    }`}
+                  >
+                    Tests
+                  </button>
+                  <button
+                    onClick={() => navigate("/health-packages/all")}
+                    className={`block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors ${
+                      location.pathname === "/health-packages/all" ? 'bg-gray-100 text-primary font-semibold' : ''
+                    }`}
+                  >
+                    Packages
+                  </button>
+                </div>
+              </div>
+            </div>
+          </nav>
+          
+          {/* Auth Buttons - Right Side */}
+          <div className="flex items-center gap-2 sm:gap-4 md:gap-6 lg:gap-8">
+            {!isAuthenticated ? (
             <>
               <button onClick={() => navigate("/login-selection")} className={`${beamUnderline} hidden lg:block`}>
                 Login
@@ -238,6 +287,7 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
               </button>
             </>
           )}
+        </div>
         </div>
 
       </div>

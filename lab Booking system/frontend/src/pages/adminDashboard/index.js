@@ -3753,7 +3753,7 @@ export default function AdminDashboardIndex() {
   // Fetch appointments when bookings tab is active
   useEffect(() => {
     if (activeTab === 'bookings' && user?.token) {
-      fetchAppointmentsAdmin();
+      fetchBookings();
     }
   }, [activeTab, user]);
 
@@ -4039,7 +4039,7 @@ export default function AdminDashboardIndex() {
         body: JSON.stringify({ status: newStatus })
       });
       if (response.ok) {
-        fetchAppointmentsAdmin();
+        fetchBookings();
         await Swal.fire({
           icon: 'success',
           title: 'Status Updated',
