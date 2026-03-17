@@ -73,9 +73,9 @@ export default function RecommendedDetail() {
         let apiCategory = "";
 
         if (type === "test" && id) {
-          url = createApiUrl('/api/tests/${id}');
+          url = createApiUrl(`/api/tests/${id}`);
         } else if (type === "package" && id) {
-          url = createApiUrl('/api/packages/${id}');
+          url = createApiUrl(`/api/packages/${id}`);
         }
 
         if (url) {

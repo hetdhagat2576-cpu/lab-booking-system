@@ -21,7 +21,7 @@ const getApiBaseUrl = () => {
   
   // 4. Production: Use separate backend URL
   console.log('Using production API URL - separate backend');
-  return process.env.REACT_APP_API_URL || 'https://lab-booking-backend.vercel.app/api';
+  return process.env.REACT_APP_API_URL || 'https://backend-apckl0ugk-hetdhagat2576-8656s-projects.vercel.app/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();

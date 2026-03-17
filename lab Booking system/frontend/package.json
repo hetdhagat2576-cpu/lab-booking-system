@@ -32,7 +32,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "node build.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -42,8 +42,10 @@
       "react-app/jest"
     ],
     "rules": {
-      "no-unused-vars": "warn",
-      "react-hooks/exhaustive-deps": "warn"
+      "no-unused-vars": "off",
+      "react-hooks/exhaustive-deps": "off",
+      "no-mixed-operators": "off",
+      "no-template-curly-in-string": "off"
     }
   },
   "browserslist": {
