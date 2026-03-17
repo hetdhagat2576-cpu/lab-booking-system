@@ -172,7 +172,7 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5001;
 
 // Only start server if not in Vercel environment
-if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+if (process.env.NODE_ENV !== 'production' || process.env.VERCEL !== '1') {
   const server = http.createServer(app);
 
   // WebSocket setup (only for local development)

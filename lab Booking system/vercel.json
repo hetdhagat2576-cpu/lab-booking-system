@@ -19,7 +19,15 @@
       "dest": "/backend/server.js"
     },
     {
-      "src": "/backend/(.*)",
+      "src": "/uploads/(.*)",
+      "dest": "/backend/server.js"
+    },
+    {
+      "src": "/health",
+      "dest": "/backend/server.js"
+    },
+    {
+      "src": "/",
       "dest": "/backend/server.js"
     },
     {
