@@ -9,14 +9,18 @@
       }
     },
     {
-      "src": "api/index.js",
+      "src": "backend/server.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/index.js"
+      "dest": "/backend/server.js"
+    },
+    {
+      "src": "/backend/(.*)",
+      "dest": "/backend/server.js"
     },
     {
       "src": "/(.*)",
@@ -25,10 +29,5 @@
   ],
   "env": {
     "NODE_ENV": "production"
-  },
-  "functions": {
-    "api/index.js": {
-      "maxDuration": 30
-    }
   }
 }
