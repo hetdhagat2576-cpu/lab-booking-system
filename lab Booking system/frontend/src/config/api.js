@@ -19,9 +19,9 @@ const getApiBaseUrl = () => {
     return 'http://localhost:5001';
   }
   
-  // 4. Production: Use the configured backend URL
-  console.log('Using production API URL from environment');
-  return process.env.REACT_APP_API_URL || 'https://lab-booking-system-backend.vercel.app';
+  // 4. Production: Use separate backend URL
+  console.log('Using production API URL - separate backend');
+  return process.env.REACT_APP_API_URL || 'https://lab-booking-backend.vercel.app';
 };
 
 const API_BASE_URL = getApiBaseUrl();
