@@ -92,7 +92,7 @@ const createBooking = async (req, res) => {
       time,
       duration,
       purpose: purpose || packageName || 'Lab Test',
-      patientName,
+      patientName: `${req.user.name} (${req.user.email})`, // Auto-populate with user name and email
       packageName,
       packagePrice: packagePrice || 0,
       totalAmount: totalAmount || 0,

@@ -48,7 +48,7 @@ const showSuccessAlert = (title, message) => {
 export default function FeedbackIndex() {
   const navigate = useNavigate();
   const { ChevronLeft, Send } = IconConfig;
-  const { isAuthenticated, isAdmin, isLabTechnician, loading } = useAuth();
+  const { isAuthenticated, isAdmin, loading } = useAuth();
 
   const [form, setForm] = useState({
     bookingEaseRating: 5,
@@ -131,7 +131,7 @@ export default function FeedbackIndex() {
       return;
     }
 
-    // Allow access for authenticated users and lab technicians
+    // Allow access for authenticated users
     const stored = localStorage.getItem("lab_user");
     const user = stored ? JSON.parse(stored) : null;
     const token = user?.token;

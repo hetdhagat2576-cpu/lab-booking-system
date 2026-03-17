@@ -256,10 +256,24 @@ const downloadReportPDF = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Report not found' });
     }
 
+    // Check if user has permission to download this report
+    const userId = req.user._id;
+    const userRole = req.user.role;
+    
+    // Admin can download any report
+    // Lab technician can download reports they created
+    // User can download their own reports
+    if (userRole !== 'admin' && 
+        report.technicianId._id.toString() !== userId && 
+        report.patientId._id.toString() !== userId) {
+      return res.status(403).json({ success: false, message: 'Access denied. You do not have permission to download this report.' });
+    }
+
     try {
       const pdfBuffer = await generateReportPDF(report);
       
-      const filename = `Lab_Report_${report.patientId?.name || 'Patient'}_${report._id.toString().slice(-8)}.pdf`;
+      const patientName = typeof report.patientId?.name === 'string' ? report.patientId.name : report.patientId?.name?.name || 'Patient';
+      const filename = `Lab_Report_${patientName}_${report._id.toString().slice(-8)}.pdf`;
       
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -269,21 +283,22 @@ const downloadReportPDF = async (req, res) => {
     } catch (pdfError) {
       console.error('PDF generation error:', pdfError);
       // Fallback: send HTML as text file
+      const patientName = typeof report.patientId?.name === 'string' ? report.patientId.name : report.patientId?.name?.name || 'Patient';
       const htmlContent = `
         <html>
         <head><title>Lab Report - ${report.packageName}</title></head>
         <body>
           <h1>Lab Report</h1>
-          <p>Patient: ${report.patientId?.name}</p>
-          <p>Date: ${new Date(report.testDate).toLocaleDateString()}</p>
+          <p>Patient: ${patientName}</p>
+          <p>Date: ${new Date(report.testDate || report.createdAt).toLocaleDateString()}</p>
           <h2>Test Results:</h2>
           ${report.selectedTests?.map(test => 
             `<p><strong>${test.name}:</strong> ${test.result} ${test.unit || ''} (${test.status})</p>`
-          ).join('')}
+          ).join('') || '<p>No test results available</p>'}
           <h2>Summary:</h2>
-          <p>${report.summary}</p>
+          <p>${report.summary || 'No summary provided.'}</p>
           <h2>Recommendations:</h2>
-          <p>${report.recommendations}</p>
+          <p>${report.recommendations || 'No specific recommendations.'}</p>
         </body>
         </html>
       `;

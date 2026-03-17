@@ -1,4 +1,7 @@
 const Feedback = require('../models/feedback');
+const Booking = require('../models/booking');
+const User = require('../models/user');
+
 
 // Create feedback from user form (public)
 const createPublicFeedback = async (req, res) => {
@@ -317,6 +320,7 @@ const getMyFeedbacks = async (req, res) => {
 };
  
 module.exports = {
+  // General feedback functions
   createPublicFeedback,
   getAllFeedbacks,
   getFeedbackById,

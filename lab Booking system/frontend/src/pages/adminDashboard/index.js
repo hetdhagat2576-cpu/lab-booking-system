@@ -3724,14 +3724,10 @@ export default function AdminDashboardIndex() {
     if (activeTab === 'bookings' && user?.token) {
       fetchBookings();
 
-      // Set up polling to refresh bookings every 10 seconds
-      const pollingInterval = setInterval(() => {
-        fetchBookings();
-      }, 10000);
-
-      // Cleanup interval when component unmounts or tab changes
+      // Remove polling to reduce excessive API calls
+      // Bookings will only be fetched when tab is activated or after actions
       return () => {
-        clearInterval(pollingInterval);
+        // Cleanup function
       };
     }
   }, [activeTab, user, fetchBookings]);
@@ -5012,7 +5008,7 @@ export default function AdminDashboardIndex() {
                   <div>
                     <p className="text-sm font-medium text-gray-600">Pending</p>
                     <p className="text-3xl font-bold text-yellow-600 mt-2">
-                      {appointments.filter(a => (a.status === 'pending' || a.adminStatus === 'pending')).length}
+                      {appointments.filter(a => a.adminStatus === 'pending').length}
                     </p>
                   </div>
                   <div className="p-3 bg-yellow-100 rounded-lg">
@@ -5030,7 +5026,7 @@ export default function AdminDashboardIndex() {
                   <div>
                     <p className="text-sm font-medium text-gray-600">Approved</p>
                     <p className="text-3xl font-bold text-green-600 mt-2">
-                      {appointments.filter(a => (a.status === 'approved' || a.adminStatus === 'approved')).length}
+                      {appointments.filter(a => a.adminStatus === 'approved').length}
                     </p>
                   </div>
                   <div className="p-3 bg-green-100 rounded-lg">
@@ -5048,7 +5044,7 @@ export default function AdminDashboardIndex() {
                   <div>
                     <p className="text-sm font-medium text-gray-600">Rejected</p>
                     <p className="text-3xl font-bold text-red-600 mt-2">
-                      {appointments.filter(a => (a.status === 'rejected' || a.adminStatus === 'rejected')).length}
+                      {appointments.filter(a => a.adminStatus === 'rejected').length}
                     </p>
                   </div>
                   <div className="p-3 bg-red-100 rounded-lg">
@@ -5172,27 +5168,24 @@ export default function AdminDashboardIndex() {
                             </td>
                             <td className="p-4">
                               <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                appointment.status === 'pending' || appointment.adminStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                appointment.status === 'approved' || appointment.adminStatus === 'approved' ? 'bg-green-100 text-green-800' :
-                                appointment.status === 'rejected' || appointment.adminStatus === 'rejected' ? 'bg-red-100 text-red-800' :
+                                appointment.adminStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                appointment.adminStatus === 'approved' ? 'bg-green-100 text-green-800' :
+                                appointment.adminStatus === 'rejected' ? 'bg-red-100 text-red-800' :
                                 appointment.status === 'Scheduled' ? 'bg-blue-100 text-blue-800' :
-                                appointment.status === 'Completed' ? 'bg-green-100 text-green-800' :
-                                appointment.status === 'Canceled' ? 'bg-red-100 text-red-800' :
-                                appointment.adminStatus === 'approving' ? 'bg-blue-100 text-blue-800' :
-                                appointment.adminStatus === 'rejecting' ? 'bg-red-100 text-red-800' :
                                 'bg-gray-100 text-gray-800'
                               }`}>
                                 {appointment.adminStatus === 'approving' ? 'Approving...' :
                                  appointment.adminStatus === 'rejecting' ? 'Rejecting...' :
                                  appointment.adminStatus === 'approved' ? 'Approved' :
                                  appointment.adminStatus === 'rejected' ? 'Rejected' :
+                                 appointment.adminStatus === 'pending' ? 'Pending' :
                                  appointment.status}
                               </span>
                             </td>
                             <td className="p-4">
                               <div className="flex items-center justify-end gap-2">
-                                {/* Show Approve/Reject buttons for pending bookings */}
-                                {(appointment.status === 'pending' || appointment.adminStatus === 'pending') && (
+                                {/* Show Approve/Reject buttons ONLY for pending bookings */}
+                                {appointment.adminStatus === 'pending' && (
                                   <>
                                     <CButton
                                       onClick={() => handleApprove(appointment._id)}
@@ -5248,14 +5241,27 @@ export default function AdminDashboardIndex() {
                                         </>
                                       )}
                                     </CButton>
-                                    <CButton
-                                      onClick={() => handleDeleteBooking(appointment._id, appointment)}
-                                      className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-lg text-sm flex items-center gap-1"
-                                      title="Delete Booking"
-                                    >
-                                      <IconConfig.Trash2 size={14} />
-                                    </CButton>
                                   </>
+                                )}
+                                {/* Show Delete button for approved bookings */}
+                                {appointment.adminStatus === 'approved' && (
+                                  <CButton
+                                    onClick={() => handleDeleteBooking(appointment._id, appointment)}
+                                    className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-lg text-sm flex items-center gap-1"
+                                    title="Delete Booking"
+                                  >
+                                    <IconConfig.Trash2 size={14} />
+                                  </CButton>
+                                )}
+                                {/* Show Delete button for rejected bookings */}
+                                {appointment.adminStatus === 'rejected' && (
+                                  <CButton
+                                    onClick={() => handleDeleteBooking(appointment._id, appointment)}
+                                    className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-lg text-sm flex items-center gap-1"
+                                    title="Delete Booking"
+                                  >
+                                    <IconConfig.Trash2 size={14} />
+                                  </CButton>
                                 )}
                                 {/* Show Complete/Cancel buttons for scheduled appointments */}
                                 {appointment.status === 'Scheduled' && (
@@ -5589,7 +5595,7 @@ export default function AdminDashboardIndex() {
         {/* Reports Management */}
         {activeTab === "reports" && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
               <div 
                 onClick={() => setReportFilter('all')}
                 className="p-4 rounded-lg border cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105"
@@ -5611,17 +5617,6 @@ export default function AdminDashboardIndex() {
               >
                 <div className="text-2xl font-bold" style={{ color: Theme.colors.emerald600 }}>{reports.filter(r => r.status === 'Completed').length}</div>
                 <div className="text-sm" style={{ color: Theme.colors.emerald600 }}>Completed</div>
-              </div>
-              <div 
-                onClick={() => setReportFilter('In Progress')}
-                className="p-4 rounded-lg border cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-105"
-                style={{
-                  backgroundColor: reportFilter === 'In Progress' ? Theme.colors.amber100 : Theme.colors.amber50,
-                  borderColor: reportFilter === 'In Progress' ? Theme.colors.amber600 : Theme.colors.amber100
-                }}
-              >
-                <div className="text-2xl font-bold" style={{ color: Theme.colors.amber600 }}>{reports.filter(r => r.status === 'In Progress').length}</div>
-                <div className="text-sm" style={{ color: Theme.colors.amber600 }}>In Progress</div>
               </div>
               <div 
                 onClick={() => setReportFilter('Pending')}
@@ -5677,7 +5672,6 @@ export default function AdminDashboardIndex() {
                       <tr className="border-b border-gray-200 bg-gray-50/50 backdrop-blur-sm">
                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Report ID</th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Patient</th>
-                        <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Package</th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Test Date</th>
                         <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
@@ -5694,11 +5688,6 @@ export default function AdminDashboardIndex() {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex flex-col">
                               <span className="text-sm font-medium text-gray-900">{report.patientId?.name || 'N/A'}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex flex-col">
-                              <span className="text-sm font-medium text-gray-900">{report.technicianId?.email || 'N/A'}</span>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -5724,20 +5713,83 @@ export default function AdminDashboardIndex() {
                           <td className="px-6 py-4 whitespace-nowrap text-sm">
                             <div className="flex items-center gap-2">
                               <button
-                                onClick={() => window.open(`/reportView/${report._id}`, '_blank')}
+                                onClick={() => {
+                                  // Ensure user is authenticated before opening report
+                                  const user = JSON.parse(localStorage.getItem('lab_user'));
+                                  if (!user || !user.token) {
+                                    Swal.fire({
+                                      icon: 'error',
+                                      title: 'Authentication Required',
+                                      text: 'Please log in again to view reports',
+                                      confirmButtonColor: '#3085d6'
+                                    });
+                                    return;
+                                  }
+                                  
+                                  // Set sessionStorage for back navigation
+                                  sessionStorage.setItem('cameFromAdminDashboard', 'true');
+                                  
+                                  // Open report in new tab with a small delay to ensure sessionStorage is set
+                                  setTimeout(() => {
+                                    window.open(`/reportView/${report._id}`, '_blank');
+                                  }, 100);
+                                }}
                                 className="text-blue-600 hover:text-blue-800 font-medium p-2 rounded-lg hover:bg-blue-50 transition-colors"
                                 title="View Report"
                               >
                                 <IconConfig.Eye size={16} />
                               </button>
                               <button
-                                onClick={() => {
-                                  const link = document.createElement('a');
-                                  link.href = `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/${report._id}/download`;
-                                  link.download = `Report_${report._id.slice(-8)}.pdf`;
-                                  document.body.appendChild(link);
-                                  link.click();
-                                  document.body.removeChild(link);
+                                onClick={async () => {
+                                  try {
+                                    // Get token from localStorage
+                                    const storedUser = JSON.parse(localStorage.getItem('lab_user'));
+                                    const token = storedUser?.token;
+                                    
+                                    if (!token) {
+                                      alert('Please log in to download reports');
+                                      return;
+                                    }
+                                    
+                                    const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/${report._id}/download`, {
+                                      method: 'GET',
+                                      headers: {
+                                        'Authorization': `Bearer ${token}`,
+                                      },
+                                    });
+                                    
+                                    if (!response.ok) {
+                                      if (response.status === 403) {
+                                        alert('Access denied. You do not have permission to download this report.');
+                                        return;
+                                      } else if (response.status === 404) {
+                                        alert('Report not found.');
+                                        return;
+                                      }
+                                      throw new Error(`Download failed: ${response.status}`);
+                                    }
+                                    
+                                    const blob = await response.blob();
+                                    if (blob.size === 0) {
+                                      alert('Downloaded file is empty. Please try again.');
+                                      return;
+                                    }
+                                    
+                                    const url = window.URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    const patientName = report.patientId?.name || 'Patient';
+                                    a.download = `Lab_Report_${patientName}_${report._id.slice(-8)}.pdf`;
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    window.URL.revokeObjectURL(url);
+                                    document.body.removeChild(a);
+                                    
+                                    alert('Report downloaded successfully!');
+                                  } catch (error) {
+                                    console.error('Download error:', error);
+                                    alert('Failed to download report. Please try again.');
+                                  }
                                 }}
                                 className="text-green-600 hover:text-green-800 font-medium p-2 rounded-lg hover:bg-green-50 transition-colors"
                                 title="Download Report"

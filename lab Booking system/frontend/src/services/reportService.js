@@ -110,6 +110,22 @@ export const reportService = {
     });
     return response.data;
   },
+
+  // Alternative download method for direct usage (same as admin/labtech)
+  downloadReportDirect: async (reportId, token) => {
+    const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/${reportId}/download`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Download failed: ${response.status}`);
+    }
+    
+    return await response.blob();
+  },
 };
 
 export default reportService;
