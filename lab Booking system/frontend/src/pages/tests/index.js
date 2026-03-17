@@ -145,7 +145,7 @@ export default function AllTests() {
             <h1 className="text-lg md:text-xl font-bold text-slate-800 tracking-tight">
               All Tests
             </h1>
-            <span className="ml-auto text-xs font-bold text-primary">{tests.length} items</span>
+            <span className="ml-auto text-xs font-bold text-primary">{tests ? tests.length : 0} items</span>
             <button
               onClick={handleRefresh}
               disabled={refreshing}
@@ -159,11 +159,12 @@ export default function AllTests() {
 
         <div className="container mx-auto px-4 py-8 overflow-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tests.map((test) => (
-              <div
-                key={test._id || test.id || Math.random()}
-                className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all overflow-hidden"
-              >
+            {tests && tests.length > 0 ? (
+              tests.map((test, index) => (
+                <div
+                  key={test._id || test.id || `test-${index}`}
+                  className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all overflow-hidden"
+                >
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <h4 className="text-lg font-bold text-slate-800 flex-1">
@@ -222,7 +223,12 @@ export default function AllTests() {
                   </div>
                 </div>
               </div>
-            ))}
+              ))
+            ) : (
+              <div className="col-span-full text-center py-8">
+                <p className="text-slate-600">No tests available</p>
+              </div>
+            )}
           </div>
         </div>
       </main>

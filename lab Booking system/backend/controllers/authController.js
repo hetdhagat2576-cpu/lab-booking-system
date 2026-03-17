@@ -10,7 +10,8 @@ const mongoose = require('mongoose');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const { setSessionUser } = require('../utils/sessionUtils');
-const { sendOtpEmail } = require('../services/emailService');
+const { sendOtpEmail, sendPasswordResetEmail } = require('../services/emailService');
+const { createTransporter } = require('../config/emailConfig');
 
 const generateToken = (id) => {
   const jwtSecret = process.env.JWT_SECRET || 'fallback_secret_key_for_development_only';
@@ -22,93 +23,9 @@ const generateToken = (id) => {
   });
 };
 
-const sendPasswordResetEmail = async (email, resetToken, name = 'User') => {
-  const host = process.env.EMAIL_HOST;
-  const port = parseInt(process.env.EMAIL_PORT || '0', 10);
-  const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD;
-  const from = process.env.EMAIL_FROM || 'no-reply@labbooking.local';
-  
-  // Always create reset link for console fallback
-  const resetLink = `http://localhost:3000/reset-password?token=${resetToken}`;
-  
-  // DEV MODE: Always show reset link in console for testing
-  console.log('=================================');
-  console.log('🔗 PASSWORD RESET LINK:');
-  console.log('Link:', resetLink);
-  console.log('Email:', email);
-  console.log('Name:', name);
-  console.log('⏰ Expires in 1 hour');
-  console.log('=================================');
-  
-  if (!host || !port || !user || !pass) {
-    // Development fallback: log reset link to console
-    console.log('📧 Email transport not configured - Using console fallback');
-    return { sent: false, message: 'Email transport not configured - Reset link available in console' };
-  }
-  
-  const transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  });
-  
-  try {
-    await transporter.verify();
-  } catch (err) {
-    console.error('SMTP transporter verify failed:', err);
-    
-    // Development fallback: log reset link to console when email fails
-    console.log('📧 EMAIL FAILED - Using console fallback');
-    
-    // Provide Gmail setup instructions if it's a Gmail auth error
-    if (err.code === 'EAUTH' && host.includes('gmail.com')) {
-      console.log('\n=== GMAIL SETUP REQUIRED ===');
-      console.log('1. Enable 2-Factor Authentication on your Gmail account');
-      console.log('2. Go to: https://myaccount.google.com/apppasswords');
-      console.log('3. Generate an App Password for "Mail"');
-      console.log('4. Update EMAIL_PASS in .env with the 16-character app password');
-      console.log('5. Restart the backend server');
-      console.log('=============================\n');
-    }
-    
-    return { sent: false, message: `SMTP verify failed: ${err.message} - Reset link available in console` };
-  }
-
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; border-radius: 12px;">
-      <div style="background: white; padding: 30px; border-radius: 8px; text-align: center;">
-        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 7H19C20.1046 7 21 7.89543 21 9V19C21 20.1046 20.1046 21 19 21H9C7.89543 21 7 20.1046 7 19V15M3 13L9 7M3 13H7.5C8.32843 13 9 12.3284 9 11.5V7M3 13L7.5 8.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-        <h1 style="color: #333; margin-bottom: 10px; font-size: 28px;">Password Reset</h1>
-        <p style="color: #666; margin-bottom: 30px; font-size: 16px;">Hi ${name},</p>
-        <p style="color: #666; margin-bottom: 20px; font-size: 16px;">We received a request to reset your password. Click the button below to reset it:</p>
-        <a href="${resetLink}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 18px; font-weight: bold; padding: 15px 30px; border-radius: 8px; text-decoration: none; margin: 20px 0; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">Reset Password</a>
-        <p style="color: #999; font-size: 14px; margin-top: 30px;">This link expires in 1 hour.</p>
-        <p style="color: #999; font-size: 14px;">If you didn't request this reset, please ignore this email.</p>
-        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
-          <p style="color: #999; font-size: 12px;">If the button doesn't work, copy and paste this link: ${resetLink}</p>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  try {
-    await transporter.sendMail({
-      from,
-      to: email,
-      subject: 'Reset Your Lab Booking Password',
-      text: `Reset your password by clicking this link: ${resetLink}. This link expires in 1 hour.`,
-      html,
-    });
-    return { sent: true };
-  } catch (err) {
-    return { sent: false, message: `SendMail failed: ${err.message}` };
-  }
+const sendPasswordResetEmailWrapper = async (email, resetToken, name = 'User') => {
+  const result = await sendPasswordResetEmail(email, resetToken, name);
+  return { sent: result.success, message: result.error };
 };
 
 
@@ -592,7 +509,7 @@ async function forgotPassword(req, res) {
     let emailMessage = '';
     
     try {
-      const result = await sendPasswordResetEmail(user.email, resetToken, user.name);
+      const result = await sendPasswordResetEmailWrapper(user.email, resetToken, user.name);
       emailSent = !!result.sent;
       if (!result.sent) {
         emailMessage = result.message;
@@ -993,7 +910,7 @@ async function resendPasswordReset(req, res) {
     let emailMessage = '';
     
     try {
-      const result = await sendPasswordResetEmail(user.email, resetToken, user.name);
+      const result = await sendPasswordResetEmailWrapper(user.email, resetToken, user.name);
       emailSent = !!result.sent;
       if (!result.sent) {
         emailMessage = result.message;

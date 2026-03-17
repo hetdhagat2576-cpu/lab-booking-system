@@ -1,29 +1,28 @@
 const nodemailer = require('nodemailer');
+require('dotenv').config();
 
 // Create a reusable transporter object using SMTP transport
 const createTransporter = () => {
-  // Check if email credentials are properly configured
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn('Email credentials not configured. Using fallback configuration.');
+  // Use service: 'gmail' as it's more robust for Nodemailer
+  const user = (process.env.EMAIL_USER || 'hetdhagat2576@gmail.com').trim();
+  const pass = (process.env.EMAIL_PASS || '').trim();
+  
+  if (!pass) {
+    console.error('CRITICAL ERROR: EMAIL_PASS is missing in .env file!');
   }
   
-  return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-    port: process.env.EMAIL_PORT || 587,
-    secure: process.env.EMAIL_SECURE === 'true', 
+  const transporterConfig = {
+    service: 'gmail',
     auth: {
-      user: process.env.EMAIL_USER || 'hetdhagat2576@gmail.com',
-      pass: process.env.EMAIL_PASS
+      user: user,
+      pass: pass
     },
     tls: {
       rejectUnauthorized: false 
-    },
-    connectionTimeout: 60000, 
-    greetingTimeout: 30000,   
-    socketTimeout: 60000,     
-    debug: process.env.NODE_ENV === 'development', 
-    logger: process.env.NODE_ENV === 'development' 
-  });
+    }
+  };
+
+  return nodemailer.createTransport(transporterConfig);
 };
 
 // Verify transporter configuration

@@ -18,6 +18,9 @@ export default function UserProfileIndex() {
   const { user, updateUser } = useAuth();
   const { User, Mail, MapPin, Activity, Award, Calendar, Phone, MessageSquare, FileText, Settings, History, Star, ChevronLeft, Trash2, X, Clock } = IconConfig;
   
+  // Ref to prevent multiple simultaneous API calls
+  const isFetchingRef = React.useRef(false);
+  
   // State for user profile fields
   const [formData, setFormData] = useState({
     fullName: "",
@@ -40,8 +43,6 @@ export default function UserProfileIndex() {
   const [bookings, setBookings] = useState([]);
   const [showAllBookings, setShowAllBookings] = useState(false);
   const [showAllReports, setShowAllReports] = useState(false);
-  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
-  const [selectedBookingForFeedback, setSelectedBookingForFeedback] = useState(null);
 
   // Memoized sidebar navigation items to prevent infinite re-render
   const sidebarItems = React.useMemo(() => [
@@ -78,11 +79,10 @@ export default function UserProfileIndex() {
   ], [feedbacks.length, contacts.length, reports.length]);
 
   const fetchAllUserData = useCallback(async () => {
-    if (!user || !user.token) return;
+    if (!user || !user.token || isFetchingRef.current) return;
 
     // Prevent multiple simultaneous calls
-    if (loading) return;
-
+    isFetchingRef.current = true;
     setLoading(true);
 
     // Fetch user profile data
@@ -172,16 +172,19 @@ export default function UserProfileIndex() {
       console.error('Error fetching reports:', error);
     } finally {
       setLoading(false);
+      // Reset the fetching ref
+      isFetchingRef.current = false;
     }
-  }, [user]); // Dependencies for useCallback - removed updateUser to prevent infinite loop
+  }, [user?._id, user?.token]); // Only depend on user ID and token
 
-  // Fetch all user data on component mount
+  // Single useEffect to handle user authentication and data fetching
   useEffect(() => {
     if (!user || (user.role && user.role !== "user")) {
       navigate("/user-login");
       return;
     }
     
+    // Set initial form data
     const initialForm = {
       fullName: user?.name || user?.fullName || "",
       email: user?.email || "",
@@ -196,14 +199,10 @@ export default function UserProfileIndex() {
       const hasChanged = Object.keys(initialForm).some(key => prev[key] !== initialForm[key]);
       return hasChanged ? initialForm : prev;
     });
-  }, [user?._id, user?.token, navigate]); // Removed fetchAllUserData from dependencies
 
-  // Separate effect to fetch user data when user changes - optimized to prevent excessive calls
-  useEffect(() => {
-    if (user && user.token && user.role === "user") {
-      fetchAllUserData();
-    }
-  }, [user?._id]); // Only depend on user ID to prevent multiple calls
+    // Fetch all user data
+    fetchAllUserData();
+  }, [user?._id, user?.token, user?.role, navigate, fetchAllUserData]); // Combined dependencies with fetchAllUserData
 
   // Single handleChange function for all form inputs
   const handleChange = useCallback((e) => {
@@ -1101,21 +1100,18 @@ export default function UserProfileIndex() {
                   </Card>
                 )}
 
+                {/* Generate Reports Tab */}
                 {activeTab === 3 && (
                   <Card elevation={0} className="rounded-2xl border border-slate-200 p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                       <div className="flex items-center gap-3">
-                        <FileText className="w-6 h-6" style={{ color: Theme.colors.primary }} />
-                        <Typography variant="h6" fontWeight="700" style={{ color: Theme.colors.primary }}>Your Lab Reports</Typography>
+                        <FileText className="w-6 h-6 text-green-600" />
+                        <Typography variant="h6" fontWeight="700">Generate Reports</Typography>
                         <Chip 
                           label={reports.length} 
                           size="small" 
+                          color="success" 
                           variant="outlined"
-                          sx={{ 
-                            borderColor: Theme.colors.primary, 
-                            color: Theme.colors.primary,
-                            backgroundColor: `${Theme.colors.primary}08`
-                          }}
                         />
                       </div>
                       <div className="flex gap-2">
@@ -1150,32 +1146,21 @@ export default function UserProfileIndex() {
                               color: Theme.colors.primaryHover 
                             }
                           }}
-                          startIcon={<FileText size={16} />}
-                        >
-                          Refresh
-                        </Button>
-                      </div>
+                        startIcon={<FileText size={16} />}
+                      >
+                        Refresh
+                      </Button>
                     </div>
                     
                     {reports.length === 0 ? (
-                      <div className="rounded-2xl p-8 text-center border-2 border-dashed" style={{ backgroundColor: `${Theme.colors.primary}05`, borderColor: Theme.colors.primary }}>
-                        <FileText className="w-12 h-12 mx-auto mb-3" style={{ color: Theme.colors.primary }} />
-                        <Typography variant="h6" className="mb-2" style={{ color: Theme.colors.primary }}>No Reports Available Yet</Typography>
-                        <Typography variant="body2" className="mb-4" style={{ color: Theme.colors.textSecondary }}>Your lab reports will appear here once they are generated by the lab technician</Typography>
+                      <div className="bg-gray-50 border border-gray-200 rounded-2xl p-8 text-center">
+                        <FileText className="w-12 h-12 text-green-400 mx-auto mb-3" />
+                        <Typography variant="h6" className="text-gray-800 mb-2">No Reports Available Yet</Typography>
+                        <Typography variant="body2" className="text-gray-600 mb-4">Your lab reports will appear here once they are generated by the lab technician</Typography>
                         <Button 
                           variant="contained" 
                           onClick={() => navigate("/dashboard")}
-                          sx={{ 
-                            backgroundColor: Theme.colors.primary, 
-                            "&:hover": { 
-                              backgroundColor: Theme.colors.primaryHover,
-                              boxShadow: `0 4px 12px ${Theme.colors.primary}30`
-                            },
-                            borderRadius: '10px',
-                            px: 3,
-                            py: 1.5,
-                            fontWeight: 'bold'
-                          }}
+                          sx={{ backgroundColor: Theme.colors.primary, "&:hover": { backgroundColor: Theme.colors.primaryHover } }}
                         >
                           Book a Test
                         </Button>
@@ -1198,7 +1183,7 @@ export default function UserProfileIndex() {
                               
                               <div className="flex items-center justify-between">
                                 <span className="text-xs text-gray-400">
-                                  {new Date(report.testDate || report.createdAt).toLocaleDateString()}
+                                  {new Date(report.testDate).toLocaleDateString()}
                                 </span>
                                 <Chip 
                                   label="Completed"
@@ -1217,103 +1202,37 @@ export default function UserProfileIndex() {
                               </div>
                               
                               <div className="mt-4">
-                                <div className="flex gap-2">
-                                  <Button 
-                                    variant="outlined" 
-                                    size="small"
-                                    onClick={() => {
-                                      // Set sessionStorage to track that user came from user profile
-                                      sessionStorage.setItem('cameFromUserProfile', 'true');
-                                      // Open report in new tab
-                                      window.open(`/reportView/${report._id}`, '_blank');
-                                    }}
-                                    sx={{ 
-                                      borderColor: Theme.colors.primary, 
-                                      color: Theme.colors.primary,
-                                      '&:hover': {
-                                        borderColor: Theme.colors.primaryHover,
-                                        backgroundColor: `${Theme.colors.primary}08`
-                                      }
-                                    }}
-                                  >
-                                    View Report
-                                  </Button>
-                                  <Button 
-                                    variant="contained" 
-                                    size="small"
-                                    onClick={async () => {
+                                <Button 
+                                  variant="contained" 
+                                  size="small"
+                                  fullWidth
+                                  onClick={async () => {
                                     try {
-                                      // Get token from auth context or localStorage
-                                      let token = user?.token;
-                                      if (!token) {
-                                        const storedUser = JSON.parse(localStorage.getItem('lab_user'));
-                                        token = storedUser?.token;
-                                      }
-                                      
-                                      if (!token) {
-                                        Swal.fire({
-                                          icon: 'error',
-                                          title: 'Authentication Required',
-                                          text: 'Please log in to download reports.',
-                                          confirmButtonColor: Theme.colors.primary
-                                        });
-                                        return;
-                                      }
-                                      
                                       const response = await fetch(createApiUrl(`/api/reports/${report._id}/download`), {
                                         headers: {
-                                          Authorization: `Bearer ${token}`
+                                          Authorization: `Bearer ${user?.token || ""}`
                                         }
                                       });
                                       
                                       if (!response.ok) {
-                                        if (response.status === 403) {
-                                          Swal.fire({
-                                            icon: 'warning',
-                                            title: 'Access Denied',
-                                            text: 'You do not have permission to download this report.',
-                                            confirmButtonColor: Theme.colors.primary
-                                          });
-                                          return;
-                                        } else if (response.status === 404) {
-                                          Swal.fire({
-                                            icon: 'warning',
-                                            title: 'Report Not Found',
-                                            text: 'The requested report could not be found.',
-                                            confirmButtonColor: Theme.colors.primary
-                                          });
-                                          return;
-                                        }
-                                        throw new Error(`Download failed: ${response.status}`);
+                                        throw new Error('Failed to fetch PDF');
                                       }
                                       
                                       const blob = await response.blob();
-                                      if (blob.size === 0) {
-                                        Swal.fire({
-                                          icon: 'error',
-                                          title: 'Download Failed',
-                                          text: 'Downloaded file is empty. Please try again.',
-                                          confirmButtonColor: Theme.colors.primary
-                                        });
-                                        return;
-                                      }
-                                      
                                       const url = window.URL.createObjectURL(blob);
                                       const link = document.createElement('a');
                                       link.href = url;
-                                      const patientName = report.patientId?.name || 'Patient';
-                                      link.download = `Lab_Report_${patientName}_${report._id.toString().slice(-8)}.pdf`;
+                                      link.download = `Lab_Report_${report.packageName}_${report._id.toString().slice(-8)}.pdf`;
                                       document.body.appendChild(link);
                                       link.click();
-                                      window.URL.revokeObjectURL(url);
                                       document.body.removeChild(link);
+                                      window.URL.revokeObjectURL(url);
                                       
                                       Swal.fire({
                                         icon: 'success',
-                                        title: 'Download Successful',
-                                        text: 'Your lab report has been downloaded successfully.',
+                                        title: 'Download Started',
+                                        text: 'Your lab report is being downloaded.',
                                         timer: 2000,
-                                        timerProgressBar: true,
                                         showConfirmButton: false
                                       });
                                     } catch (error) {
@@ -1331,18 +1250,19 @@ export default function UserProfileIndex() {
                                     "&:hover": { backgroundColor: Theme.colors.primaryHover },
                                     borderRadius: '8px',
                                     textTransform: 'none',
-                                    fontWeight: 'bold'
+                                    fontSize: '0.75rem',
+                                    py: 1
                                   }}
                                 >
-                                  Download Report
+                                  Download PDF
                                 </Button>
-                                </div>
                               </div>
                             </CardContent>
                           </Card>
                         ))}
                       </div>
                     )}
+                    </div>
                   </Card>
                 )}
 
@@ -1351,8 +1271,8 @@ export default function UserProfileIndex() {
                   <Card elevation={0} className="rounded-2xl border border-slate-200 p-6 shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                       <div className="flex items-center gap-3">
-                        <History className="w-6 h-6" style={{ color: Theme.colors.primary }} />
-                        <Typography variant="h6" fontWeight="700" style={{ color: Theme.colors.primary }}>
+                        <History className="w-6 h-6 text-primary-600" />
+                        <Typography variant="h6" fontWeight="700" className="text-slate-800">
                           Your Booking History
                         </Typography>
                       </div>
@@ -1444,124 +1364,108 @@ export default function UserProfileIndex() {
                   {bookings.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {bookings.slice(0, showAllBookings ? bookings.length : 3).map((booking, index) => (
-                        <Card key={index} elevation={1} className="rounded-xl hover:shadow-lg transition-shadow duration-300 border border-gray-100 bg-white p-6">
-                          {/* Header with icon, title, date and status */}
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="flex items-start space-x-3">
-                              {/* Document Icon */}
-                              <div className="flex-shrink-0">
-                                <svg className="w-6 h-6 text-gray-600 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                              </div>
-                              
+                        <Card key={index} elevation={1} className="rounded-xl hover:shadow-md transition-all duration-200 border border-gray-100 bg-white">
+                          <CardContent className="p-5">
+                            <div className="flex justify-between items-start mb-3">
                               <div className="flex-1">
-                                <h3 className="text-lg font-bold text-gray-900 mb-1">
-                                  Lab Report
+                                <h3 className="text-lg font-semibold text-teal-600 mb-1">
+                                  {booking.testName || booking.packageName || "Lab Test"}
                                 </h3>
-                                <div className="flex items-center space-x-4 text-sm text-gray-600">
-                                  <span>{new Date(booking.date || booking.createdAt).toLocaleDateString()}</span>
-                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    (booking.adminStatus || booking.status) === "completed" 
-                                      ? 'bg-green-100 text-green-800' 
-                                      : (booking.adminStatus || booking.status) === "approved" || (booking.adminStatus || booking.status) === "confirmed"
-                                      ? 'bg-blue-100 text-blue-800'
-                                      : (booking.adminStatus || booking.status) === "rejected" || (booking.adminStatus || booking.status) === "cancelled"
-                                      ? 'bg-red-100 text-red-800'
-                                      : 'bg-yellow-100 text-yellow-800'
-                                  }`}>
-                                    {(booking.adminStatus || booking.status) === "completed" ? "Completed" : 
-                                     (booking.adminStatus || booking.status) === "approved" || (booking.adminStatus || booking.status) === "confirmed" ? "Confirmed" :
-                                     (booking.adminStatus || booking.status) === "rejected" || (booking.adminStatus || booking.status) === "cancelled" ? "Cancelled" :
-                                     "Pending"}
-                                  </span>
-                                </div>
+                                <p className="text-sm text-gray-500">
+                                  {new Date(booking.date || booking.createdAt).toLocaleDateString()} at {booking.time || 'Scheduled Time'}
+                                </p>
+                                {booking.rescheduledDate && (
+                                  <p className="text-xs text-blue-600 mt-1">
+                                    <strong>Rescheduled to:</strong> {new Date(booking.rescheduledDate).toLocaleDateString()} at {booking.rescheduledTime || booking.time}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <FileText className="w-4 h-4 text-teal-500" />
                               </div>
                             </div>
-                          </div>
-                          
-                          {/* Test Name */}
-                          <div className="mb-4">
-                            <h4 className="text-base font-semibold text-gray-900 mb-2">
-                              {booking.testName || booking.packageName || "Aspartate Aminotransferase (AST / SGOT) Test"}
-                            </h4>
-                          </div>
-                          
-                          {/* Details */}
-                          <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center space-x-4 text-sm text-gray-600">
-                              <span>6 tests included</span>
-                              <span>Technician: Lab...</span>
+                            
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="text-sm font-medium text-gray-700">
+                                {booking.testName || booking.packageName || "Lab Test"}
+                              </span>
+                              <Chip 
+                                label={booking.adminStatus || booking.status || "pending"}
+                                size="small"
+                                color={
+                                  (booking.adminStatus || booking.status) === "completed" ? "success" : 
+                                  (booking.adminStatus || booking.status) === "approved" || (booking.adminStatus || booking.status) === "confirmed" ? "primary" : 
+                                  (booking.adminStatus || booking.status) === "rejected" || (booking.adminStatus || booking.status) === "cancelled" ? "error" :
+                                  "warning"
+                                }
+                                variant="outlined"
+                                className="font-medium text-xs"
+                              />
                             </div>
-                          </div>
-                          
-                          {/* Download Button - Only show for completed bookings */}
-                          {(booking.adminStatus || booking.status) === "completed" && (
-                            <div className="flex justify-end gap-2 mb-4">
-                              <button
-                                onClick={() => {
-                                  setSelectedBookingForFeedback(booking);
-                                  setShowFeedbackForm(true);
-                                }}
-                                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 font-medium text-sm flex items-center space-x-2"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                                </svg>
-                                <span>Give Feedback</span>
-                              </button>
-                              <button
-                                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-sm flex items-center space-x-2"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                <span>Download PDF</span>
-                              </button>
-                            </div>
-                          )}
-                          
-                          {/* Action buttons for non-completed bookings */}
-                          {(booking.adminStatus || booking.status) !== "completed" && (
-                            <div className="flex justify-end space-x-2">
-                              {(booking.adminStatus || booking.status) === "pending" && (
-                                <button
-                                  onClick={() => handleCancelBooking(booking._id)}
-                                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium text-sm flex items-center space-x-2"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                  </svg>
-                                  <span>Cancel</span>
-                                </button>
+                            
+                            <div className="mt-3 pt-3 border-t border-gray-100">
+                              <p className="text-sm text-gray-600 mb-3">
+                                {booking.labName || booking.location || "Wellness Center Lab"}
+                              </p>
+                              {booking.rejectionReason && (
+                                <p className="text-xs text-red-600 mb-2">
+                                  <strong>Reason:</strong> {booking.rejectionReason}
+                                </p>
                               )}
                               
+                              {/* Action buttons based on booking status */}
+                              {(booking.adminStatus || booking.status) === "pending" && (
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="error"
+                                    onClick={() => handleCancelBooking(booking._id)}
+                                    startIcon={<X className="w-4 h-4" />}
+                                    sx={{
+                                      fontSize: '0.75rem',
+                                      py: 0.5,
+                                      px: 1,
+                                      borderColor: '#ef4444',
+                                      color: '#ef4444',
+                                      '&:hover': {
+                                        borderColor: '#dc2626',
+                                        backgroundColor: '#fef2f2'
+                                      }
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              )}
+                              
+                              {/* Show Reschedule button only for cancelled/rejected bookings */}
                               {(booking.adminStatus || booking.status) === "cancelled" || (booking.adminStatus || booking.status) === "rejected" ? (
-                                <button
-                                  onClick={() => handleRescheduleBooking(booking)}
-                                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium text-sm flex items-center space-x-2"
-                                >
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                  </svg>
-                                  <span>Reschedule</span>
-                                </button>
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="primary"
+                                    onClick={() => handleRescheduleBooking(booking)}
+                                    startIcon={<Clock className="w-4 h-4" />}
+                                    sx={{
+                                      fontSize: '0.75rem',
+                                      py: 0.5,
+                                      px: 1,
+                                      borderColor: Theme.colors.primary,
+                                      color: Theme.colors.primary,
+                                      '&:hover': {
+                                        borderColor: Theme.colors.primaryHover,
+                                        backgroundColor: `${Theme.colors.primary}08`
+                                      }
+                                    }}
+                                  >
+                                    Reschedule
+                                  </Button>
+                                </div>
                               ) : null}
                             </div>
-                          )}
-                          
-                          {/* Additional information */}
-                          <div className="mt-4 pt-4 border-t border-gray-100 text-sm text-gray-500">
-                            <div className="flex justify-between">
-                              <span>Lab: {booking.labName || booking.location || "Wellness Center Lab"}</span>
-                              <span>Time: {booking.time || 'Scheduled Time'}</span>
-                            </div>
-                            {booking.rescheduledDate && (
-                              <div className="mt-1 text-blue-600">
-                                <span>Rescheduled to: {new Date(booking.rescheduledDate).toLocaleDateString()} at {booking.rescheduledTime || booking.time}</span>
-                              </div>
-                            )}
-                          </div>
+                          </CardContent>
                         </Card>
                       ))}
                     </div>

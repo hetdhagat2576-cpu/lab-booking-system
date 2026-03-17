@@ -1,57 +1,12 @@
 
 const nodemailer = require('nodemailer');
-
-// Create transporter function
-const createTransporter = () => {
-  const host = process.env.EMAIL_HOST || 'smtp.gmail.com';
-  const port = parseInt(process.env.EMAIL_PORT || '587', 10);
-  const user = process.env.EMAIL_USER || 'hetdhagat2576@gmail.com';
-  const pass = process.env.EMAIL_PASS || 'klqtosidazgxxqj'; // Fallback to your app password
-  
-  // Check if app password is configured
-  if (!pass || pass === 'YOUR_GMAIL_APP_PASSWORD_HERE' || pass.length < 16) {
-    console.log('=================================');
-    console.log('EMAIL CONFIGURATION ISSUE:');
-    console.log('Current EMAIL_PASS length:', pass ? pass.length : 0);
-    console.log('Expected: 16-character Gmail App Password');
-    console.log('To fix:');
-    console.log('1. Enable 2-Factor Authentication on Gmail');
-    console.log('2. Go to: https://myaccount.google.com/apppasswords');
-    console.log('3. Generate App Password for "Mail"');
-    console.log('4. Update EMAIL_PASS in .env file with 16-char password');
-    console.log('=================================');
-    // Still try to create transporter for testing
-  }
-  
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-    tls: {
-      rejectUnauthorized: false
-    }
-  });
-};
+const { createTransporter } = require('../config/emailConfig');
 
 // Send contact reply email
 const sendContactReplyEmail = async (email, name, subject, replyMessage, originalMessage) => {
   try {
     console.log('📧 Attempting to send contact reply email to:', email);
     const transporter = createTransporter();
-    
-    // If no transporter (development mode), log reply and return success
-    if (!transporter) {
-      console.log('=================================');
-      console.log('🔧 DEVELOPMENT MODE - CONTACT REPLY');
-      console.log('📧 Email:', email);
-      console.log('👤 Name:', name);
-      console.log('📋 Subject:', subject);
-      console.log('💬 Reply:', replyMessage);
-      console.log('📄 Original:', originalMessage);
-      console.log('=================================');
-      return { success: true, messageId: 'dev-mode', development: true };
-    }
     
     // Verify transporter connection first
     await transporter.verify();
@@ -81,7 +36,7 @@ const sendContactReplyEmail = async (email, name, subject, replyMessage, origina
     `;
 
     const mailOptions = {
-      from: 'Lab Booking System <hetdhagat2576@gmail.com>',
+      from: `Lab Booking System <${process.env.EMAIL_USER || 'hetdhagat2576@gmail.com'}>`,
       to: email,
       subject: `Re: ${subject} - Lab Booking System`,
       html: html
@@ -124,7 +79,7 @@ const sendOtpEmail = async (email, otp, name = 'User') => {
       `;
 
       const mailOptions = {
-        from: 'Lab Booking System <hetdhagat2576@gmail.com>',
+        from: `Lab Booking System <${process.env.EMAIL_USER || 'hetdhagat2576@gmail.com'}>`,
         to: email,
         subject: 'Verify Your Lab Booking Account',
         html: html
@@ -160,19 +115,6 @@ const sendBookingNotificationEmail = async (email, name, status, booking, reject
   try {
     console.log(`📧 Attempting to send booking ${status} email to:`, email);
     const transporter = createTransporter();
-    
-    // If no transporter (development mode), log notification and return success
-    if (!transporter) {
-      console.log('=================================');
-      console.log('🔧 DEVELOPMENT MODE - BOOKING NOTIFICATION');
-      console.log('📧 Email:', email);
-      console.log('👤 Name:', name);
-      console.log('📋 Status:', status);
-      console.log('📅 Booking:', booking);
-      if (rejectionReason) console.log('❌ Reason:', rejectionReason);
-      console.log('=================================');
-      return { success: true, messageId: 'dev-mode', development: true };
-    }
     
     // Verify transporter connection first
     await transporter.verify();
@@ -245,7 +187,7 @@ const sendBookingNotificationEmail = async (email, name, status, booking, reject
     `;
 
     const mailOptions = {
-      from: 'Lab Booking System <hetdhagat2576@gmail.com>',
+      from: `Lab Booking System <${process.env.EMAIL_USER || 'hetdhagat2576@gmail.com'}>`,
       to: email,
       subject: `${subject} - Lab Booking System`,
       html: html
@@ -261,8 +203,52 @@ const sendBookingNotificationEmail = async (email, name, status, booking, reject
   }
 };
 
+// Send password reset email
+const sendPasswordResetEmail = async (email, resetToken, name = 'User') => {
+  try {
+    console.log('📧 Attempting to send password reset email to:', email);
+    const transporter = createTransporter();
+    
+    // Verify transporter connection first
+    await transporter.verify();
+    console.log('✅ SMTP connection verified for password reset');
+    
+    // Reset link
+    const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+    
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; border-radius: 12px;">
+        <div style="background: white; padding: 30px; border-radius: 8px; text-align: center;">
+          <h1 style="color: #333; margin-bottom: 10px; font-size: 28px;">Password Reset</h1>
+          <p style="color: #666; margin-bottom: 30px; font-size: 16px;">Hi ${name},</p>
+          <p style="color: #666; margin-bottom: 20px; font-size: 16px;">We received a request to reset your password. Click the button below to reset it:</p>
+          <a href="${resetLink}" style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 18px; font-weight: bold; padding: 15px 30px; border-radius: 8px; text-decoration: none; margin: 20px 0; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">Reset Password</a>
+          <p style="color: #999; font-size: 14px; margin-top: 30px;">This link expires in 1 hour.</p>
+          <p style="color: #999; font-size: 14px;">If you didn't request this reset, please ignore this email.</p>
+        </div>
+      </div>
+    `;
+
+    const mailOptions = {
+      from: `Lab Booking System <${process.env.EMAIL_USER || 'hetdhagat2576@gmail.com'}>`,
+      to: email,
+      subject: 'Reset Your Password - Lab Booking System',
+      html: html
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log('✅ Password reset email sent successfully:', result.messageId);
+    return { success: true, messageId: result.messageId };
+    
+  } catch (error) {
+    console.error('❌ Password reset email sending failed:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
 module.exports = {
   sendContactReplyEmail,
   sendOtpEmail,
-  sendBookingNotificationEmail
+  sendBookingNotificationEmail,
+  sendPasswordResetEmail
 };

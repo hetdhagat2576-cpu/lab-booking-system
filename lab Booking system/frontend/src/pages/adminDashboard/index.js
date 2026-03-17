@@ -489,23 +489,37 @@ export default function AdminDashboardIndex() {
         setLastUpdated(new Date());
         
         // Transform bookings for appointments display
-        const transformedBookings = list.map(booking => ({
-          ...booking,
-          patientName: booking.patientName || booking.user?.name || 'Unknown',
-          email: booking.user?.email || 'No email',
-          phone: booking.user?.phone || 'No phone'
-        }));
+        const transformedBookings = list.map(booking => {
+          // Extract email from patientName if it's in "Name (email)" format
+          let email = booking.user?.email;
+          let patientName = booking.patientName || booking.user?.name || 'Unknown';
+          
+          if (!email && patientName.includes('(')) {
+            const match = patientName.match(/\(([^)]+)\)/);
+            if (match) email = match[1];
+            patientName = patientName.split('(')[0].trim();
+          }
+
+          return {
+            ...booking,
+            patientName: patientName,
+            email: email || 'No email',
+            phone: booking.user?.phone || booking.phone || 'No phone'
+          };
+        });
         setAppointments(transformedBookings);
         
         const pending = list.filter(b => (b.adminStatus || '').toLowerCase() === 'pending').length;
         const approved = list.filter(b => (b.adminStatus || '').toLowerCase() === 'approved').length;
         const rejected = list.filter(b => (b.adminStatus || '').toLowerCase() === 'rejected').length;
+        const scheduled = list.filter(b => (b.status || '').toLowerCase() === 'scheduled').length;
         setStats(prev => ({
           ...prev,
           totalBookings: list.length,
           pendingBookings: pending,
           approvedBookings: approved,
-          rejectedBookings: rejected
+          rejectedBookings: rejected,
+          scheduledBookings: scheduled
         }));
       } else {
         console.error('Failed to fetch bookings - Status:', resp.status);
@@ -5118,7 +5132,7 @@ export default function AdminDashboardIndex() {
                     <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
                       <tr>
                         <th className="p-4">Patient Info</th>
-                        <th className="p-4">Lab Details</th>
+                        <th className="p-4">Booking Details</th>
                         <th className="p-4">Schedule</th>
                         <th className="p-4">Status</th>
                         <th className="p-4 text-right">Actions</th>
@@ -5135,34 +5149,38 @@ export default function AdminDashboardIndex() {
                             <td className="p-4">
                               <div>
                                 <div className="font-medium text-gray-900">
-                                  {appointment.user ? appointment.user.name : 'Guest User'}
+                                  {appointment.patientName || (appointment.user ? appointment.user.name : 'Guest User')}
                                 </div>
-                                {appointment.user && (
-                                  <div className="text-sm text-gray-500">{appointment.user.email}</div>
-                                )}
-                                {appointment.user?.phone && (
-                                  <div className="text-sm text-gray-500">{appointment.user.phone}</div>
+                                <div className="text-sm text-gray-500">
+                                  {appointment.user?.email || (appointment.patientName?.includes('(') ? appointment.patientName.split('(')[1].replace(')', '') : 'No email')}
+                                </div>
+                                {(appointment.user?.phone || appointment.phone) && (
+                                  <div className="text-sm text-gray-500">{appointment.user?.phone || appointment.phone}</div>
                                 )}
                               </div>
                             </td>
                             <td className="p-4">
                               <div className="text-sm">
-                                <div className="font-medium">{appointment.lab?.name || 'Lab'}</div>
-                                {appointment.lab?.address && (
-                                  <div className="text-gray-500">{appointment.lab.address}</div>
-                                )}
-                                {appointment.lab?.phone && (
-                                  <div className="text-gray-500">{appointment.lab.phone}</div>
+                                <div className="font-medium text-blue-600">
+                                  {appointment.packageName || (appointment.selectedTests?.length > 0 ? appointment.selectedTests.map(t => t.name).join(', ') : 'Lab Test')}
+                                </div>
+                                <div className="text-gray-500 mt-1">
+                                  <span className="font-medium">Lab:</span> {appointment.labName || appointment.labAppointment || 'General Lab'}
+                                </div>
+                                {appointment.totalAmount > 0 && (
+                                  <div className="text-gray-700 font-medium mt-1">
+                                    ₹{appointment.totalAmount}
+                                  </div>
                                 )}
                               </div>
                             </td>
                             <td className="p-4">
                               <div className="text-sm">
                                 <div className="font-medium">
-                                  {new Date(appointment.appointmentDate).toLocaleDateString()}
+                                  {appointment.date || 'No Date'}
                                 </div>
                                 <div className="text-gray-500">
-                                  {new Date(appointment.appointmentDate).toLocaleTimeString()}
+                                  {appointment.time || 'No Time'}
                                 </div>
                               </div>
                             </td>
