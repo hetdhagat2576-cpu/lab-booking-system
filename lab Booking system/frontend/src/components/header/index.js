@@ -11,7 +11,7 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated, isAdmin, isLabTechnician, logout } = useAuth();
-  const { UserCircle, LogOut, ChevronDown, Settings, Menu, X } = IconConfig || {};
+  const { UserCircle, LogOut, ChevronDown, Menu, X } = IconConfig || {};
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -348,7 +348,7 @@ export default function Header({ hideNavItems = false, hideProfileIcon = false }
                 <NotificationBell />
               )}
               
-              {/* Admin - Show direct logout button */}
+              {/* Admin - Show direct logout button only (no profile icon) */}
               {isAdmin && !hideProfileIcon && (
                 <button
                   onClick={handleLogoutClick}
