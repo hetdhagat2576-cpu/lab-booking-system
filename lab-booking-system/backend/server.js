@@ -262,4 +262,13 @@ process.on('unhandledRejection', (reason, promise) => {
   process.exit(1);
 });
 
+// Export for Vercel serverless deployment
 module.exports = app;
+
+// Start server only if not running on Vercel
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  server.listen(PORT, () => {
+    console.log(`✅ Server running on port ${PORT}`);
+    console.log(`✅ WebSocket server running on ws://localhost:${PORT}`);
+  });
+}
