@@ -3,7 +3,7 @@
 const getApiBaseUrl = () => {
   // Always use localhost for development
   console.log('Using local development API URL');
-  return 'http://localhost:5000';
+  return 'http://localhost:5001';
 };
 
 const API_BASE_URL = getApiBaseUrl();
