@@ -115,6 +115,7 @@ app.use((req, res, next) => {
 // Import controllers
 const { getHomeWhyBook, getHomeHowItWorks, getFaq, getLegal } = require('../controllers/contentController');
 const { getReviewedFeedbacks } = require('../controllers/feedbackController');
+const { loginUser } = require('../controllers/authController');
 
 // Simple database middleware
 const withDB = (handler) => {
@@ -210,6 +211,20 @@ app.get('/api/feedback/reviewed', withDB(async (req, res) => {
   }
 }));
 
+// Auth routes
+app.post('/api/auth/login', withDB(async (req, res) => {
+  try {
+    await loginUser(req, res);
+  } catch (error) {
+    console.error('Login route error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Login failed',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+}));
+
 // Root route
 app.get('/', (req, res) => {
   res.status(200).json({ 
@@ -222,7 +237,8 @@ app.get('/', (req, res) => {
       '/api/content/home/how-it-works',
       '/api/content/faq',
       '/api/content/legal',
-      '/api/feedback/reviewed'
+      '/api/feedback/reviewed',
+      '/api/auth/login'
     ]
   });
 });
