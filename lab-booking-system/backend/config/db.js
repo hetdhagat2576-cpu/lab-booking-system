@@ -4,30 +4,35 @@ const connectDB = async () => {
   try {
     const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/lab_appointment';
     
+    if (!mongoURI || mongoURI === 'mongodb://localhost:27017/lab_appointment') {
+      console.log('⚠️  WARNING: Using local MongoDB. This will not work in production/Vercel');
+      console.log('Please set MONGODB_URI environment variable with MongoDB Atlas connection string');
+    }
+    
     const conn = await mongoose.connect(mongoURI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
 
-    console.log('MongoDB connected');
+    console.log('✅ MongoDB connected:', conn.connection.host);
     
     // Handle connection events
     mongoose.connection.on('error', (err) => {
-      console.error('MongoDB connection error:', err);
+      console.error('❌ MongoDB connection error:', err);
     });
     
     mongoose.connection.on('disconnected', () => {
-      console.log('MongoDB disconnected');
+      console.log('🔌 MongoDB disconnected');
     });
     
     mongoose.connection.on('reconnected', () => {
-      console.log('MongoDB reconnected');
+      console.log('🔄 MongoDB reconnected');
     });
     
   } catch (error) {
-    console.error('Error connecting to MongoDB:', error.message);
+    console.error('❌ Error connecting to MongoDB:', error.message);
     console.error('Please ensure MongoDB is running and accessible');
-    console.log('Server will continue running without database connection...');
+    console.log('For Vercel deployment, set MONGODB_URI environment variable');
     // Don't exit process, allow server to run without DB
   }
 };
