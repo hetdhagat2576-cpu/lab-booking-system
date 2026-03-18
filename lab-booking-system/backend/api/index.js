@@ -4,7 +4,6 @@ require('dotenv').config();
 // Import express and create a new app instance
 const express = require('express');
 const mongoose = require('mongoose');
-const session = require('express-session');
 const app = express();
 
 // Global database connection state
@@ -75,18 +74,6 @@ require('../models/healthConcern');
 // Middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Session middleware for serverless environment
-app.use(session({
-  secret: process.env.JWT_SECRET || 'your-secret-key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
-}));
 
 // Enhanced CORS middleware for Vercel
 app.use((req, res, next) => {
