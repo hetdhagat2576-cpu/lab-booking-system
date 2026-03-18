@@ -230,16 +230,15 @@ app.get('/api/debug/models', async (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5000;
 
-// Only start server if not in Vercel environment
-if (process.env.NODE_ENV !== 'production' || process.env.VERCEL !== '1') {
-  const server = http.createServer(app);
+// Start server for local development
+const server = http.createServer(app);
 
-  // WebSocket setup (only for local development)
-  const wss = new WebSocket.Server({ server });
-  const bookingController = require('./controllers/bookingController');
-  bookingController.setWebSocketServer(wss);
+// WebSocket setup (only for local development)
+const wss = new WebSocket.Server({ server });
+const bookingController = require('./controllers/bookingController');
+bookingController.setWebSocketServer(wss);
 
   wss.on('connection', (ws, req) => {
     console.log('✅ New WebSocket connection established');
@@ -309,7 +308,6 @@ if (process.env.NODE_ENV !== 'production' || process.env.VERCEL !== '1') {
     console.log(`✅ Server running on port ${PORT}`);
     console.log(`✅ WebSocket server running on ws://localhost:${PORT}`);
   });
-}
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {

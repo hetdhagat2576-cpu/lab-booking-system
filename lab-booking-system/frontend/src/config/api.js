@@ -1,27 +1,9 @@
 
 // Determine the base API URL based on environment
 const getApiBaseUrl = () => {
-  // 1. Check for Create React App environment variable (CRA format)
-  if (process.env.REACT_APP_API_URL) {
-    console.log('Using API URL from CRA environment:', process.env.REACT_APP_API_URL);
-    return process.env.REACT_APP_API_URL;
-  }
-  
-  // 2. Check for Vite environment variable (for future Vite migration)
-  if (typeof window !== 'undefined' && window.importMeta && window.importMeta.env && window.importMeta.env.VITE_API_URL) {
-    console.log('Using API URL from Vite environment:', window.importMeta.env.VITE_API_URL);
-    return window.importMeta.env.VITE_API_URL;
-  }
-  
-  // 3. Check if running on localhost (development)
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    console.log('Using local development API URL');
-    return 'http://localhost:5000';
-  }
-  
-  // 4. Production: Use separate backend URL
-  console.log('Using production API URL - main project backend');
-  return process.env.REACT_APP_API_URL || '/api';
+  // Always use localhost for development
+  console.log('Using local development API URL');
+  return 'http://localhost:5000';
 };
 
 const API_BASE_URL = getApiBaseUrl();
