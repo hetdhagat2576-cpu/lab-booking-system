@@ -32,4 +32,4 @@ const aboutContentSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model('AboutContent', aboutContentSchema);
+module.exports = mongoose.models.AboutContent || mongoose.model('AboutContent', aboutContentSchema);

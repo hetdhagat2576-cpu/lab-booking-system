@@ -1,5 +1,4 @@
 const express = require('express');
-const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const http = require('http');
@@ -19,7 +18,7 @@ require('./models/package');
 require('./models/faq');
 require('./models/serviceContent');
 require('./models/termsContent');
-require('./models/privacyContent');
+require('./models/privacyPolicy');
 require('./models/aboutContent');
 require('./models/healthConcern');
 
@@ -35,51 +34,40 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Dynamic CORS configuration
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  "https://lab-booking-frontend-l2ki0uzr8-hetdhagat2576-8656s-projects.vercel.app",
-  "https://lab-booking-frontend.vercel.app",
-  "http://localhost:3000",
-  "http://localhost:3001",
-  "http://localhost:5173",
-  "http://127.0.0.1:3000",
-  "http://127.0.0.1:3001",
-  "http://127.0.0.1:5173"
-].filter(Boolean); // Filter out undefined values
+// Dynamic CORS middleware - custom implementation
+app.use((req, res, next) => {
+  const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    "https://lab-booking-frontend-l2ki0uzr8-hetdhagat2576-8656s-projects.vercel.app",
+    "https://lab-booking-frontend.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
+    "http://127.0.0.1:5173"
+  ].filter(Boolean);
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-Requested-With',
-    'X-CSRF-Token',
-    'X-API-Key',
-    'Origin',
-    'Accept',
-    'Accept-Language',
-    'Content-Length'
-  ],
-  optionsSuccessStatus: 200,
-  exposedHeaders: ['X-Total-Count', 'X-Page-Count', 'Content-Disposition']
-};
-
-app.use(cors(corsOptions));
-
-// Handle preflight requests explicitly
-app.options('*', cors(corsOptions));
+  const origin = req.headers.origin;
+  
+  // Set single origin or no header if not allowed
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  
+  // Required headers
+  res.setHeader('Vary', 'Origin');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  next();
+});
 
 // Session middleware after JSON parsing - only apply to routes that need authentication
 app.use('/api/auth', sessionConfig);
@@ -187,9 +175,31 @@ app.get('/', (req, res) => {
 
 // CORS test endpoint
 app.get('/api/cors-test', (req, res) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    "https://lab-booking-frontend-l2ki0uzr8-hetdhagat2576-8656s-projects.vercel.app",
+    "https://lab-booking-frontend.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://localhost:5173",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
+    "http://127.0.0.1:5173"
+  ].filter(Boolean);
+  
   res.status(200).json({ 
     message: 'CORS test successful',
-    origin: req.headers.origin,
+    origin: origin,
+    isAllowed: allowedOrigins.includes(origin),
+    allowedOrigins: allowedOrigins,
+    headers: {
+      'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
+      'Vary': res.getHeader('Vary'),
+      'Access-Control-Allow-Methods': res.getHeader('Access-Control-Allow-Methods'),
+      'Access-Control-Allow-Headers': res.getHeader('Access-Control-Allow-Headers'),
+      'Access-Control-Allow-Credentials': res.getHeader('Access-Control-Allow-Credentials')
+    },
     timestamp: new Date().toISOString()
   });
 });
@@ -330,11 +340,3 @@ process.on('unhandledRejection', (reason, promise) => {
 
 // Export for Vercel serverless deployment
 module.exports = app;
-
-// Start server only if not running on Vercel
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-  server.listen(PORT, () => {
-    console.log(`✅ Server running on port ${PORT}`);
-    console.log(`✅ WebSocket server running on ws://localhost:${PORT}`);
-  });
-}

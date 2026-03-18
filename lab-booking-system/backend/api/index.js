@@ -1,196 +1,145 @@
 const mongoose = require('mongoose');
-
-// Load environment variables
 require('dotenv').config();
 
-// Global connection to avoid reconnecting on every request
 let isConnected = false;
 
 const connectDB = async () => {
-  if (isConnected) {
-    return;
-  }
+  if (isConnected) return;
 
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://hetdhagat2576:hN5tCKK9auWfZpZx@labbooking.q9gns.mongodb.net/labbooking?retryWrites=true&w=majority', {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      maxPoolSize: 10, // Connection pooling
-      serverSelectionTimeoutMS: 5000, // How long MongoDB tries to find a server
-      socketTimeoutMS: 45000, // How long a send or receive on a socket can take
-    });
+    await mongoose.connect(
+      process.env.MONGODB_URI ||
+        'mongodb+srv://hetdhagat2576:hN5tCKK9auWfZpZx@labbooking.q9gns.mongodb.net/labbooking?retryWrites=true&w=majority',
+      {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        maxPoolSize: 10,
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+      }
+    );
+
     isConnected = true;
-    console.log('MongoDB connected for serverless function');
+    console.log('MongoDB connected');
   } catch (error) {
-    console.error('MongoDB connection error:', error);
+    console.error('MongoDB error:', error);
     throw error;
   }
 };
 
 module.exports = async (req, res) => {
-  // Dynamic CORS handling
+  // ✅ CORS FIX START - Dynamic single-origin CORS
   const allowedOrigins = [
+    process.env.FRONTEND_URL,
     'https://lab-booking-frontend.vercel.app',
     'https://lab-booking-frontend-l2ki0uzr8-hetdhagat2576-8656s-projects.vercel.app',
     'http://localhost:3000',
     'http://localhost:3001',
-    'http://localhost:5173'
-  ];
-  
+    'http://localhost:5173',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+    'http://127.0.0.1:5173'
+  ].filter(Boolean);
+
   const origin = req.headers.origin;
-  
-  res.removeHeader('Access-Control-Allow-Origin');
-  res.removeHeader('access-control-allow-origin');
-  res.removeHeader('Access-Control-Allow-Methods');
-  res.removeHeader('access-control-allow-methods');
-  res.removeHeader('Access-Control-Allow-Headers');
-  res.removeHeader('access-control-allow-headers');
-  res.removeHeader('Access-Control-Allow-Credentials');
-  res.removeHeader('access-control-allow-credentials');
-  res.removeHeader('Access-Control-Max-Age');
-  res.removeHeader('access-control-max-age');
-  res.removeHeader('Access-Control-Expose-Headers');
-  res.removeHeader('access-control-expose-headers');
-  
-  // Set single origin based on request
+
+  // Set single origin or no header if not allowed
   if (allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
-  
+
+  // Required headers
+  res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
+  // ✅ CORS FIX END
 
   try {
-    // Connect to database
     await connectDB();
 
-    // Basic routing
     const { url, method } = req;
-    
-    // Health check
+
+    // ✅ Health
     if (url === '/health' && method === 'GET') {
-      res.status(200).json({ 
-        status: 'OK', 
-        timestamp: new Date().toISOString(),
-        environment: 'production'
+      return res.status(200).json({
+        status: 'OK',
+        time: new Date().toISOString(),
+        cors: {
+          origin: req.headers.origin,
+          allowedOrigins: allowedOrigins,
+          isAllowed: allowedOrigins.includes(req.headers.origin),
+          headers: {
+            'Access-Control-Allow-Origin': res.getHeader('Access-Control-Allow-Origin'),
+            'Vary': res.getHeader('Vary'),
+            'Access-Control-Allow-Methods': res.getHeader('Access-Control-Allow-Methods'),
+            'Access-Control-Allow-Headers': res.getHeader('Access-Control-Allow-Headers'),
+            'Access-Control-Allow-Credentials': res.getHeader('Access-Control-Allow-Credentials')
+          }
+        }
       });
-      return;
     }
 
-    // CORS test
-    if (url === '/api/cors-test' && method === 'GET') {
-      res.status(200).json({ 
-        message: 'CORS test successful',
-        origin: req.headers.origin,
-        timestamp: new Date().toISOString()
-      });
-      return;
-    }
-
-    // Debug models
-    if (url === '/api/debug/models' && method === 'GET') {
-      try {
-        // Load models dynamically
-        require('../models/user');
-        const Feedback = require('../models/feedback');
-        const HomeHowItWorks = require('../models/homeHowItWorks');
-        
-        res.status(200).json({
-          success: true,
-          message: 'Models loaded successfully',
-          models: {
-            Feedback: !!Feedback,
-            HomeHowItWorks: !!HomeHowItWorks,
-            User: !!require('../models/user')
-          },
-          connectionState: mongoose.connection.readyState
-        });
-        return;
-      } catch (error) {
-        res.status(500).json({
-          success: false,
-          message: 'Error loading models',
-          error: error.message
-        });
-        return;
-      }
-    }
-
-    // Feedback reviewed endpoint
+    // ✅ Feedback API
     if (url === '/api/feedback/reviewed' && method === 'GET') {
       try {
-        // Load models dynamically
         require('../models/user');
         const Feedback = require('../models/feedback');
-        
-        // Simple query without populate for now
-        const feedbacks = await Feedback.find({ status: { $in: ['reviewed', 'new', 'pending', 'positive'] } })
+
+        const data = await Feedback.find({
+          status: { $in: ['reviewed', 'new', 'pending', 'positive'] }
+        })
           .sort({ createdAt: -1 })
-          .lean(); // Use lean() for better performance
-        
-        res.status(200).json({
+          .lean();
+
+        return res.status(200).json({
           success: true,
-          data: feedbacks,
-          count: feedbacks.length
+          data
         });
-        return;
-      } catch (error) {
-        console.error('Feedback error:', error);
-        res.status(500).json({
+      } catch (err) {
+        return res.status(500).json({
           success: false,
-          message: 'Error fetching reviewed feedbacks',
-          error: error.message
+          error: err.message
         });
-        return;
       }
     }
 
-    // Home how it works endpoint
+    // ✅ How it works API
     if (url === '/api/content/home/how-it-works' && method === 'GET') {
       try {
-        // Load model dynamically
         const HomeHowItWorks = require('../models/homeHowItWorks');
-        const howItWorksData = await HomeHowItWorks.find({ isActive: true })
-          .sort({ order: 1, stepNumber: 1 })
-          .lean(); // Use lean() for better performance
-        
-        res.status(200).json({
+
+        const data = await HomeHowItWorks.find({ isActive: true })
+          .sort({ order: 1 })
+          .lean();
+
+        return res.status(200).json({
           success: true,
-          data: howItWorksData
+          data
         });
-        return;
-      } catch (error) {
-        console.error('How it works error:', error);
-        res.status(500).json({
+      } catch (err) {
+        return res.status(500).json({
           success: false,
-          message: 'Error fetching how it works',
-          error: error.message
+          error: err.message
         });
-        return;
       }
     }
 
-    // 404 for unknown routes
-    res.status(404).json({
+    // ❌ 404
+    return res.status(404).json({
       success: false,
-      message: 'Route not found',
-      url: url,
-      method: method
+      message: 'Route not found'
     });
 
   } catch (error) {
-    console.error('Serverless function error:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: 'Internal server error',
-      error: error.message
+      message: error.message
     });
   }
 };
