@@ -16,7 +16,7 @@ const getApiBaseUrl = () => {
   // 3. Check if running on localhost (development)
   if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
     console.log('Using local development API URL');
-    return 'http://localhost:5001';
+    return 'http://localhost:5000';
   }
   
   // 4. Production: Use separate backend URL
