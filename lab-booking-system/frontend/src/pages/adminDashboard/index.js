@@ -542,7 +542,7 @@ export default function AdminDashboardIndex() {
   const fetchFeedbacksAdmin = useCallback(async () => {
     if (!user?.token) return;
     try {
-      const resp = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/feedback?limit=100`, {
+      const resp = await fetch(`${process.env.REACT_APP_API_URL }/api/feedback?limit=100`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
@@ -578,7 +578,7 @@ export default function AdminDashboardIndex() {
   const fetchContactsAdmin = useCallback(async () => {
     if (!user?.token) return;
     try {
-      const resp = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/contact`, {
+      const resp = await fetch(`${process.env.REACT_APP_API_URL }/api/contact`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
@@ -614,7 +614,7 @@ export default function AdminDashboardIndex() {
       console.log('Fetching users with token:', token.substring(0, 20) + '...');
       console.log('Token length:', token.length);
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/admin/users`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/admin/users`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -681,7 +681,7 @@ export default function AdminDashboardIndex() {
     }
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/admin/users/${userId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/admin/users/${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -734,7 +734,7 @@ export default function AdminDashboardIndex() {
     }
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/bookings/${bookingId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/bookings/${bookingId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -800,7 +800,7 @@ export default function AdminDashboardIndex() {
       const token = user.token;
       console.log('Fetching reports with token:', token.substring(0, 20) + '...');
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/admin/all?limit=100`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/reports/admin/all?limit=100`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -851,7 +851,7 @@ export default function AdminDashboardIndex() {
     }
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/${reportId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/reports/${reportId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -905,37 +905,37 @@ export default function AdminDashboardIndex() {
       setContentLoading(true);
       // Fetch real data from APIs
       const [whyBookResponse, howItWorksResponse, serviceContentResponse, aboutResponse, termsResponse, privacyResponse, faqResponse] = await Promise.all([
-        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/why-book`, {
+        fetch(`${process.env.REACT_APP_API_URL }/api/content/home/why-book`, {
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
         }),
-        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/how-it-works`, {
+        fetch(`${process.env.REACT_APP_API_URL }/api/content/home/how-it-works`, {
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
         }),
-        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content`, {
+        fetch(`${process.env.REACT_APP_API_URL }/api/service-content`, {
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
         }),
-        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/about`, {
+        fetch(`${process.env.REACT_APP_API_URL }/api/about`, {
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
         }),
-        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/terms`, {
+        fetch(`${process.env.REACT_APP_API_URL }/api/terms`, {
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
         }),
-        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/privacy`, {
+        fetch(`${process.env.REACT_APP_API_URL }/api/privacy`, {
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
         }),
-        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq/admin`, {
+        fetch(`${process.env.REACT_APP_API_URL }/api/faq/admin`, {
           headers: {
             'Authorization': `Bearer ${user.token}`
           }
@@ -1145,7 +1145,7 @@ export default function AdminDashboardIndex() {
 
     try {
       setTestLoading(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/tests`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
@@ -1187,7 +1187,7 @@ export default function AdminDashboardIndex() {
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests/${id}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL }/api/tests/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${user.token}`
@@ -1217,8 +1217,8 @@ export default function AdminDashboardIndex() {
       };
 
       const url = editingTest
-        ? `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests/${editingTest._id}`
-        : `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests`;
+        ? `${process.env.REACT_APP_API_URL }/api/tests/${editingTest._id}`
+        : `${process.env.REACT_APP_API_URL }/api/tests`;
 
       const method = editingTest ? 'PUT' : 'POST';
 
@@ -1422,8 +1422,8 @@ export default function AdminDashboardIndex() {
       console.log('Current tests IDs:', tests.map(t => t._id));
 
       const url = editingPackage
-        ? `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages/${editingPackage._id}`
-        : `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages`;
+        ? `${process.env.REACT_APP_API_URL }/api/packages/${editingPackage._id}`
+        : `${process.env.REACT_APP_API_URL }/api/packages`;
 
       const method = editingPackage ? 'PUT' : 'POST';
 
@@ -1530,7 +1530,7 @@ export default function AdminDashboardIndex() {
     e.preventDefault();
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/auth/register`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1598,7 +1598,7 @@ export default function AdminDashboardIndex() {
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/admin/users/${userId}/block`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL }/api/admin/users/${userId}/block`, {
           method: 'PATCH',
           headers: {
             'Authorization': `Bearer ${user.token}`
@@ -1649,7 +1649,7 @@ export default function AdminDashboardIndex() {
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/admin/users/${userId}/unblock`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL }/api/admin/users/${userId}/unblock`, {
           method: 'PATCH',
           headers: {
             'Authorization': `Bearer ${user.token}`
@@ -1690,7 +1690,7 @@ export default function AdminDashboardIndex() {
   const fetchHealthConcerns = useCallback(async () => {
     if (!user?.token) return;
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/health-concerns`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
@@ -1730,8 +1730,8 @@ export default function AdminDashboardIndex() {
     try {
       const method = editingHealthConcern ? 'PUT' : 'POST';
       const url = editingHealthConcern
-        ? `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns/${editingHealthConcern._id}`
-        : `${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns`;
+        ? `${process.env.REACT_APP_API_URL }/api/health-concerns/${editingHealthConcern._id}`
+        : `${process.env.REACT_APP_API_URL }/api/health-concerns`;
 
       // Convert order to number, default to 0 if empty
       const processedFormData = {
@@ -1781,7 +1781,7 @@ export default function AdminDashboardIndex() {
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns/${id}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL }/api/health-concerns/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${user.token}`
@@ -1851,7 +1851,7 @@ export default function AdminDashboardIndex() {
     if (!user?.token || !concernId) return false;
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns/${concernId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/health-concerns/${concernId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -1888,7 +1888,7 @@ export default function AdminDashboardIndex() {
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns/${concernId}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL }/api/health-concerns/${concernId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${user.token}`
@@ -1932,7 +1932,7 @@ export default function AdminDashboardIndex() {
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns/seed`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL }/api/health-concerns/seed`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${user.token}`
@@ -1983,7 +1983,7 @@ export default function AdminDashboardIndex() {
 
     try {
       setPackageLoading(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/packages`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
@@ -2011,7 +2011,7 @@ export default function AdminDashboardIndex() {
 
     try {
       setTestDetailsLoading(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/test-details/${testId}/details`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/test-details/${testId}/details`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
@@ -2041,7 +2041,7 @@ export default function AdminDashboardIndex() {
 
     try {
       setPackageDetailsLoading(true);
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/package-details/${packageId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/package-details/${packageId}`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
@@ -2071,7 +2071,7 @@ export default function AdminDashboardIndex() {
     if (!user?.token || !testId) return false;
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/test-details/${testId}/details`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/test-details/${testId}/details`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -2137,7 +2137,7 @@ export default function AdminDashboardIndex() {
     };
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/test-details/${test._id}/details`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/test-details/${test._id}/details`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -2195,7 +2195,7 @@ export default function AdminDashboardIndex() {
     if (!result.isConfirmed) return false;
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/test-details/${testId}/details`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/test-details/${testId}/details`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -2226,7 +2226,7 @@ export default function AdminDashboardIndex() {
     if (!user?.token || !packageId) return false;
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/package-details/${packageId}/details`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/package-details/${packageId}/details`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -2268,7 +2268,7 @@ export default function AdminDashboardIndex() {
     if (!result.isConfirmed) return false;
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/package-details/${packageId}/details`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/package-details/${packageId}/details`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -2308,7 +2308,7 @@ export default function AdminDashboardIndex() {
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages/${id}`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL }/api/packages/${id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${user.token}`
@@ -2329,7 +2329,7 @@ export default function AdminDashboardIndex() {
   // Service Content Functions
   const createServiceFeature = async (formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/features`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/service-content/features`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2353,7 +2353,7 @@ export default function AdminDashboardIndex() {
 
   const updateServiceFeature = async (id, formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/features/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/service-content/features/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -2390,7 +2390,7 @@ export default function AdminDashboardIndex() {
     if (!result.isConfirmed) return false;
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/features/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/service-content/features/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -2413,7 +2413,7 @@ export default function AdminDashboardIndex() {
   // Highlight Functions (API Integration)
   const addHighlight = async (formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/highlights`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/service-content/highlights`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2461,7 +2461,7 @@ export default function AdminDashboardIndex() {
     })));
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/highlights/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/service-content/highlights/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -2511,7 +2511,7 @@ export default function AdminDashboardIndex() {
     console.log('Deleting highlight with ID:', id);
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/highlights/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/service-content/highlights/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -2542,7 +2542,7 @@ export default function AdminDashboardIndex() {
   // About Content Functions
   const createAboutSection = async (formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/about/section`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/about/section`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2566,7 +2566,7 @@ export default function AdminDashboardIndex() {
 
   const updateAboutSection = async (id, formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/about/section/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/about/section/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -2603,7 +2603,7 @@ export default function AdminDashboardIndex() {
     if (!result.isConfirmed) return false;
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/about/section/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/about/section/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -2625,7 +2625,7 @@ export default function AdminDashboardIndex() {
 
   const updateAboutContent = async (formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/about`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/about`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -2680,7 +2680,7 @@ export default function AdminDashboardIndex() {
   // FAQ Functions (Persist to backend)
   const createFAQ = async (formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/faq`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2704,7 +2704,7 @@ export default function AdminDashboardIndex() {
 
   const updateFAQ = async (id, formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/faq/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -2740,7 +2740,7 @@ export default function AdminDashboardIndex() {
 
     if (!result.isConfirmed) return false;
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/faq/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -2761,7 +2761,7 @@ export default function AdminDashboardIndex() {
 
   const toggleFAQStatus = async (id) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq/${id}/toggle`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/faq/${id}/toggle`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -2783,7 +2783,7 @@ export default function AdminDashboardIndex() {
   // Terms Functions
   const addTermsSection = async (formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/terms-and-conditions`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/terms-and-conditions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2830,7 +2830,7 @@ export default function AdminDashboardIndex() {
       console.log('Creating terms section with data:', dataToSend);
       console.log('Terms content sections:', termsContent.sections);
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/terms/sections`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/terms/sections`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2856,7 +2856,7 @@ export default function AdminDashboardIndex() {
 
   const updateTermsSection = async (id, formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/terms/sections/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/terms/sections/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -2893,7 +2893,7 @@ export default function AdminDashboardIndex() {
     if (!result.isConfirmed) return false;
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/terms/sections/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/terms/sections/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -2916,7 +2916,7 @@ export default function AdminDashboardIndex() {
   // Privacy Functions
   const createPrivacySection = async (formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/privacy/sections`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/privacy/sections`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2940,7 +2940,7 @@ export default function AdminDashboardIndex() {
 
   const updatePrivacySection = async (id, formData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/privacy/sections/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/privacy/sections/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -2977,7 +2977,7 @@ export default function AdminDashboardIndex() {
     if (!result.isConfirmed) return false;
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/privacy/sections/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/privacy/sections/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -3367,7 +3367,7 @@ export default function AdminDashboardIndex() {
       };
 
       // Store packages data (only if not already exists)
-      const existingPackagesResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages`, {
+      const existingPackagesResponse = await fetch(`${process.env.REACT_APP_API_URL }/api/packages`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
@@ -3381,7 +3381,7 @@ export default function AdminDashboardIndex() {
         if (existingPackages.length === 0) {
           for (const packageData of seedPackagesData) {
             try {
-              const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/packages`, {
+              const response = await fetch(`${process.env.REACT_APP_API_URL }/api/packages`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -3400,7 +3400,7 @@ export default function AdminDashboardIndex() {
       }
 
       // Store service features data (only if not already exists)
-      const existingServiceContentResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content`, {
+      const existingServiceContentResponse = await fetch(`${process.env.REACT_APP_API_URL }/api/service-content`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
@@ -3416,7 +3416,7 @@ export default function AdminDashboardIndex() {
         if (existingFeatures.length === 0) {
           for (const featureData of seedServiceData.features) {
             try {
-              const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/features`, {
+              const response = await fetch(`${process.env.REACT_APP_API_URL }/api/service-content/features`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -3437,7 +3437,7 @@ export default function AdminDashboardIndex() {
         if (existingHighlights.length === 0) {
           for (const highlightData of seedServiceData.highlights) {
             try {
-              const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content/highlights`, {
+              const response = await fetch(`${process.env.REACT_APP_API_URL }/api/service-content/highlights`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -3605,7 +3605,7 @@ export default function AdminDashboardIndex() {
 
       // Store terms data
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/terms`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL }/api/terms`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -3625,7 +3625,7 @@ export default function AdminDashboardIndex() {
       }
 
       // Store FAQ data (only if not already exists)
-      const existingFAQsResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq/admin`, {
+      const existingFAQsResponse = await fetch(`${process.env.REACT_APP_API_URL }/api/faq/admin`, {
         headers: {
           'Authorization': `Bearer ${user.token}`
         }
@@ -3639,7 +3639,7 @@ export default function AdminDashboardIndex() {
         if (existingFAQs.length === 0) {
           for (const faqData of seedFAQData) {
             try {
-              const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq`, {
+              const response = await fetch(`${process.env.REACT_APP_API_URL }/api/faq`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -3802,7 +3802,7 @@ export default function AdminDashboardIndex() {
         )
       );
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/bookings/${id}/status`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/bookings/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -3845,7 +3845,7 @@ export default function AdminDashboardIndex() {
         const approvedBooking = bookings.find(b => b._id === id);
         if (approvedBooking && approvedBooking.userId) {
           try {
-            await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/notifications`, {
+            await fetch(`${process.env.REACT_APP_API_URL }/api/notifications`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -3922,7 +3922,7 @@ export default function AdminDashboardIndex() {
         )
       );
 
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/bookings/${id}/status`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/bookings/${id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -3965,7 +3965,7 @@ export default function AdminDashboardIndex() {
         const rejectedBooking = bookings.find(b => b._id === id);
         if (rejectedBooking && rejectedBooking.userId) {
           try {
-            await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/notifications`, {
+            await fetch(`${process.env.REACT_APP_API_URL }/api/notifications`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -4020,7 +4020,7 @@ export default function AdminDashboardIndex() {
 
   const updateFeedbackStatus = async (id, newStatus) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/feedback/${id}/status`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/feedback/${id}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -4040,7 +4040,7 @@ export default function AdminDashboardIndex() {
 
   const updateAppointmentStatus = async (id, newStatus) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/appointments/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/appointments/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -4110,7 +4110,7 @@ export default function AdminDashboardIndex() {
 
     if (!result.isConfirmed) return;
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/feedback/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/feedback/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -4140,7 +4140,7 @@ export default function AdminDashboardIndex() {
 
     if (!result.isConfirmed) return;
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/contact/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/contact/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -4158,7 +4158,7 @@ export default function AdminDashboardIndex() {
 
   const updateContactStatus = async (id, newStatus) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/contact/${id}/status`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/contact/${id}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -4202,7 +4202,7 @@ export default function AdminDashboardIndex() {
     setSendingReply(true);
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/contact/${selectedContact._id}/reply`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/contact/${selectedContact._id}/reply`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -4283,7 +4283,7 @@ export default function AdminDashboardIndex() {
   // Home Content Functions
   const createHomeWhyBookItem = async (itemData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/why-book`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/content/home/why-book`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -4307,7 +4307,7 @@ export default function AdminDashboardIndex() {
 
   const updateHomeWhyBookItem = async (id, itemData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/why-book/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/content/home/why-book/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -4344,7 +4344,7 @@ export default function AdminDashboardIndex() {
     if (!result.isConfirmed) return false;
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/why-book/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/content/home/why-book/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -4366,7 +4366,7 @@ export default function AdminDashboardIndex() {
 
   const createHomeHowItWorksItem = async (itemData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/how-it-works`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/content/home/how-it-works`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -4390,7 +4390,7 @@ export default function AdminDashboardIndex() {
 
   const updateHomeHowItWorksItem = async (id, itemData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/how-it-works/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/content/home/how-it-works/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -4427,7 +4427,7 @@ export default function AdminDashboardIndex() {
     if (!result.isConfirmed) return false;
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/content/home/how-it-works/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/content/home/how-it-works/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${user.token}`
@@ -4560,7 +4560,7 @@ export default function AdminDashboardIndex() {
   // FAQ Functions
   const createFAQItem = async (faqData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/faq`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -4581,7 +4581,7 @@ export default function AdminDashboardIndex() {
 
   const updateFAQItem = async (id, faqData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/faq/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -4615,7 +4615,7 @@ export default function AdminDashboardIndex() {
     if (!result.isConfirmed) return false;
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/faq/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/faq/${id}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${user.token}`
@@ -4635,7 +4635,7 @@ export default function AdminDashboardIndex() {
   // Privacy Policy Functions
   const updatePrivacyPolicy = async (policyData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/privacy-policy`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/privacy-policy`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -4657,7 +4657,7 @@ export default function AdminDashboardIndex() {
   // Terms & Conditions Functions
   const updateTermsConditions = async (termsData) => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/terms-and-conditions`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/terms-and-conditions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -5769,7 +5769,7 @@ export default function AdminDashboardIndex() {
                                       return;
                                     }
                                     
-                                    const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/${report._id}/download`, {
+                                    const response = await fetch(`${process.env.REACT_APP_API_URL }/api/reports/${report._id}/download`, {
                                       method: 'GET',
                                       headers: {
                                         'Authorization': `Bearer ${token}`,

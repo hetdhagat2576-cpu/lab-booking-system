@@ -31,7 +31,7 @@ export default function DashboardIndex() {
   const fetchHealthConcerns = async () => {
     try {
       setLoadingHealthConcerns(true);
-      const response = await safeFetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns`);
+      const response = await safeFetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL }/api/health-concerns`);
       if (response.ok) {
         const result = await response.json();
         const healthConcernsData = result.data || [];
@@ -98,7 +98,7 @@ export default function DashboardIndex() {
     try {
       setLoadingReports(true);
       console.log('Fetching user reports sequentially...');
-      const response = await safeFetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/user`, {
+      const response = await safeFetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL }/api/reports/user`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -126,7 +126,7 @@ export default function DashboardIndex() {
     try {
       setLoadingTests(true);
       console.log('Fetching tests sequentially...');
-      const response = await safeFetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/tests?isActive=true`);
+      const response = await safeFetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL }/api/tests?isActive=true`);
       
       if (response.ok) {
         const data = await response.json();
@@ -182,7 +182,7 @@ export default function DashboardIndex() {
     try {
       setLoadingHealthConcerns(true);
       console.log('Fetching health concerns sequentially...');
-      const response = await safeFetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/health-concerns`);
+      const response = await safeFetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL }/api/health-concerns`);
       
       if (response.ok) {
         const result = await response.json();
@@ -213,7 +213,7 @@ export default function DashboardIndex() {
     if (!user?.token) return;
     setLoadingReports(true);
     try {
-      const response = await fetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/patient/${user._id}`, {
+      const response = await fetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL }/api/reports/patient/${user._id}`, {
         headers: {
           Authorization: `Bearer ${user.token}`
         }
@@ -230,7 +230,7 @@ export default function DashboardIndex() {
   };
   const handleDownloadReport = async (reportId) => {
     try {
-      const response = await fetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/${reportId}/download`, {
+      const response = await fetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL }/api/reports/${reportId}/download`, {
         headers: {
           Authorization: `Bearer ${user.token}`
         }
@@ -259,7 +259,7 @@ export default function DashboardIndex() {
   useEffect(() => {
     const fetchUserBookings = async () => {
       try {
-        const response = await fetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/bookings`, {
+        const response = await fetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL }/api/bookings`, {
           headers: {
             Authorization: `Bearer ${user?.token || ""}`,
           },

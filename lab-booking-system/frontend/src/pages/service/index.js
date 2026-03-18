@@ -105,7 +105,7 @@ export default function ServiceIndex() {
   useEffect(() => {
     const fetchServiceContent = async () => {
       try {
-        const response = await safeFetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/service-content`);
+        const response = await safeFetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL }/api/service-content`);
         if (response.ok) {
           const result = await response.json();
           const data = result.data || {};

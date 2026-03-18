@@ -301,7 +301,7 @@ const ReportView = () => {
       }
       
       // Use the same download method as admin and lab technician
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/${reportId}/download`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL }/api/reports/${reportId}/download`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,

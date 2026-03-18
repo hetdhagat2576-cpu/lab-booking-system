@@ -156,7 +156,7 @@ export default function NotificationBell() {
       
       console.log('🔔 Fetching notifications...');
       
-      const response = await fetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/notifications`, {
+      const response = await fetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL }/api/notifications`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -218,7 +218,7 @@ export default function NotificationBell() {
         return;
       }
       
-      const response = await fetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/notifications/${notificationId}/read`, {
+      const response = await fetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL }/api/notifications/${notificationId}/read`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -255,7 +255,7 @@ export default function NotificationBell() {
         return;
       }
       
-      const response = await fetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/notifications/read-all`, {
+      const response = await fetch(`${process.env.VITE_API_URL || process.env.REACT_APP_API_URL }/api/notifications/read-all`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`

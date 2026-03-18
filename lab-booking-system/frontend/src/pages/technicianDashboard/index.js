@@ -98,7 +98,7 @@ const TechnicianDashboard = () => {
   // Initialize WebSocket connection
   useEffect(() => {
     if (user?.token && user?.id) {
-      const websocketUrl = `${process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5001'}?userId=${user.id}&token=${user.token}`;
+      const websocketUrl = `${process.env.VITE_API_URL || process.env.REACT_APP_API_URL }?userId=${user.id}&token=${user.token}`;
       const websocket = new WebSocket(websocketUrl);
       
       websocket.onopen = () => {
@@ -134,7 +134,7 @@ const TechnicianDashboard = () => {
         setTimeout(() => {
           if (user?.token && user?.id) {
             console.log('Attempting to reconnect WebSocket...');
-            const reconnectUrl = `${process.env.VITE_API_URL || process.env.REACT_APP_API_URL || 'http://localhost:5001'}?userId=${user.id}&token=${user.token}`;
+            const reconnectUrl = `${process.env.VITE_API_URL || process.env.REACT_APP_API_URL }?userId=${user.id}&token=${user.token}`;
             const reconnectWs = new WebSocket(reconnectUrl);
             setWs(reconnectWs);
           }
@@ -193,7 +193,7 @@ const TechnicianDashboard = () => {
       
       if (bookingData.success && bookingData.data) {
         // Use the correct download endpoint with report ID
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001'}/api/reports/${bookingData.data._id}/download`, {
+        const response = await fetch(`${process.env.REACT_APP_API_URL }/api/reports/${bookingData.data._id}/download`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${user.token}`,
