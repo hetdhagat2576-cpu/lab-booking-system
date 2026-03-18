@@ -115,7 +115,6 @@ app.use((req, res, next) => {
 // Import controllers
 const { getHomeWhyBook, getHomeHowItWorks, getFaq, getLegal } = require('../controllers/contentController');
 const { getReviewedFeedbacks } = require('../controllers/feedbackController');
-const { loginUser } = require('../controllers/authController');
 
 // Simple database middleware
 const withDB = (handler) => {
@@ -211,10 +210,80 @@ app.get('/api/feedback/reviewed', withDB(async (req, res) => {
   }
 }));
 
-// Auth routes
+// Auth routes - serverless compatible
 app.post('/api/auth/login', withDB(async (req, res) => {
   try {
-    await loginUser(req, res);
+    const { email, password, role } = req.body;
+    
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide email and password'
+      });
+    }
+
+    // Find user by email
+    const User = require('../models/user').default || require('../models/user');
+    const user = await User.findOne({ email }).select('+password +isEmailVerified +role');
+    
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
+      });
+    }
+
+    // Check if email is verified
+    if (!user.isEmailVerified) {
+      return res.status(403).json({
+        success: false,
+        message: 'Please verify your email before logging in'
+      });
+    }
+
+    // Check role if specified
+    if (role && user.role !== role) {
+      return res.status(403).json({
+        success: false,
+        message: `Access denied. Expected role: ${role}, but user role is: ${user.role}`
+      });
+    }
+
+    // Compare password
+    const isMatch = await user.comparePassword(password);
+    
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid credentials'
+      });
+    }
+
+    // Generate token
+    const jwt = require('jsonwebtoken');
+    const token = jwt.sign(
+      { 
+        id: user._id, 
+        email: user.email, 
+        role: user.role 
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // Return success response
+    res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
+
   } catch (error) {
     console.error('Login route error:', error);
     res.status(500).json({
