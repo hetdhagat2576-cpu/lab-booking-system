@@ -39,6 +39,19 @@ module.exports = async (req, res) => {
   
   const origin = req.headers.origin;
   
+  res.removeHeader('Access-Control-Allow-Origin');
+  res.removeHeader('access-control-allow-origin');
+  res.removeHeader('Access-Control-Allow-Methods');
+  res.removeHeader('access-control-allow-methods');
+  res.removeHeader('Access-Control-Allow-Headers');
+  res.removeHeader('access-control-allow-headers');
+  res.removeHeader('Access-Control-Allow-Credentials');
+  res.removeHeader('access-control-allow-credentials');
+  res.removeHeader('Access-Control-Max-Age');
+  res.removeHeader('access-control-max-age');
+  res.removeHeader('Access-Control-Expose-Headers');
+  res.removeHeader('access-control-expose-headers');
+  
   // Set single origin based on request
   if (allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);

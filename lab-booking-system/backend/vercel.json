@@ -2,13 +2,6 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/test.js",
-      "use": "@vercel/node",
-      "config": {
-        "functionName": "test-function"
-      }
-    },
-    {
       "src": "api/index.js",
       "use": "@vercel/node",
       "config": {
@@ -17,10 +10,6 @@
     }
   ],
   "routes": [
-    {
-      "src": "/api/test",
-      "dest": "/api/test.js"
-    },
     {
       "src": "/api/(.*)",
       "dest": "/api/index.js"
