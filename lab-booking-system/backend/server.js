@@ -35,41 +35,51 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// to avoid conflicts with serverless function CORS handling
-if (process.env.NODE_ENV !== 'production' || process.env.VERCEL !== '1') {
-  app.use(cors({
-    origin: [
-      process.env.FRONTEND_URL,
-      "https://lab-booking-frontend-l2ki0uzr8-hetdhagat2576-8656s-projects.vercel.app",
-      "https://lab-booking-frontend.vercel.app",
-      "http://localhost:3000",
-      "http://localhost:3001", 
-      "http://localhost:5173",
-      "http://127.0.0.1:3000", 
-      "http://127.0.0.1:3001",
-      "http://127.0.0.1:5173"
-    ],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: [
-      'Content-Type', 
-      'Authorization', 
-      'X-Requested-With',
-      'X-CSRF-Token',
-      'X-API-Key',
-      'Origin',
-      'Accept',
-      'Accept-Language',
-      'Content-Length'
-    ],
-    optionsSuccessStatus: 200,
-    preflightContinue: false,
-    exposedHeaders: ['X-Total-Count', 'X-Page-Count', 'Content-Disposition']
-  }));
+// Dynamic CORS configuration
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  "https://lab-booking-frontend-l2ki0uzr8-hetdhagat2576-8656s-projects.vercel.app",
+  "https://lab-booking-frontend.vercel.app",
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:5173",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:3001",
+  "http://127.0.0.1:5173"
+].filter(Boolean); // Filter out undefined values
 
-  // Handle preflight requests explicitly
-  app.options('*', cors());
-}
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'X-CSRF-Token',
+    'X-API-Key',
+    'Origin',
+    'Accept',
+    'Accept-Language',
+    'Content-Length'
+  ],
+  optionsSuccessStatus: 200,
+  exposedHeaders: ['X-Total-Count', 'X-Page-Count', 'Content-Disposition']
+};
+
+app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly
+app.options('*', cors(corsOptions));
 
 // Session middleware after JSON parsing - only apply to routes that need authentication
 app.use('/api/auth', sessionConfig);
