@@ -28,7 +28,7 @@ import About from "./pages/about";
 import Service from "./pages/service";
 import NewBooking from "./pages/newBooking";
 import ContactUs from "./pages/contact-Us";
-import PrivacyPolicy from "./pages/privacy Policy";
+import PrivacyPolicy from "./pages/privacy-policy";
 import UserProfile from "./pages/userprofile";
 import UserHistory from "./pages/userHistory";
 import TermsCondition from "./pages/termsCondition";

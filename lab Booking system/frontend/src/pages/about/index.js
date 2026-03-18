@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import Header from "../../components/header";
 import Footer from "../../components/footer";
 import CButton from "../../components/cButton";
-import ImageConfig from "../../config/image File";
+import ImageConfig from "../../config/image-file";
 import Theme from "../../config/theam/index.js";
 import { ABOUT_FEATURES, ABOUT_COMMITMENT_POINTS } from "../../config/staticData";
 import { safeFetch } from "../../config/api";
