@@ -323,12 +323,19 @@ const deleteHomeWhyBookItem = async (req, res) => {
 // Home How It Works Content Functions
 const getHomeHowItWorks = async (req, res) => {
   try {
+    console.log('=== DEBUG: getHomeHowItWorks called ===');
+    console.log('HomeHowItWorks model:', HomeHowItWorks);
+    
     const howItWorksData = await HomeHowItWorks.find({ isActive: true }).sort({ order: 1, stepNumber: 1 });
+    console.log('Found how it works:', howItWorksData.length);
+    
     res.status(200).json({
       success: true,
       data: howItWorksData
     });
   } catch (error) {
+    console.error('Get home how it works error:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Server error',

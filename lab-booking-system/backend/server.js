@@ -8,6 +8,21 @@ const sessionConfig = require('./middleware/sessionMiddleware');
 const { showLoadingIndicator, hideLoadingIndicator } = require('./middleware/loadingMiddleware');
 const { errorHandler, notFound } = require('./middleware/errorMiddleware');
 
+// Load all models to ensure they are registered
+require('./models/user');
+require('./models/feedback');
+require('./models/homeHowItWorks');
+require('./models/homeWhyBook');
+require('./models/booking');
+require('./models/test');
+require('./models/package');
+require('./models/faq');
+require('./models/serviceContent');
+require('./models/termsContent');
+require('./models/privacyContent');
+require('./models/aboutContent');
+require('./models/healthConcern');
+
 // Load environment variables
 dotenv.config();
 
@@ -165,6 +180,43 @@ app.get('/api/cors-test', (req, res) => {
     origin: req.headers.origin,
     timestamp: new Date().toISOString()
   });
+});
+
+// Debug endpoint to test models
+app.get('/api/debug/models', async (req, res) => {
+  try {
+    console.log('=== DEBUG: Testing models ===');
+    
+    const mongoose = require('mongoose');
+    console.log('Mongoose version:', mongoose.version);
+    console.log('Connection state:', mongoose.connection.readyState);
+    
+    // Test Feedback model
+    const Feedback = mongoose.model('Feedback');
+    console.log('Feedback model loaded:', !!Feedback);
+    
+    // Test HomeHowItWorks model
+    const HomeHowItWorks = mongoose.model('HomeHowItWorks');
+    console.log('HomeHowItWorks model loaded:', !!HomeHowItWorks);
+    
+    res.status(200).json({
+      success: true,
+      message: 'Models loaded successfully',
+      models: {
+        Feedback: !!Feedback,
+        HomeHowItWorks: !!HomeHowItWorks
+      },
+      connectionState: mongoose.connection.readyState
+    });
+  } catch (error) {
+    console.error('Debug endpoint error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error loading models',
+      error: error.message,
+      stack: error.stack
+    });
+  }
 });
 
 // Enhanced error handling middleware (must be last)

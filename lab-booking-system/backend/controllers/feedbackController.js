@@ -229,9 +229,14 @@ const deleteFeedback = async (req, res) => {
 // Get reviewed feedbacks (Admin only)
 const getReviewedFeedbacks = async (req, res) => {
   try {
+    console.log('=== DEBUG: getReviewedFeedbacks called ===');
+    console.log('Feedback model:', Feedback);
+    
     const feedbacks = await Feedback.find({ status: { $in: ['reviewed', 'new', 'pending', 'positive'] } })
       .populate('user', 'name email')
       .sort({ createdAt: -1 });
+    
+    console.log('Found feedbacks:', feedbacks.length);
     
     res.status(200).json({
       success: true,
@@ -240,6 +245,7 @@ const getReviewedFeedbacks = async (req, res) => {
     });
   } catch (error) {
     console.error('Get reviewed feedbacks error:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
       message: 'Error fetching reviewed feedbacks',
