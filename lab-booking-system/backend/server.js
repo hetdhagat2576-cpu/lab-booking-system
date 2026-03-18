@@ -7,21 +7,6 @@ const sessionConfig = require('./middleware/sessionMiddleware');
 const { showLoadingIndicator, hideLoadingIndicator } = require('./middleware/loadingMiddleware');
 const { errorHandler, notFound } = require('./middleware/errorMiddleware');
 
-// Load all models to ensure they are registered
-require('./models/user');
-require('./models/feedback');
-require('./models/homeHowItWorks');
-require('./models/homeWhyBook');
-require('./models/booking');
-require('./models/test');
-require('./models/package');
-require('./models/faq');
-require('./models/serviceContent');
-require('./models/termsContent');
-require('./models/privacyPolicy');
-require('./models/aboutContent');
-require('./models/healthConcern');
-
 // Load environment variables
 dotenv.config();
 

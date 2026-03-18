@@ -1,5 +1,20 @@
 const mongoose = require('mongoose');
 
+// Load all models to ensure they are registered
+require('../models/user');
+require('../models/feedback');
+require('../models/homeHowItWorks');
+require('../models/homeWhyBook');
+require('../models/booking');
+require('../models/test');
+require('../models/package');
+require('../models/faq');
+require('../models/serviceContent');
+require('../models/termsContent');
+require('../models/privacyPolicy');
+require('../models/AboutContent');
+require('../models/healthConcern');
+
 const connectDB = async () => {
   try {
     const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/lab_appointment';
