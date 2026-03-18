@@ -12,15 +12,15 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "../backend/server.js"
+      "dest": "../backend/api/index.js"
     },
     {
       "src": "/uploads/(.*)",
-      "dest": "../backend/server.js"
+      "dest": "../backend/api/index.js"
     },
     {
       "src": "/health",
-      "dest": "../backend/server.js"
+      "dest": "../backend/api/index.js"
     },
     {
       "src": "/static/(.*)",
