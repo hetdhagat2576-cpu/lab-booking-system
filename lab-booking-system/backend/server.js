@@ -24,6 +24,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cors({
   origin: [
     process.env.FRONTEND_URL,
+    "https://lab-booking-frontend-l2ki0uzr8-hetdhagat2576-8656s-projects.vercel.app",
+    "https://lab-booking-frontend.vercel.app",
     "http://localhost:3000",
     "http://localhost:3001", 
     "http://localhost:5173",

@@ -11,18 +11,6 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "../backend/server.js"
-    },
-    {
-      "src": "/uploads/(.*)",
-      "dest": "../backend/server.js"
-    },
-    {
-      "src": "/health",
-      "dest": "../backend/server.js"
-    },
-    {
       "src": "/static/(.*)",
       "dest": "/static/$1"
     },
@@ -46,8 +34,5 @@
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }
