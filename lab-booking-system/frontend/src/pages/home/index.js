@@ -181,44 +181,44 @@ export default function HomeIndex() {
           {
             iconKey: "Home",
             title: "Home Sample Collection",
-            desc: "Free and timely sample pickup by certified professionals."
+            desc: "Free and timely sample pickup by certified professionals at your doorstep."
           },
           {
             iconKey: "CheckCircle", 
             title: "Certified Labs",
-            desc: "ISO & NABL certified laboratories for accurate results."
+            desc: "ISO & NABL certified laboratories ensuring accurate and reliable test results."
           },
           {
             iconKey: "Users",
             title: "Best Prices", 
-            desc: "Compare labs and save up to 70% on test bookings."
+            desc: "Compare prices from multiple labs and save up to 70% on your test bookings."
           },
           {
             iconKey: "FileText",
             title: "Digital Reports",
-            desc: "Get your test reports delivered digitally within 24-48 hours."
+            desc: "Receive your test reports digitally within 24-48 hours with secure access."
           }
         ]);
         setHowItWorksData([
           {
-            step: 1,
-            title: "Book Test",
-            desc: "Select your test and book appointment online."
+            iconKey: "Search",
+            title: "Search & Select",
+            desc: "Search for tests and labs, compare prices, and select what you need."
           },
           {
-            step: 2,
+            iconKey: "CreditCard",
+            title: "Book & Pay",
+            desc: "Book your test and pay securely online or choose cash on collection."
+          },
+          {
+            iconKey: "Home",
             title: "Sample Collection",
-            desc: "Our certified professional will collect sample from your home."
+            desc: "Get your sample collected at home or visit the lab."
           },
           {
-            step: 3,
-            title: "Lab Testing",
-            desc: "Sample is tested in our certified laboratory."
-          },
-          {
-            step: 4,
+            iconKey: "FileText",
             title: "Get Reports",
-            desc: "Receive your accurate test reports digitally."
+            desc: "Receive your test reports digitally within 24-48 hours."
           }
         ]);
         
@@ -361,22 +361,33 @@ export default function HomeIndex() {
       {/* WHY BOOK WITH US */}
       <AnimatedSection className="bg-gray-50 py-12 sm:py-16 md:py-20 border-y-2 border-gray-200" delay={0.2}>
         <div className="container mx-auto px-4">
-          <motion.h2 
-            variants={textReveal}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
-            className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-center text-gray-900 mb-4 sm:mb-6"
-          >
-            Why Book With Us?
-          </motion.h2>
-          <motion.div 
-            initial={{ width: 0 }}
-            whileInView={{ width: "4rem" }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-            className="h-1 bg-primary mx-auto rounded-full mb-8 sm:mb-12"
-          />
+          <motion.div className="text-center mb-8 sm:mb-12">
+            <motion.h2 
+              variants={textReveal}
+              initial="initial"
+              whileInView="animate"
+              viewport={{ once: true }}
+              className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 mb-4"
+            >
+              Why Book With Us?
+            </motion.h2>
+            <motion.p 
+              initial={{ opacity: 0, y: -20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed"
+            >
+              Experience the convenience and reliability of our laboratory booking platform
+            </motion.p>
+            <motion.div 
+              initial={{ width: 0 }}
+              whileInView={{ width: "4rem" }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+              className="h-1 bg-primary mx-auto rounded-full mt-4"
+            />
+          </motion.div>
           <motion.div 
             variants={staggerContainer}
             initial="initial"
@@ -450,7 +461,7 @@ export default function HomeIndex() {
                   className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-2xl bg-gradient-to-br from-primary to-secondary text-white flex items-center justify-center shadow-lg group-hover:shadow-2xl transition-all duration-300"
                 >
                   {item.iconKey && IconConfig[item.iconKey] ? (
-                    React.createElement(IconConfig[item.iconKey], { size: 28 })
+                    React.createElement(IconConfig[item.iconKey], { className: "text-white", size: 28 })
                   ) : (
                     <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-lg" />
                   )}
