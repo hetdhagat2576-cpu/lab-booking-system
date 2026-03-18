@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/header";
 import Footer from "../../components/footer";
-import ImageConfig from "../../config/image File";
+import ImageConfig from "../../config/image-file";
 import IconConfig from "../../components/icon/index.js";
 import Theme from "../../config/theam/index.js";
 import { safeFetch, createApiUrl } from "../../config/api";

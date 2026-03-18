@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import Header from "../../components/header";
 import Footer from "../../components/footer";
 import Loader from "../../components/loader";
-import ImageConfig from "../../config/image File";
+import ImageConfig from "../../config/image-file";
 import IconConfig from "../../components/icon/index.js";
 import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
 import {
