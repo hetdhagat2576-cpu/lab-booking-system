@@ -368,6 +368,7 @@ export default function HomeIndex() {
               whileInView="animate"
               viewport={{ once: true }}
               className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 mb-4"
+              style={{ color: '#1e293b' }}
             >
               Why Book With Us?
             </motion.h2>
@@ -378,14 +379,14 @@ export default function HomeIndex() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed"
             >
-              Experience the convenience and reliability of our laboratory booking platform
             </motion.p>
             <motion.div 
               initial={{ width: 0 }}
               whileInView={{ width: "4rem" }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-              className="h-1 bg-primary mx-auto rounded-full mt-4"
+              className="h-1 mx-auto rounded-full mt-4"
+              style={{ backgroundColor: '#2a7a8e' }}
             />
           </motion.div>
           <motion.div 
@@ -432,6 +433,7 @@ export default function HomeIndex() {
             whileInView="animate"
             viewport={{ once: true }}
             className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4 sm:mb-6"
+            style={{ color: '#1e293b' }}
           >
             How It Works
           </motion.h2>
@@ -440,7 +442,8 @@ export default function HomeIndex() {
             whileInView={{ width: "4rem" }}
             viewport={{ once: true }}
             transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-            className="h-1 bg-primary mx-auto rounded-full mb-8 sm:mb-12"
+            className="h-1 mx-auto rounded-full mb-8 sm:mb-12"
+            style={{ backgroundColor: '#2a7a8e' }}
           />
           <motion.div 
             variants={staggerContainer}
