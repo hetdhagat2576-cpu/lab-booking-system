@@ -2,7 +2,7 @@
   "name": "lab-booking-backend",
   "version": "1.0.0",
   "description": "Backend API for Lab Booking System",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
     "start": "cross-env PORT=5001 node server.js",
     "dev": "nodemon server.js",
@@ -23,6 +23,9 @@
     "seed-about": "node scripts/seedAboutContent.js",
     "seed-health-concerns": "node scripts/seedHealthConcerns.js",
     "seed-all": "node seedUsers.js && node scripts/seedTests.js && node scripts/seedPackages.js && node scripts/seedReports.js && node scripts/seedHomeContent.js && node scripts/seedServiceContent.js && node scripts/seedTerms.js && node scripts/seedPrivacyContent.js && node scripts/seedFAQ.js && node scripts/seedAboutContent.js"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   },
   "dependencies": {
     "axios": "^1.13.2",

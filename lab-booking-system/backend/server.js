@@ -230,18 +230,15 @@ app.get('/api/debug/models', async (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5001;
+// Start server for local development only
+if (process.env.NODE_ENV !== 'production') {
+  const server = http.createServer(app);
+  const WebSocket = require('ws');
+  const wss = new WebSocket.Server({ server });
 
-// Start server for local development
-const server = http.createServer(app);
-
-// WebSocket setup (only for local development)
-const wss = new WebSocket.Server({ server });
-const bookingController = require('./controllers/bookingController');
-bookingController.setWebSocketServer(wss);
-
+  // WebSocket connection handling
   wss.on('connection', (ws, req) => {
-    console.log('✅ New WebSocket connection established');
+    console.log('New WebSocket connection established');
     
     try {
       const url = new URL(req.url, `http://${req.headers.host}`);
@@ -308,6 +305,7 @@ bookingController.setWebSocketServer(wss);
     console.log(`✅ Server running on port ${PORT}`);
     console.log(`✅ WebSocket server running on ws://localhost:${PORT}`);
   });
+}
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
@@ -320,6 +318,3 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
   process.exit(1);
 });
-
-// Export for Vercel serverless deployment
-module.exports = app;
