@@ -23,6 +23,8 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use((req, res, next) => {
   const allowedOrigins = [
     process.env.FRONTEND_URL,
+    "https://backend-kjcnywwly-hetdhagat2576-8656s-projects.vercel.app",
+    "https://lab-booking-frontend-86.vercel.app",
     "https://lab-booking-frontend-l2ki0uzr8-hetdhagat2576-8656s-projects.vercel.app",
     "https://lab-booking-frontend.vercel.app",
     "http://localhost:3000",
@@ -231,7 +233,7 @@ app.use(notFound);
 app.use(errorHandler);
 
 // Start server for local development only
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
   const server = http.createServer(app);
   const WebSocket = require('ws');
   const wss = new WebSocket.Server({ server });
@@ -318,3 +320,6 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
   process.exit(1);
 });
+
+// Export app for Vercel serverless deployment
+module.exports = app;

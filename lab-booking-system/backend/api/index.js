@@ -11,14 +11,5 @@ connectDB();
 // Import the main app from server.js
 const app = require('./server.js');
 
-// Add a simple test route for debugging
-app.get('/test', (req, res) => {
-  res.json({ 
-    message: 'Backend is working!', 
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV 
-  });
-});
-
 // Export for Vercel serverless deployment
 module.exports = app;
