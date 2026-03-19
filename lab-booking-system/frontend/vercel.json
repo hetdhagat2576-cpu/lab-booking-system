@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "name": "lab-booking-frontend",
   "builds": [
     {
       "src": "package.json",
@@ -15,13 +14,5 @@
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ],
-  "env": {
-    "REACT_APP_API_URL": "@api_url",
-    "REACT_APP_RAZORPAY_KEY_ID": "@razorpay_key_id"
-  },
-  "buildCommand": "npm run build",
-  "outputDirectory": "build",
-  "installCommand": "npm install",
-  "framework": "create-react-app"
+  ]
 }
