@@ -6,14 +6,7 @@ import Footer from "../../components/footer";
 import Loader from "../../components/loader";
 import ImageConfig from "../../config/image-file";
 import IconConfig from "../../components/icon/index.js";
-import {
-  FaFacebook,
-  FaTwitter,
-  FaInstagram,
-  FaLinkedin,
-  FaShieldAlt,
-  FaAward
-} from "react-icons/fa";
+import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
 import {
   heroTitle,
   heroSubtitle,
@@ -188,44 +181,44 @@ export default function HomeIndex() {
           {
             iconKey: "Home",
             title: "Home Sample Collection",
-            desc: "Free and timely sample pickup by certified professionals."
+            desc: "Free and timely sample pickup by certified professionals at your doorstep."
           },
           {
             iconKey: "CheckCircle", 
             title: "Certified Labs",
-            desc: "ISO & NABL certified laboratories for accurate results."
+            desc: "ISO & NABL certified laboratories ensuring accurate and reliable test results."
           },
           {
             iconKey: "Users",
             title: "Best Prices", 
-            desc: "Compare labs and save up to 70% on test bookings."
+            desc: "Compare prices from multiple labs and save up to 70% on your test bookings."
           },
           {
             iconKey: "FileText",
             title: "Digital Reports",
-            desc: "Get your test reports delivered digitally within 24-48 hours."
+            desc: "Receive your test reports digitally within 24-48 hours with secure access."
           }
         ]);
         setHowItWorksData([
           {
-            step: 1,
-            title: "Book Test",
-            desc: "Select your test and book appointment online."
+            iconKey: "Search",
+            title: "Search & Select",
+            desc: "Search for tests and labs, compare prices, and select what you need."
           },
           {
-            step: 2,
+            iconKey: "CreditCard",
+            title: "Book & Pay",
+            desc: "Book your test and pay securely online or choose cash on collection."
+          },
+          {
+            iconKey: "Home",
             title: "Sample Collection",
-            desc: "Our certified professional will collect sample from your home."
+            desc: "Get your sample collected at home or visit the lab."
           },
           {
-            step: 3,
-            title: "Lab Testing",
-            desc: "Sample is tested in our certified laboratory."
-          },
-          {
-            step: 4,
+            iconKey: "FileText",
             title: "Get Reports",
-            desc: "Receive your accurate test reports digitally."
+            desc: "Receive your test reports digitally within 24-48 hours."
           }
         ]);
         
@@ -249,173 +242,182 @@ export default function HomeIndex() {
       </div>
 
       {/* HERO BANNER */}
-      <section className="relative bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800">
-        <div className="absolute inset-0 bg-black/20"></div>
-        <div className="relative container mx-auto px-4 py-20 sm:py-24 md:py-32 lg:py-40">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <motion.div 
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              className="text-center lg:text-left text-white"
+      <section className="bg-white">
+        <div className="relative w-full h-96 sm:h-[28rem] md:h-[32rem] lg:h-[40rem] xl:h-screen overflow-hidden">
+          <motion.img
+            initial={{ scale: 1.2 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            src={ImageConfig.homeImage}
+            alt={ImageConfig.homeImageDescription}
+            title={ImageConfig.homeImageName}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.src = ImageConfig.homeImageFallback;
+            }}
+          />
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: 0.5 }}
+            className="absolute inset-0 bg-black/30" 
+          />
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center text-white px-4 sm:px-6 md:px-8">
+            {/* Image Name Overlay */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.1 }}
+              className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-black shadow-md"
             >
-              <motion.div
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                className="inline-flex items-center bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full text-sm font-medium mb-6"
-              >
-                <FaShieldAlt className="mr-2" size={16} />
-                Trusted by 10,000+ Patients
-              </motion.div>
-              
-              <motion.h1 
-                initial={{ opacity: 0, y: -30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6"
-              >
-                Your Health,
-                <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-400">
-                  Our Priority
-                </span>
-              </motion.h1>
-              
-              <motion.p 
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                className="text-lg sm:text-xl md:text-2xl text-blue-100 mb-8 leading-relaxed"
-              >
-                Book laboratory tests with confidence. 
-                <br />
-                Certified labs, instant reports.
-              </motion.p>
-              
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.5 }}
-                className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
-              >
-                <AnimatedButton
-                  onClick={() => navigate("/register")}
-                  className="px-8 py-4 bg-white text-blue-700 font-semibold rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center gap-2"
-                >
-                  Book Now
-                  <ArrowRight size={18} />
-                </AnimatedButton>
-                
-                <AnimatedButton
-                  onClick={() => navigate("/health-packages/all")}
-                  className="px-8 py-4 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-blue-700 transition-all duration-300"
-                >
-                  View Packages
-                </AnimatedButton>
-              </motion.div>
+              🏥 {ImageConfig.homeImageName || "Medical Laboratory"}
             </motion.div>
             
-            <motion.div 
-              initial={{ opacity: 0, x: 50, scale: 0.8 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
+            <motion.p 
+              initial={{ opacity: 0, y: -30 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.3 }}
-              className="relative"
+              className="text-xs sm:text-sm font-semibold uppercase tracking-widest bg-teal-600 w-fit px-3 sm:px-4 py-2 rounded"
             >
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-orange-400/20 rounded-2xl transform rotate-6"></div>
-                <img
-                  src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&q=80"
-                  alt="Healthcare Professional"
-                  className="relative rounded-2xl shadow-2xl w-full h-auto max-h-96 object-cover"
-                />
-              </div>
-            </motion.div>
+              Laboratory Booking System
+            </motion.p>
+            <motion.h1 
+              variants={heroTitle}
+              initial="initial"
+              animate="animate"
+              className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-7xl font-extrabold tracking-tight mt-4 leading-none"
+            >
+              Book, Track & Test with
+            </motion.h1>
+            <motion.h2 
+              variants={heroSubtitle}
+              initial="initial"
+              animate="animate"
+              className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-6xl font-light tracking-wide mt-3 text-white/95"
+            >
+              Confidence
+            </motion.h2>
+            <motion.p 
+              variants={heroDescription}
+              initial="initial"
+              animate="animate"
+              className="mt-4 sm:mt-6 max-w-2xl md:max-w-3xl text-sm sm:text-base md:text-lg text-white/90"
+            >
+              Seamless scheduling, trusted diagnostics, and fast digital reports.
+            </motion.p>
+            
+            <AnimatedButton
+              onClick={() => navigate("/register")}
+              className="mt-6 sm:mt-8 px-6 sm:px-8 md:px-10 lg:px-12 py-3 sm:py-4 bg-white text-primary font-black rounded-full shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center gap-3 group border-2 border-white/20 backdrop-blur-sm text-sm sm:text-base"
+            >
+              <span className="hidden xs:inline sm:hidden">Book Home Service</span>
+              <span className="xs:hidden sm:inline">Book Now</span>
+              <motion.div
+                whileHover={{ x: 8 }}
+                transition={{ duration: 0.3 }}
+              >
+                <ArrowRight size={16} />
+              </motion.div>
+            </AnimatedButton>
           </div>
         </div>
       </section>
 
-      {/* STATS SECTION */}
-      <AnimatedSection className="py-16 bg-gray-50" delay={0.2}>
-        <div className="container mx-auto px-4">
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-8"
-          >
-            {[
-              { number: "10,000+", label: "Happy Patients", icon: Users },
-              { number: "500+", label: "Partner Labs", icon: Home },
-              { number: "50+", label: "Cities Covered", icon: FaAward },
-              { number: "24/7", label: "Support Available", icon: Clock }
-            ].map((stat, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: 0.1 * index }}
-                className="text-center bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-all duration-300"
-              >
-                <motion.div
-                  animate={floating}
-                  className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4"
-                >
-                  {React.createElement(stat.icon, { className: "text-blue-600", size: 24 })}
-                </motion.div>
-                <div className="text-3xl font-bold text-gray-800 mb-2">{stat.number}</div>
-                <div className="text-gray-600">{stat.label}</div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </AnimatedSection>
-
-      {/* WHY BOOK WITH US */}
-      <AnimatedSection className="py-16 bg-white" delay={0.4}>
-        <div className="container mx-auto px-4">
-          <motion.div 
+      {/* Trusted Laboratory Experts Section */}
+      <AnimatedSection className="bg-white py-12 sm:py-16 md:py-20 border-b-4 border-gray-300">
+        <div className="container mx-auto px-4 text-center">
+          <motion.h2 
             initial={{ opacity: 0, y: -30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="text-3xl sm:text-4xl md:text-5xl font-bold text-black mb-6"
           >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Why Choose BookMyLab?
-            </h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-indigo-600 mx-auto rounded-full"></div>
+            Trusted Laboratory Experts
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: -20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+            className="text-lg sm:text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed mb-8"
+          >
+            Our platform connects patients with certified laboratories,
+            ensuring transparency, accuracy, and reliable diagnostics
+            for every test.
+          </motion.p>
+          {/* Colored horizontal line using primary theme color */}
+          <motion.div 
+            initial={{ width: 0 }}
+            whileInView={{ width: "6rem" }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
+            className="h-1 bg-primary mx-auto rounded-full"
+          />
+        </div>
+      </AnimatedSection>
+
+      
+      {/* WHY BOOK WITH US */}
+      <AnimatedSection className="bg-gray-50 py-12 sm:py-16 md:py-20 border-y-2 border-gray-200" delay={0.2}>
+        <div className="container mx-auto px-4">
+          <motion.div className="text-center mb-8 sm:mb-12">
+            <motion.h2 
+              variants={textReveal}
+              initial="initial"
+              whileInView="animate"
+              viewport={{ once: true }}
+              className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-gray-900 mb-4"
+              style={{ color: '#1e293b' }}
+            >
+              Why Book With Us?
+            </motion.h2>
+            <motion.p 
+              initial={{ opacity: 0, y: -20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed"
+            >
+            </motion.p>
+            <motion.div 
+              initial={{ width: 0 }}
+              whileInView={{ width: "4rem" }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+              className="h-1 mx-auto rounded-full mt-4"
+              style={{ backgroundColor: '#2a7a8e' }}
+            />
           </motion.div>
-          
           <motion.div 
             variants={staggerContainer}
             initial="initial"
             whileInView="animate"
             viewport={{ once: true, amount: 0.2 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 max-w-6xl mx-auto"
           >
             {whyBookData.map((item, index) => (
               <AnimatedGridItem
                 key={item._id || index}
                 index={index}
-                className="bg-gray-50 p-6 rounded-2xl hover:bg-blue-50 border border-gray-200 hover:border-blue-300 transition-all duration-300 group"
+                className="flex gap-3 sm:gap-6 bg-white p-4 sm:p-6 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 group"
               >
                 <motion.div 
                   animate={floating}
-                  className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform duration-300"
+                  className="p-4 sm:p-5 rounded-xl bg-gradient-to-br from-primary/10 to-secondary/10 group-hover:from-primary/20 group-hover:to-secondary/20 transition-all duration-300 h-fit"
                 >
                   {item.iconKey && IconConfig[item.iconKey] ? (
-                    React.createElement(IconConfig[item.iconKey], { size: 28 })
+                    React.createElement(IconConfig[item.iconKey], { className: "text-primary", size: 28 })
                   ) : (
-                    <CheckCircle size={28} />
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-primary rounded-lg" />
                   )}
                 </motion.div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3 group-hover:text-blue-600 transition-colors duration-300">
-                  {item.title}
-                </h3>
-                <p className="text-gray-600 leading-relaxed">{item.desc || item.description}</p>
+                <div className="flex-1">
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 sm:mb-3 text-gray-800 group-hover:text-primary transition-colors duration-300">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm sm:text-base text-gray-600 leading-relaxed">{item.desc || item.description}</p>
+                </div>
               </AnimatedGridItem>
             ))}
           </motion.div>
@@ -423,192 +425,315 @@ export default function HomeIndex() {
       </AnimatedSection>
 
       {/* HOW IT WORKS */}
-      <AnimatedSection className="py-16 bg-gradient-to-b from-blue-50 to-white" delay={0.6}>
-        <div className="container mx-auto px-4">
-          <motion.div 
-            initial={{ opacity: 0, y: -30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+      <AnimatedSection className="bg-gradient-to-b from-white to-gray-50 py-12 sm:py-16 md:py-20" delay={0.4}>
+        <div className="container mx-auto px-4 text-center">
+          <motion.h2 
+            variants={textReveal}
+            initial="initial"
+            whileInView="animate"
             viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
+            className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4 sm:mb-6"
+            style={{ color: '#1e293b' }}
           >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              How It Works
-            </h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-indigo-600 mx-auto rounded-full"></div>
-          </motion.div>
-          
+            How It Works
+          </motion.h2>
+          <motion.div 
+            initial={{ width: 0 }}
+            whileInView={{ width: "4rem" }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+            className="h-1 mx-auto rounded-full mb-8 sm:mb-12"
+            style={{ backgroundColor: '#2a7a8e' }}
+          />
           <motion.div 
             variants={staggerContainer}
             initial="initial"
             whileInView="animate"
             viewport={{ once: true, amount: 0.2 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto"
+            className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8 max-w-6xl mx-auto"
           >
             {howItWorksData.map((item, index) => (
               <AnimatedGridItem
                 key={item._id || index}
                 index={index}
-                className="text-center group"
+                className="space-y-4 sm:space-y-6 group"
               >
                 <motion.div 
-                  whileHover={{ scale: 1.1, y: -5 }}
+                  whileHover={{ scale: 1.1, rotate: 5 }}
                   transition={{ duration: 0.3 }}
-                  className="relative mb-6"
+                  className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-2xl bg-gradient-to-br from-primary to-secondary text-white flex items-center justify-center shadow-lg group-hover:shadow-2xl transition-all duration-300"
                 >
-                  <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white mx-auto shadow-lg group-hover:shadow-2xl transition-all duration-300">
-                    <span className="text-2xl font-bold">{item.step}</span>
-                  </div>
-                  {index < howItWorksData.length - 1 && (
-                    <div className="hidden lg:block absolute top-10 left-full w-full h-0.5 bg-gradient-to-r from-blue-300 to-transparent -translate-y-1/2"></div>
+                  {item.iconKey && IconConfig[item.iconKey] ? (
+                    React.createElement(IconConfig[item.iconKey], { className: "text-white", size: 28 })
+                  ) : (
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-lg" />
                   )}
                 </motion.div>
-                <h3 className="text-xl font-bold text-gray-800 mb-3">{item.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{item.desc || item.description}</p>
+                <div className="space-y-2">
+                  <h3 className="text-base sm:text-lg md:text-xl font-bold text-gray-800 text-center">{item.title}</h3>
+                  <p className="text-sm sm:text-base text-gray-600 leading-relaxed px-2">{item.desc || item.description}</p>
+                </div>
               </AnimatedGridItem>
             ))}
           </motion.div>
         </div>
       </AnimatedSection>
 
-      {/* MAIN CONTENT SECTION - REMOVED */}
-
-      {/* TESTIMONIALS */}
-      <AnimatedSection className="py-16 bg-gray-50" delay={0.8}>
-        <div className="container mx-auto px-4">
-          <motion.div 
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              What Our Patients Say
-            </h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-blue-600 to-indigo-600 mx-auto rounded-full"></div>
-          </motion.div>
-          
-          <motion.div 
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="feedback-section marquee-container"
-          >
-            {userFeedbacks.length > 0 ? (
-              <div className="marquee-track">
-                {[...userFeedbacks, ...userFeedbacks].map((feedback, index) => (
+      {/* MAIN CONTENT SECTION */}
+      <main className="flex-grow">
+        <AnimatedSection className="container mx-auto px-4 py-8 sm:py-12 md:py-16" delay={0.6}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 md:gap-14 items-center">
+            <motion.div 
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="space-y-6 sm:space-y-8 text-center md:text-left"
+            >
+              <motion.h1 
+                initial={{ opacity: 0, y: -20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"
+              >
+                BookMyLab
+              </motion.h1>
+              <motion.p 
+                initial={{ opacity: 0, y: -20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                className="text-base sm:text-lg md:text-xl text-gray-600 leading-relaxed"
+              >
+                Book laboratory tests effortlessly with real-time availability,
+                trusted labs, and instant access to reports.
+              </motion.p>
+              <motion.div 
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="space-y-3 sm:space-y-4"
+              >
+                {[
+                  "Quick & simple booking",
+                  "Real-time slot availability",
+                  "Access reports anytime",
+                ].map((text, index) => (
                   <motion.div 
-                    key={`${feedback._id || index}-duplicate-${index >= userFeedbacks.length ? '2' : '1'}`} 
-                    className="testimonial-card"
-                    whileHover={{ 
-                      y: -12,
-                      scale: 1.03,
-                      boxShadow: "0 30px 40px -10px rgba(0, 0, 0, 0.2), 0 20px 20px -10px rgba(0, 0, 0, 0.1)"
-                    }}
+                    key={index} 
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5, delay: 0.5 + index * 0.1 }}
+                    className="flex items-center gap-3 justify-center md:justify-start"
                   >
-                    <div className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 h-full flex flex-col">
-                      <div className="flex items-start gap-3 mb-4">
-                        <motion.div
-                          animate={floating}
-                          className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center flex-shrink-0"
-                        >
-                          <MessageSquare className="text-white" size={16} />
-                        </motion.div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-800 truncate">{feedback.userName || "Anonymous User"}</h4>
-                          <div className="flex items-center gap-1">
-                            {[...Array(5)].map((_, i) => (
-                              <motion.div
-                                key={i}
-                                initial={{ scale: 0, rotate: -180 }}
-                                animate={{ scale: 1, rotate: 0 }}
-                                transition={{ delay: 0.5 + i * 0.1, type: "spring", stiffness: 200 }}
-                              >
-                                <Star 
-                                  className={`w-4 h-4 flex-shrink-0 ${i < (feedback.bookingEaseRating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
-                                />
-                              </motion.div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <p className="text-gray-600 leading-relaxed mb-4 line-clamp-3 flex-grow text-sm sm:text-base">
-                        "{feedback.comment || 'Great experience with platform!'}"
-                      </p>
-                      
-                      <div className="flex items-center justify-between text-sm text-gray-500 mt-auto">
-                        <span className="truncate">Overall Experience</span>
-                        <span className="font-medium text-blue-600 flex-shrink-0">
-                          {feedback.bookingEaseRating || 5}/5
-                        </span>
-                      </div>
-                    </div>
+                    <motion.div
+                      animate={pulse}
+                      className="flex-shrink-0"
+                    >
+                      <CheckCircle className="text-primary" size={20} />
+                    </motion.div>
+                    <span className="text-base sm:text-lg text-gray-700 font-medium">{text}</span>
                   </motion.div>
                 ))}
-              </div>
-            ) : (
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-                className="text-center py-16"
-              >
-                <motion.div 
-                  animate={floating}
-                  className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6"
-                >
-                  <MessageSquare className="text-gray-400" size={32} />
-                </motion.div>
-                <h3 className="text-2xl font-semibold text-gray-600 mb-3">
-                  No Reviews Yet
-                </h3>
-                <p className="text-gray-500 max-w-md mx-auto text-lg">
-                  Be the first to share your experience! Our valued customers' reviews will appear here once they are reviewed by our team.
-                </p>
               </motion.div>
-            )}
-          </motion.div>
-        </div>
-      </AnimatedSection>
+            </motion.div>
 
-      {/* CTA SECTION */}
-      <AnimatedSection className="py-20 bg-gradient-to-r from-blue-600 to-indigo-700" delay={1.0}>
-        <div className="container mx-auto px-4 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-6">
-              Ready to Take Control of Your Health?
-            </h2>
-            <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-              Join thousands of satisfied customers who trust BookMyLab for their diagnostic needs.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <AnimatedButton
-                onClick={() => navigate("/register")}
-                className="px-8 py-4 bg-white text-blue-700 font-semibold rounded-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center gap-2"
+            <motion.div 
+              initial={{ opacity: 0, x: 50, scale: 0.8 }}
+              whileInView={{ opacity: 1, x: 0, scale: 1 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
+              className="relative w-full max-w-lg md:max-w-xl lg:max-w-2xl min-h-[320px] sm:min-h-[400px] md:min-h-[480px]"
+            >
+              <div className="relative w-full h-full rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl border-4 sm:border-8 border-white">
+                {/* Image Name Badge */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                  className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium text-black shadow-md"
+                >
+                  🔬 {ImageConfig.heroSideImageName}
+                </motion.div>
+                
+                <motion.img
+                  initial={{ scale: 1.1 }}
+                  whileInView={{ scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1, ease: "easeOut" }}
+                  src={ImageConfig.heroSideImage}
+                  alt={ImageConfig.heroSideImageDescription}
+                  title={ImageConfig.heroSideImageName}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.src = ImageConfig.heroSideImageFallback;
+                  }}
+                />
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 1, delay: 0.5 }}
+                  className="absolute inset-0 bg-gradient-to-t from-primary/40 to-transparent" 
+                />
+              </div>
+            </motion.div>
+          </div>
+        </AnimatedSection>
+      </main>
+
+      {/* WHAT OUR USERS SAY SECTION */}
+        <AnimatedSection className="bg-gradient-to-br from-[#98d2e0]/20 to-[#2a7a8e]/10 py-8 sm:py-12 md:py-16" delay={0.8}>
+          <div className="container mx-auto px-4">
+            <motion.div 
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-8 sm:mb-12"
+            >
+              <h1 
+                className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-4"
               >
-                Get Started Now
-                <ArrowRight size={18} />
-              </AnimatedButton>
-              
-              <AnimatedButton
-                onClick={() => navigate("/contact")}
-                className="px-8 py-4 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-blue-700 transition-all duration-300"
+                What Our Users Say
+              </h1>
+              <p 
+                className="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto"
               >
-                Contact Us
-              </AnimatedButton>
-            </div>
-          </motion.div>
-        </div>
-      </AnimatedSection>
+                Real feedback from our valued customers about their experience with our laboratory booking platform.
+              </p>
+              <div 
+                className="h-1 bg-[#2a7a8e] mx-auto mt-4 sm:mt-6 rounded-full w-16"
+              />
+            </motion.div>
+            
+            <motion.div 
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="feedback-section marquee-container"
+            >
+              {userFeedbacks.length > 0 ? (
+                <div className="marquee-track">
+                  {/* Create 2 sets of cards for seamless infinite scroll */}
+                  {[...userFeedbacks, ...userFeedbacks].map((feedback, index) => (
+                    <motion.div 
+                      key={`${feedback._id || index}-duplicate-${index >= userFeedbacks.length ? '2' : '1'}`} 
+                      className="testimonial-card"
+                      whileHover={{ 
+                        y: -12,
+                        scale: 1.03,
+                        boxShadow: "0 30px 40px -10px rgba(0, 0, 0, 0.2), 0 20px 20px -10px rgba(0, 0, 0, 0.1)"
+                      }}
+                    >
+                        <div className="bg-white p-4 sm:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 h-full flex flex-col">
+                          <motion.div 
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="flex items-start gap-3 mb-4"
+                          >
+                            <motion.div 
+                              animate={floating}
+                              className="w-10 h-10 bg-gradient-to-br from-[#2a7a8e]/20 to-[#98d2e0]/20 rounded-full flex items-center justify-center flex-shrink-0"
+                            >
+                              <MessageSquare className="text-[#2a7a8e]" size={16} />
+                            </motion.div>
+                            <div className="min-w-0 flex-1">
+                              <h4 className="font-semibold text-gray-800 truncate text-base">{feedback.userName || "Anonymous User"}</h4>
+                              <motion.div 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.4 }}
+                                className="flex items-center gap-1"
+                              >
+                                {[...Array(5)].map((_, i) => (
+                                  <motion.div
+                                    key={i}
+                                    initial={{ scale: 0, rotate: -180 }}
+                                    animate={{ scale: 1, rotate: 0 }}
+                                    transition={{ delay: 0.5 + i * 0.1, type: "spring", stiffness: 200 }}
+                                  >
+                                    <Star 
+                                      className={`w-4 h-4 flex-shrink-0 ${i < (feedback.bookingEaseRating || 0) ? 'text-amber-400 fill-current' : 'text-gray-300'}`} 
+                                    />
+                                  </motion.div>
+                                ))}
+                              </motion.div>
+                            </div>
+                          </motion.div>
+                          
+                          <motion.p 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.3 }}
+                            className="text-gray-600 leading-relaxed mb-4 line-clamp-3 flex-grow text-sm sm:text-base"
+                          >
+                            "{feedback.comment || 'Great experience with platform!'}"
+                          </motion.p>
+                          
+                          <motion.div 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.6 }}
+                            className="flex items-center justify-between text-sm text-gray-500 mt-auto"
+                          >
+                            <span className="truncate">Overall Experience</span>
+                            <motion.span 
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ delay: 0.7, type: "spring" }}
+                              className="font-medium text-[#2a7a8e] flex-shrink-0"
+                            >
+                              {feedback.bookingEaseRating || 5}/5
+                            </motion.span>
+                          </motion.div>
+                        </div>
+                      </motion.div>
+                    ))}
+                </div>
+              ) : (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6 }}
+                  className="text-center py-12"
+                >
+                  <motion.div 
+                    animate={floating}
+                    className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4"
+                  >
+                    <MessageSquare className="text-gray-400" size={32} />
+                  </motion.div>
+                  <motion.h3 
+                    initial={{ opacity: 0, y: -10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2 }}
+                    className="text-xl font-semibold text-gray-600 mb-2"
+                  >
+                    No Reviews Yet
+                  </motion.h3>
+                  <motion.p 
+                    initial={{ opacity: 0, y: -10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.3 }}
+                    className="text-gray-500 max-w-md mx-auto"
+                  >
+                    Be the first to share your experience! Our valued customers' reviews will appear here once they are reviewed by our team.
+                  </motion.p>
+                </motion.div>
+              )}
+            </motion.div>
+          </div>
+        </AnimatedSection>
 
       <Footer/>
     </div>
