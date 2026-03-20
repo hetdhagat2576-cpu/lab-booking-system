@@ -23,12 +23,11 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use((req, res, next) => {
   const allowedOrigins = [
     process.env.FRONTEND_URL,
+    "https://lab-booking-frontend.vercel.app",
     "http://localhost:3000",
     "http://localhost:3001",
-    "http://localhost:5173",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:3001",
-    "http://127.0.0.1:5173"
+    "http://localhost:5173"
+    
   ].filter(Boolean);
 
   const origin = req.headers.origin;
@@ -100,7 +99,16 @@ app.get('/public/content/home/how-it-works', require('./controllers/contentContr
 app.get('/public/content/faq', require('./controllers/contentController').getFaq);
 app.get('/public/content/legal', require('./controllers/contentController').getLegal);
 
-// Routes
+// Health check endpoint for Render
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// API Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/otp', require('./routes/otpRoutes'));
 app.use('/api/bookings', require('./routes/bookingRoutes'));

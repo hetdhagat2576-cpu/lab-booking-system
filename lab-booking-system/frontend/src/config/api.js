@@ -2,8 +2,8 @@
 const getApiBaseUrl = () => {
   // Check if we're in production (deployed on Vercel)
   if (window.location.hostname.includes('vercel.app')) {
-    // Production - use deployed backend URL (will be updated after deployment)
-    return 'https://lab-booking-backend.vercel.app';
+    // Production - use deployed backend URL
+    return 'https://backend-dusky-seven-93.vercel.app';
   }
   
   // Development - use localhost
