@@ -1,17 +1,79 @@
 const express = require('express');
 const dotenv = require('dotenv');
-const connectDB = require('./config/db');
+const mongoose = require('mongoose');
+const cors = require('cors');
 const http = require('http');
 const WebSocket = require('ws');
-const sessionConfig = require('./middleware/sessionMiddleware');
-const { showLoadingIndicator, hideLoadingIndicator } = require('./middleware/loadingMiddleware');
-const { errorHandler, notFound } = require('./middleware/errorMiddleware');
 
 // Load environment variables
 dotenv.config();
 
-// Connect to MongoDB
-connectDB();
+// Import routes and middleware
+const sessionConfig = require('./middleware/sessionMiddleware');
+const { showLoadingIndicator, hideLoadingIndicator } = require('./middleware/loadingMiddleware');
+const { errorHandler, notFound } = require('./middleware/errorMiddleware');
+
+// MongoDB connection function for local development
+async function connectDB() {
+  if (mongoose.connection.readyState === 1) {
+    console.log('✅ MongoDB already connected');
+    return mongoose.connection;
+  }
+
+  const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/lab_appointment';
+  
+  if (!mongoURI || mongoURI === 'mongodb://localhost:27017/lab_appointment') {
+    console.log('🔗 Using local MongoDB at mongodb://localhost:27017/lab_appointment');
+  }
+
+  try {
+    await mongoose.connect(mongoURI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      bufferCommands: false,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      family: 4
+    });
+    
+    console.log('✅ MongoDB connected successfully');
+    
+    mongoose.connection.on('error', (err) => {
+      console.error('❌ MongoDB connection error:', err);
+    });
+    
+    mongoose.connection.on('disconnected', () => {
+      console.log('🔌 MongoDB disconnected');
+    });
+    
+    mongoose.connection.on('reconnected', () => {
+      console.log('🔄 MongoDB reconnected');
+    });
+    
+    return mongoose.connection;
+  } catch (error) {
+    console.error('❌ Error connecting to MongoDB:', error.message);
+    console.error('Please ensure MongoDB is running on localhost:27017');
+    throw error;
+  }
+}
+
+// Load all models to ensure they are registered
+require('./models/user');
+require('./models/feedback');
+require('./models/homeHowItWorks');
+require('./models/homeWhyBook');
+require('./models/booking');
+require('./models/test');
+require('./models/package');
+require('./models/faq');
+require('./models/serviceContent');
+require('./models/termsContent');
+require('./models/privacyPolicy');
+require('./models/AboutContent');
+require('./models/healthConcern');
+
 
 const app = express();
 
@@ -19,37 +81,39 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Dynamic CORS middleware - custom implementation
-app.use((req, res, next) => {
-  const allowedOrigins = [
-    process.env.FRONTEND_URL,
-    "https://lab-booking-frontend.vercel.app",
-    "http://localhost:3000",
-    "http://localhost:3001",
-    "http://localhost:5173"
-    
-  ].filter(Boolean);
+// CORS configuration for local development
+const corsOptions = {
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "http://localhost:5173",
+      "http://127.0.0.1:3000",
+      "http://127.0.0.1:3001",
+      "http://127.0.0.1:5173"
+    ];
 
-  const origin = req.headers.origin;
-  
-  // Set single origin or no header if not allowed
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
-  
-  // Required headers
-  res.setHeader('Vary', 'Origin');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
-  
-  next();
-});
+    console.log('CORS request from origin:', origin);
+
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      console.log('CORS allowed for origin:', origin);
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200
+};
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
 
 // Session middleware after JSON parsing - only apply to routes that need authentication
 app.use('/api/auth', sessionConfig);
@@ -99,13 +163,56 @@ app.get('/public/content/home/how-it-works', require('./controllers/contentContr
 app.get('/public/content/faq', require('./controllers/contentController').getFaq);
 app.get('/public/content/legal', require('./controllers/contentController').getLegal);
 
-// Health check endpoint for Render
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  });
+// Health check endpoint for local monitoring
+app.get('/health', async (req, res) => {
+  try {
+    const dbState = mongoose.connection.readyState;
+    const dbStatus = dbState === 1 ? 'connected' : 'disconnected';
+    
+    res.status(200).json({ 
+      status: 'OK', 
+      timestamp: new Date().toISOString(),
+      environment: 'development',
+      database: {
+        status: dbStatus,
+        state: dbState
+      },
+      memory: {
+        used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB',
+        total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + 'MB'
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'ERROR',
+      timestamp: new Date().toISOString(),
+      error: error.message
+    });
+  }
+});
+
+// API health check endpoint
+app.get('/api/health', async (req, res) => {
+  try {
+    const dbState = mongoose.connection.readyState;
+    const dbStatus = dbState === 1 ? 'connected' : 'disconnected';
+    
+    res.status(200).json({ 
+      status: 'OK', 
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      database: {
+        status: dbStatus,
+        state: dbState
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'ERROR',
+      timestamp: new Date().toISOString(),
+      error: error.message
+    });
+  }
 });
 
 // API Routes
@@ -140,19 +247,10 @@ app.post('/auth-verify-OTP', require('./controllers/authController').verifyOtp);
 // Fix for /appoinment typo
 app.use('/appoinment', require('./routes/appointmentRoutes'));
 
-// Health check route
-app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
-
-// Root route for Vercel
+// Root route for local development
 app.get('/', (req, res) => {
   res.status(200).json({ 
-    message: 'Lab Booking System Backend API',
+    message: 'Lab Booking System Backend API - Local Development',
     status: 'Running',
     version: '1.0.0',
     endpoints: {
@@ -164,23 +262,20 @@ app.get('/', (req, res) => {
   });
 });
 
-// CORS test endpoint
+// CORS test endpoint for local development
 app.get('/api/cors-test', (req, res) => {
   const origin = req.headers.origin;
   const allowedOrigins = [
-    process.env.FRONTEND_URL,
-    "https://lab-booking-frontend-l2ki0uzr8-hetdhagat2576-8656s-projects.vercel.app",
-    "https://lab-booking-frontend.vercel.app",
     "http://localhost:3000",
     "http://localhost:3001",
     "http://localhost:5173",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:3001",
     "http://127.0.0.1:5173"
-  ].filter(Boolean);
+  ];
   
   res.status(200).json({ 
-    message: 'CORS test successful',
+    message: 'CORS test successful - Local Development',
     origin: origin,
     isAllowed: allowedOrigins.includes(origin),
     allowedOrigins: allowedOrigins,
@@ -200,7 +295,6 @@ app.get('/api/debug/models', async (req, res) => {
   try {
     console.log('=== DEBUG: Testing models ===');
     
-    const mongoose = require('mongoose');
     console.log('Mongoose version:', mongoose.version);
     console.log('Connection state:', mongoose.connection.readyState);
     
@@ -236,13 +330,25 @@ app.get('/api/debug/models', async (req, res) => {
 app.use(notFound);
 app.use(errorHandler);
 
-// Start server for local development only
-if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
-  const PORT = process.env.PORT || 5001;
-  const server = http.createServer(app);
-  const WebSocket = require('ws');
-  const wss = new WebSocket.Server({ server });
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  process.exit(1);
+});
 
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
+// Start server for local development
+const PORT = process.env.PORT || 5001;
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+
+// Connect to database before starting server
+connectDB().then(() => {
   // WebSocket connection handling
   wss.on('connection', (ws, req) => {
     console.log('New WebSocket connection established');
@@ -309,22 +415,13 @@ if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
   });
 
   server.listen(PORT, () => {
-    console.log(`✅ Server running on port ${PORT}`);
-    console.log(`✅ WebSocket server running on ws://localhost:${PORT}`);
+    console.log(`🚀 Local server running on port ${PORT}`);
+    console.log(`🌐 API available at: http://localhost:${PORT}`);
+    console.log(`🔌 WebSocket server running on ws://localhost:${PORT}`);
+    console.log(`📊 Health check: http://localhost:${PORT}/health`);
   });
-}
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
-  console.error('❌ Uncaught Exception:', error);
+}).catch(error => {
+  console.error('❌ Failed to start server:', error);
   process.exit(1);
 });
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
-  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
-  process.exit(1);
-});
-
-// Export app for Vercel serverless deployment
-module.exports = app;

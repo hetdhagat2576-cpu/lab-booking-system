@@ -1,21 +1,15 @@
-// Determine base API URL based on environment
+// API configuration for local development
 const getApiBaseUrl = () => {
-  // Check if we're in production (deployed on Vercel)
-  if (window.location.hostname.includes('vercel.app')) {
-    // Production - use deployed backend URL
-    return 'https://backend-dusky-seven-93.vercel.app';
-  }
-  
-  // Development - use localhost
+  // Always use localhost for local development
   console.log('Using local development API URL');
   return 'http://localhost:5001';
 };
 
 const API_BASE_URL = getApiBaseUrl();
 
-console.log('🚀 API Configuration initialized:', {
+console.log('🚀 Local API Configuration initialized:', {
   baseUrl: API_BASE_URL,
-  environment: process.env.NODE_ENV,
+  environment: 'development',
   hostname: window.location.hostname
 });
 
