@@ -17,7 +17,7 @@ require('../models/healthConcern');
 
 const connectDB = async () => {
   try {
-    const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/lab_appointment';
+    const mongoURI = process.env.MONGODB_ATLAS_URI || process.env.MONGODB_URI || 'mongodb://localhost:27017/lab_appointment';
     
     if (!mongoURI || mongoURI === 'mongodb://localhost:27017/lab_appointment') {
       console.log('⚠️  WARNING: Using local MongoDB. This will not work in production/Vercel');
