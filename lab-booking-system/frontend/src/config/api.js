@@ -1,10 +1,9 @@
-
-// Determine the base API URL based on environment
+// Determine base API URL based on environment
 const getApiBaseUrl = () => {
   // Check if we're in production (deployed on Vercel)
   if (window.location.hostname.includes('vercel.app')) {
-    // Production - use the deployed backend URL
-    return 'https://backend-qcwowsoj8-hetdhagat2576-8656s-projects.vercel.app';
+    // Production - use deployed backend URL (will be updated after deployment)
+    return 'https://lab-booking-backend.vercel.app';
   }
   
   // Development - use localhost
