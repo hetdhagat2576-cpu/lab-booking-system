@@ -1,16 +1,10 @@
 
 // Determine the base API URL based on environment
 const getApiBaseUrl = () => {
-  // Check if we're in production (deployed on Render)
-  if (window.location.hostname.includes('onrender.com')) {
-    // Production - use the deployed backend URL
-    return 'https://lab-booking-backend.onrender.com';
-  }
-  
-  // Check if we're in production (deployed on Vercel) - for backward compatibility
+  // Check if we're in production (deployed on Vercel)
   if (window.location.hostname.includes('vercel.app')) {
-    // Production - use the deployed backend URL (Render)
-    return 'https://lab-booking-backend.onrender.com';
+    // Production - use the deployed backend URL
+    return 'https://backend-qcwowsoj8-hetdhagat2576-8656s-projects.vercel.app';
   }
   
   // Development - use localhost
