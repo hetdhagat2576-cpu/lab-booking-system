@@ -4,12 +4,25 @@
     {
       "src": "lab-booking-system/backend/server.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "lab-booking-system/frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "installCommand": "cd lab-booking-system/frontend && npm install",
+        "buildCommand": "cd lab-booking-system/frontend && npm run build",
+        "outputDirectory": "lab-booking-system/frontend/build"
+      }
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
       "dest": "/lab-booking-system/backend/server.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/lab-booking-system/frontend/build/$1"
     }
   ]
 }
