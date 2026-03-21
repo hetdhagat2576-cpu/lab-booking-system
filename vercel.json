@@ -21,6 +21,14 @@
       "dest": "/lab-booking-system/backend/server.js"
     },
     {
+      "src": "/static/(.*)",
+      "dest": "/lab-booking-system/frontend/build/static/$1"
+    },
+    {
+      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|ico|svg))",
+      "dest": "/lab-booking-system/frontend/build/$1"
+    },
+    {
       "src": "/(.*)",
       "dest": "/lab-booking-system/frontend/build/index.html"
     }
