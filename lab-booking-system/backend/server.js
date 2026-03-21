@@ -172,6 +172,8 @@ app.use((req, res, next) => {
 // Public content routes - no authentication required
 app.get('/public/content/home/why-book', require('./controllers/contentController').getHomeWhyBook);
 app.get('/public/content/home/how-it-works', require('./controllers/contentController').getHomeHowItWorks);
+app.get('/api/content/home/why-book', require('./controllers/contentController').getHomeWhyBook);
+app.get('/api/content/home/how-it-works', require('./controllers/contentController').getHomeHowItWorks);
 app.get('/public/content/faq', require('./controllers/contentController').getFaq);
 app.get('/public/content/legal', require('./controllers/contentController').getLegal);
 
