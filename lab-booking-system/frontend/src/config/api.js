@@ -1,16 +1,24 @@
-// API configuration for local development
+// API configuration for both development and production
 const getApiBaseUrl = () => {
-  // Always use localhost for local development
-  console.log('Using local development API URL');
+  // Use environment variable for production, fallback to localhost for development
+  const apiUrl = process.env.REACT_APP_API_URL;
+  
+  if (apiUrl) {
+    console.log('🌐 Using production API URL:', apiUrl);
+    return apiUrl;
+  }
+  
+  console.log('🏠 Using local development API URL');
   return 'http://localhost:5001';
 };
 
 const API_BASE_URL = getApiBaseUrl();
 
-console.log('🚀 Local API Configuration initialized:', {
+console.log('🚀 API Configuration initialized:', {
   baseUrl: API_BASE_URL,
-  environment: 'development',
-  hostname: window.location.hostname
+  environment: process.env.NODE_ENV || 'development',
+  hostname: window.location.hostname,
+  isProduction: window.location.hostname !== 'localhost'
 });
 
 // API call lock mechanism to prevent concurrent calls

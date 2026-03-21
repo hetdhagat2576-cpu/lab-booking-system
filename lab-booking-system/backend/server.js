@@ -13,18 +13,23 @@ const sessionConfig = require('./middleware/sessionMiddleware');
 const { showLoadingIndicator, hideLoadingIndicator } = require('./middleware/loadingMiddleware');
 const { errorHandler, notFound } = require('./middleware/errorMiddleware');
 
-// MongoDB connection function for local development
+// MongoDB connection function for local development and production
 async function connectDB() {
   if (mongoose.connection.readyState === 1) {
     console.log('✅ MongoDB already connected');
     return mongoose.connection;
   }
 
-  const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/lab_appointment';
+  // Use MongoDB Atlas for production, local for development
+  const mongoURI = process.env.NODE_ENV === 'production' 
+    ? process.env.MONGODB_ATLAS_URI 
+    : process.env.MONGODB_URI || 'mongodb://localhost:27017/lab_appointment';
   
-  if (!mongoURI || mongoURI === 'mongodb://localhost:27017/lab_appointment') {
-    console.log('🔗 Using local MongoDB at mongodb://localhost:27017/lab_appointment');
+  if (!mongoURI) {
+    throw new Error('MongoDB URI not found in environment variables');
   }
+
+  console.log('🔗 Connecting to MongoDB:', process.env.NODE_ENV === 'production' ? 'Atlas (Production)' : 'Local (Development)');
 
   try {
     await mongoose.connect(mongoURI, {
@@ -54,7 +59,6 @@ async function connectDB() {
     return mongoose.connection;
   } catch (error) {
     console.error('❌ Error connecting to MongoDB:', error.message);
-    console.error('Please ensure MongoDB is running on localhost:27017');
     throw error;
   }
 }
@@ -81,17 +85,24 @@ const app = express();
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// CORS configuration for local development
+// CORS configuration for development and production
 const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [
+      // Local development origins
       "http://localhost:3000",
       "http://localhost:3001",
       "http://localhost:5173",
       "http://127.0.0.1:3000",
       "http://127.0.0.1:3001",
-      "http://127.0.0.1:5173"
-    ];
+      "http://127.0.0.1:5173",
+      // Production Vercel frontend
+      "https://lab-booking-system-yfpt.vercel.app",
+      "https://lab-booking-system-iota.vercel.app",
+      "https://lab-booking-system.vercel.app",
+      // Add your actual Vercel domain here
+      process.env.FRONTEND_URL
+    ].filter(Boolean); // Remove any undefined values
 
     console.log('CORS request from origin:', origin);
 
@@ -103,6 +114,7 @@ const corsOptions = {
       callback(null, true);
     } else {
       console.log('CORS blocked origin:', origin);
+      console.log('Allowed origins:', allowedOrigins);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -162,6 +174,16 @@ app.get('/public/content/home/why-book', require('./controllers/contentControlle
 app.get('/public/content/home/how-it-works', require('./controllers/contentController').getHomeHowItWorks);
 app.get('/public/content/faq', require('./controllers/contentController').getFaq);
 app.get('/public/content/legal', require('./controllers/contentController').getLegal);
+
+// Simple test endpoint (no database required)
+app.get('/test', (req, res) => {
+  res.status(200).json({ 
+    message: 'Test endpoint working!',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString(),
+    vercel: process.env.VERCEL || 'false'
+  });
+});
 
 // Health check endpoint for local monitoring
 app.get('/health', async (req, res) => {
@@ -247,12 +269,15 @@ app.post('/auth-verify-OTP', require('./controllers/authController').verifyOtp);
 // Fix for /appoinment typo
 app.use('/appoinment', require('./routes/appointmentRoutes'));
 
-// Root route for local development
+// Root route for local development and Vercel production
 app.get('/', (req, res) => {
   res.status(200).json({ 
-    message: 'Lab Booking System Backend API - Local Development',
+    message: process.env.NODE_ENV === 'production' 
+      ? 'Lab Booking System Backend API - Vercel Production'
+      : 'Lab Booking System Backend API - Local Development',
     status: 'Running',
     version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
     endpoints: {
       health: '/health',
       api: '/api',
@@ -342,86 +367,103 @@ process.on('unhandledRejection', (reason, promise) => {
   process.exit(1);
 });
 
-// Start server for local development
+// Start server for local development only
 const PORT = process.env.PORT || 5001;
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
 
-// Connect to database before starting server
-connectDB().then(() => {
-  // WebSocket connection handling
-  wss.on('connection', (ws, req) => {
-    console.log('New WebSocket connection established');
-    
-    try {
-      const url = new URL(req.url, `http://${req.headers.host}`);
-      const userId = url.searchParams.get('userId');
-      const token = url.searchParams.get('token');
+// Check if we're in Vercel environment
+const isVercel = process.env.VERCEL || process.env.NODE_ENV === 'production';
+
+if (!isVercel) {
+  // Local development: Start HTTP server and WebSocket
+  const server = http.createServer(app);
+  const wss = new WebSocket.Server({ server });
+
+  // Connect to database before starting server
+  connectDB().then(() => {
+    // WebSocket connection handling
+    wss.on('connection', (ws, req) => {
+      console.log('New WebSocket connection established');
       
-      if (!userId || !token) {
-        ws.close(1008, 'Authentication required');
-        return;
-      }
-      
-      ws.userId = userId;
-      ws.token = token;
-      ws.isAlive = true;
-      
-      ws.on('pong', () => { ws.isAlive = true; });
-      
-      ws.on('message', (message) => {
-        try {
-          const parsedMessage = JSON.parse(message);
-          if (parsedMessage.type === 'authenticate' && parsedMessage.userId) {
-            ws.userId = parsedMessage.userId;
-          }
-          if (parsedMessage.type === 'ping') {
-            ws.send(JSON.stringify({ type: 'pong' }));
-          }
-        } catch (error) {
-          console.error('WebSocket message error:', error);
+      try {
+        const url = new URL(req.url, `http://${req.headers.host}`);
+        const userId = url.searchParams.get('userId');
+        const token = url.searchParams.get('token');
+        
+        if (!userId || !token) {
+          ws.close(1008, 'Authentication required');
+          return;
         }
-      });
+        
+        ws.userId = userId;
+        ws.token = token;
+        ws.isAlive = true;
+        
+        ws.on('pong', () => { ws.isAlive = true; });
+        
+        ws.on('message', (message) => {
+          try {
+            const parsedMessage = JSON.parse(message);
+            if (parsedMessage.type === 'authenticate' && parsedMessage.userId) {
+              ws.userId = parsedMessage.userId;
+            }
+            if (parsedMessage.type === 'ping') {
+              ws.send(JSON.stringify({ type: 'pong' }));
+            }
+          } catch (error) {
+            console.error('WebSocket message error:', error);
+          }
+        });
 
-      ws.on('close', () => {
-        console.log(`WebSocket closed for user ${userId}`);
-      });
+        ws.on('close', () => {
+          console.log(`WebSocket closed for user ${userId}`);
+        });
 
-      ws.on('error', (error) => {
-        console.error(`WebSocket error for user ${userId}:`, error);
-      });
-      
-    } catch (error) {
-      console.error('WebSocket connection setup error:', error);
-      ws.close(1011, 'Internal server error');
-    }
-  });
-
-  const heartbeatInterval = setInterval(() => {
-    wss.clients.forEach((ws) => {
-      if (!ws.isAlive) {
-        ws.terminate();
-        return;
-      }
-      ws.isAlive = false;
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.ping();
+        ws.on('error', (error) => {
+          console.error(`WebSocket error for user ${userId}:`, error);
+        });
+        
+      } catch (error) {
+        console.error('WebSocket connection setup error:', error);
+        ws.close(1011, 'Internal server error');
       }
     });
-  }, 30000);
 
-  wss.on('close', () => {
-    clearInterval(heartbeatInterval);
-  });
+    const heartbeatInterval = setInterval(() => {
+      wss.clients.forEach((ws) => {
+        if (!ws.isAlive) {
+          ws.terminate();
+          return;
+        }
+        ws.isAlive = false;
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.ping();
+        }
+      });
+    }, 30000);
 
-  server.listen(PORT, () => {
-    console.log(`🚀 Local server running on port ${PORT}`);
-    console.log(`🌐 API available at: http://localhost:${PORT}`);
-    console.log(`🔌 WebSocket server running on ws://localhost:${PORT}`);
-    console.log(`📊 Health check: http://localhost:${PORT}/health`);
+    wss.on('close', () => {
+      clearInterval(heartbeatInterval);
+    });
+
+    server.listen(PORT, () => {
+      console.log(`🚀 Local server running on port ${PORT}`);
+      console.log(`🌐 API available at: http://localhost:${PORT}`);
+      console.log(`🔌 WebSocket server running on ws://localhost:${PORT}`);
+      console.log(`📊 Health check: http://localhost:${PORT}/health`);
+    });
+  }).catch(error => {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
   });
-}).catch(error => {
-  console.error('❌ Failed to start server:', error);
-  process.exit(1);
-});
+} else {
+  // Vercel production: Connect to database and export app
+  connectDB().then(() => {
+    console.log('✅ Database connected for Vercel deployment');
+  }).catch(error => {
+    console.error('❌ Failed to connect to database for Vercel deployment:', error);
+  });
+}
+
+// Export for Vercel serverless functions
+module.exports = app;
 
