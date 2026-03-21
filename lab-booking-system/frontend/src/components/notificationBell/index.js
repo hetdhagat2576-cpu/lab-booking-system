@@ -32,7 +32,7 @@ export default function NotificationBell() {
     const maxReconnectAttempts = 5;
 
     const connectWebSocket = () => {
-      const wsUrl = `ws://localhost:5001?userId=${user._id}&token=${token}`;
+      const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}?userId=${user._id}&token=${token}`;
       console.log('🔗 Connecting to WebSocket:', wsUrl);
       
       try {

@@ -6,8 +6,6 @@
 
   "private": true,
 
-  "homepage": ".",
-
   "dependencies": {
 
     "@emotion/react": "^11.14.0",
