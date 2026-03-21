@@ -22,7 +22,7 @@
     },
     {
       "src": "/(.*)",
-      "dest": "/lab-booking-system/frontend/build/$1"
+      "dest": "/lab-booking-system/frontend/build/index.html"
     }
   ]
 }
